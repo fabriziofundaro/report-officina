@@ -128,11 +128,11 @@
   .filters-label { font-family: var(--sans); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
 
   /* Table */
-  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: visible; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
   .table-header { padding: .85rem 1.2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .table-title { font-weight: 700; font-size: .9rem; }
   .table-count { font-family: var(--sans); font-size: .68rem; color: var(--ink-muted); }
-  .table-wrap { overflow-x: auto; }
+  .table-wrap { overflow-x: auto; overflow-y: visible; width: 100%; }
   table { width: 100%; border-collapse: collapse; min-width: 700px; font-size: .82rem; }
   thead tr { background: var(--accent-dark); }
   thead tr.group-header th {
@@ -148,25 +148,30 @@
   thead tr.sub-header th.col-base { text-align: left; }
 
   /* Colonne fisse Data e Operatrice */
-  .col-sticky-data {
-    position: sticky; left: 0; z-index: 3;
+  /* Intestazioni sticky — z-index alto per stare sopra tutto */
+  thead .col-sticky-data {
+    position: sticky; left: 0; z-index: 6;
     background: var(--accent-dark);
-    min-width: 100px; max-width: 100px; width: 100px;
+    min-width: 100px;
   }
-  .col-sticky-op {
-    position: sticky; left: 100px; z-index: 3;
+  thead .col-sticky-op {
+    position: sticky; left: 100px; z-index: 6;
     background: var(--accent-dark);
-    min-width: 110px; max-width: 110px; width: 110px;
-    border-right: 2px solid rgba(255,255,255,.2) !important;
+    min-width: 120px;
+    border-right: 2px solid rgba(255,255,255,.25) !important;
   }
-  /* Per le righe dati e footer */
+  /* Celle dati sticky */
   td.col-sticky-data {
+    position: sticky; left: 0; z-index: 2;
     background: var(--surface) !important;
     border-right: none !important;
+    min-width: 100px;
   }
   td.col-sticky-op {
+    position: sticky; left: 100px; z-index: 2;
     background: var(--surface) !important;
     border-right: 2px solid var(--border) !important;
+    min-width: 120px;
   }
   tbody tr:hover td.col-sticky-data,
   tbody tr:hover td.col-sticky-op { background: var(--accent-dim) !important; }
@@ -174,10 +179,10 @@
   tfoot td.col-sticky-op { background: var(--surface2) !important; }
 
   /* Allineamento colonne numeri */
-  table { table-layout: fixed; }
-  .col-num { min-width: 72px; width: 72px; }
-  .col-tot { min-width: 60px; width: 60px; }
-  .col-note { min-width: 120px; width: 120px; }
+  table { table-layout: auto; border-collapse: separate; border-spacing: 0; }
+  .col-num { min-width: 65px; white-space: nowrap; }
+  .col-tot { min-width: 55px; }
+  .col-note { min-width: 100px; }
   .th-toshiko        { background: #1e3a5f; color: #93c5fd; }
   .th-toshiko-sub    { background: #2a4f7a; color: #bfdbfe; }
   .th-annullati      { background: #7c2d12; color: #fdba74; }
