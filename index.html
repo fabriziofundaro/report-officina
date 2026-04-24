@@ -141,6 +141,31 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 380px) { .header { padding: 1rem; } .page { padding: 1rem; } }
+
+  /* Operatori bonus */
+  .bonus-list { padding: .8rem 1.2rem; display: flex; flex-direction: column; gap: .6rem; }
+  .bonus-item { display: flex; align-items: center; gap: .6rem; }
+  .bonus-nome {
+    flex: 1; border: 1px solid var(--border-strong); border-radius: var(--radius);
+    padding: .45rem .7rem; font-family: var(--sans); font-size: .88rem; color: var(--ink);
+    background: var(--bg);
+  }
+  .bonus-nome:focus { outline: none; border-color: var(--accent); background: white; }
+  .bonus-nome::placeholder { color: var(--ink-muted); }
+  .bonus-num {
+    width: 72px; text-align: right; border: 1px solid var(--border-strong); border-radius: var(--radius);
+    padding: .45rem .6rem; font-family: var(--mono); font-size: 1rem; font-weight: 600;
+    color: var(--ink); background: var(--bg); -webkit-appearance: none;
+  }
+  .bonus-num:focus { outline: none; border-color: var(--green); background: white; }
+  .bonus-remove { background: none; border: none; color: var(--ink-muted); font-size: 1.1rem; cursor: pointer; padding: .2rem; flex-shrink: 0; }
+  .bonus-remove:hover { color: var(--red); }
+  .add-bonus-btn {
+    width: 100%; background: none; border: 1px dashed var(--border-strong); border-radius: var(--radius);
+    padding: .65rem; color: var(--ink-muted); font-family: var(--sans); font-size: .78rem;
+    letter-spacing: .02em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: all .2s;
+  }
+  .add-bonus-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
 </style>
 </head>
 <body>
@@ -222,7 +247,16 @@
     <!-- 4. SEZIONI DINAMICHE DA CONFIG.SEZIONI -->
     <div id="sezioni-container"></div>
 
-    <!-- 5. NOTE -->
+    <!-- 5. OPERATORI BONUS -->
+    <div class="section">
+      <div class="section-header"><span class="section-icon">👥</span><span class="section-title">Operatori bonus</span></div>
+      <div class="bonus-list" id="bonus-list"></div>
+      <div style="padding:.8rem 1.2rem; border-top: 1px solid var(--border);">
+        <button class="add-bonus-btn" onclick="addBonusRow()">+ Aggiungi operatore bonus</button>
+      </div>
+    </div>
+
+    <!-- 6. NOTE -->
     <div class="section">
       <div class="section-header"><span class="section-icon">📝</span><span class="section-title">Note libere</span></div>
       <textarea id="note" placeholder="Eventuali note aggiuntive..."></textarea>
@@ -261,9 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('submit-btn').textContent = '⚙ Setup richiesto';
   }
 
-  // Popola select operatrici
+  // Popola select — solo operatrici principali
   const sel = document.getElementById('sel-operatrice');
-  CONFIG.operatrici.forEach(op => {
+  CONFIG.operatrici.filter(op => op.principale).forEach(op => {
     const o = document.createElement('option');
     o.value = o.textContent = op.nome;
     sel.appendChild(o);
@@ -291,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tagIds = sez.categorie.filter(c => c.tagliando).map(c => c.id);
     const subtotale = tagIds.length ? `
       <div class="section-subtotal">
-        <span class="section-subtotal-label">Tagliandi ${sez.label}</span>
+        <span class="section-subtotal-label">Tagliandi ${sez.label.toLowerCase()}</span>
         <span class="section-subtotal-value" id="sub-${sez.id}">0</span>
       </div>` : '';
 
@@ -426,7 +460,6 @@ function onNumInput(el, catId, isTag) {
 
 function updateTotali() {
   let totale = 0;
-  // Aggiorna subtotali per sezione e totale generale
   CONFIG.sezioni.forEach(sez => {
     let subTot = 0;
     sez.categorie.forEach(cat => {
@@ -436,6 +469,8 @@ function updateTotali() {
     const subEl = document.getElementById('sub-' + sez.id);
     if (subEl) subEl.textContent = subTot;
   });
+  // Aggiungi tagliandi operatori bonus al totale
+  getBonusRows().forEach(b => totale += b.tagliandi);
   document.getElementById('totale').textContent = totale;
 }
 
@@ -480,6 +515,9 @@ async function submitForm() {
     .filter(c => c.label === 'Senza contatto' || c.label === 'Senza risposta' || c.label === 'Risposta')
     .reduce((s,c) => s + (valori[c.id]||0), 0);
 
+  const bonusRows = getBonusRows();
+  const bonusTot = bonusRows.reduce((s, b) => s + b.tagliandi, 0);
+
   const payload = {
     data: new Date().toLocaleDateString('it-IT'),
     operatrice: op,
@@ -491,9 +529,10 @@ async function submitForm() {
     ore_srs: parseFloat(oreSRS.toFixed(2)),
     sezioni: CONFIG.sezioni,
     valori,
-    totale_tagliandi: totaleTaglia,
+    totale_tagliandi: totaleTaglia + bonusTot,
     totale_srs: totaleSRS,
     chiamate_totali: chiamateTot,
+    operatori_bonus: bonusRows,
     note: document.getElementById('note').value.trim()
   };
 
@@ -526,6 +565,8 @@ function newReport() {
   document.getElementById('assenza-permesso-detail').classList.remove('show');
   document.getElementById('extra-list').innerHTML = '';
   extraCount = 0;
+  document.getElementById('bonus-list').innerHTML = '';
+  bonusCount = 0;
   document.getElementById('note').value = '';
   tutteLeCategorie().forEach(c => {
     const el = document.getElementById('c-' + c.id);
@@ -540,6 +581,40 @@ function newReport() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = CONFIG.googleSheets.scriptUrl.includes('INCOLLA_QUI');
   btn.textContent = '✓ Invia Report';
+}
+
+// ── Operatori bonus ──────────────────────────────────────────
+let bonusCount = 0;
+
+function addBonusRow() {
+  const id = ++bonusCount;
+  const list = document.getElementById('bonus-list');
+  const item = document.createElement('div');
+  item.className = 'bonus-item';
+  item.id = `bonus-${id}`;
+  item.innerHTML = `
+    <input type="text" class="bonus-nome" id="bonus-nome-${id}" placeholder="Nome operatore" maxlength="40">
+    <input type="number" class="bonus-num" id="bonus-num-${id}" min="0" max="20" value="1" inputmode="numeric" oninput="updateTotali()">
+    <button class="bonus-remove" onclick="removeBonus(${id})">✕</button>`;
+  list.appendChild(item);
+  document.getElementById(`bonus-nome-${id}`).focus();
+  updateTotali();
+}
+
+function removeBonus(id) {
+  document.getElementById(`bonus-${id}`)?.remove();
+  updateTotali();
+}
+
+function getBonusRows() {
+  const items = [];
+  document.querySelectorAll('.bonus-item').forEach(el => {
+    const id = el.id.replace('bonus-', '');
+    const nome = document.getElementById(`bonus-nome-${id}`)?.value.trim() || '';
+    const num  = parseInt(document.getElementById(`bonus-num-${id}`)?.value) || 0;
+    if (nome && num > 0) items.push({ nome, tagliandi: num });
+  });
+  return items;
 }
 
 function showToast(msg) {
