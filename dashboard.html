@@ -6,6 +6,9 @@
 <title>Dashboard report tagliandi</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/it.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
@@ -125,6 +128,33 @@
     transition: border-color .2s; box-shadow: 0 1px 3px rgba(0,0,0,.06);
   }
   .filter-select:focus { outline: none; border-color: var(--accent); }
+  /* Date range picker */
+  .date-range-wrap {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: .35rem .9rem;
+    cursor: pointer; transition: border-color .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .date-range-wrap:hover { border-color: var(--accent); }
+  .date-range-input {
+    border: none; background: transparent; font-family: var(--mono);
+    font-size: .75rem; color: var(--ink); cursor: pointer; width: 155px;
+    outline: none;
+  }
+  .date-range-sep { color: var(--ink-muted); font-family: var(--mono); font-size: .8rem; }
+  .date-range-icon { font-size: .9rem; color: var(--accent); flex-shrink: 0; }
+  .date-range-clear {
+    background: none; border: none; color: var(--ink-muted); cursor: pointer;
+    font-size: .8rem; padding: 0; transition: color .2s; flex-shrink: 0;
+  }
+  .date-range-clear:hover { color: var(--red); }
+  /* Flatpickr theme override */
+  .flatpickr-calendar { box-shadow: 0 8px 32px rgba(0,0,0,.12) !important; border-radius: var(--radius) !important; border: 1px solid var(--border) !important; }
+  .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background: var(--accent) !important; border-color: var(--accent) !important; }
+  .flatpickr-day.inRange { background: var(--accent-dim) !important; border-color: transparent !important; box-shadow: none !important; }
+  .flatpickr-day:hover { background: var(--accent-dim) !important; }
+
   .filters-label { font-family: var(--sans); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
 
   /* Table */
@@ -373,14 +403,15 @@
     <!-- Filters -->
     <div class="filters">
       <span class="filters-label">Filtra:</span>
-      <select class="filter-select" id="f-mese" onchange="onMeseChange()">
-        <option value="">Tutti i mesi</option>
-      </select>
+      <div class="date-range-wrap" onclick="document.getElementById('date-from').focus()">
+        <span class="date-range-icon">📅</span>
+        <input type="text" id="date-from" class="date-range-input" placeholder="Data inizio" readonly>
+        <span class="date-range-sep">→</span>
+        <input type="text" id="date-to" class="date-range-input" placeholder="Data fine" readonly>
+        <button class="date-range-clear" onclick="clearDateRange(event)" title="Rimuovi filtro date">✕</button>
+      </div>
       <select class="filter-select" id="f-op" onchange="render()">
         <option value="">Tutte le operatrici</option>
-      </select>
-      <select class="filter-select" id="f-giorno" onchange="render()">
-        <option value="">Tutti i giorni</option>
       </select>
     </div>
 
@@ -559,6 +590,31 @@ function checkPin() {
 function unlockDashboard() {
   document.getElementById('pin-screen').style.display = 'none';
   document.getElementById('dashboard').classList.add('show');
+
+  // Inizializza Flatpickr date range
+  window._flatpickr = flatpickr('#date-from', {
+    mode: 'range',
+    locale: 'it',
+    dateFormat: 'd/m/Y',
+    conjunction: ' → ',
+    wrap: false,
+    disableMobile: true,
+    onChange: function(selectedDates) {
+      if (selectedDates.length === 0 || selectedDates.length === 2) render();
+    },
+    onReady: function(_, __, fp) {
+      // Sincronizza il secondo input visivo
+      fp.config.onChange.push(() => {
+        const to = document.getElementById('date-to');
+        if (fp.selectedDates.length === 2) {
+          to.value = fp.formatDate(fp.selectedDates[1], 'd/m/Y');
+        } else {
+          to.value = '';
+        }
+      });
+    }
+  });
+
   loadData();
 }
 function logout() {
@@ -609,68 +665,40 @@ function populateFilters() {
   const oggi = new Date();
   const meseCorrente = `${String(oggi.getMonth()+1).padStart(2,'0')}/${oggi.getFullYear()}`;
 
-  const mesiSet = new Set(allRows.map(r => {
-    const p = (parseData(r['Data'])||'').split('/');
-    return p.length===3 ? `${p[1]}/${p[2]}` : null;
-  }).filter(Boolean));
-
-  const selM = document.getElementById('f-mese');
-  const curM = selM.value;
-  selM.innerHTML = '<option value="">Tutti i mesi</option>';
-  [...mesiSet].sort().forEach(m => {
-    const [mm,yy] = m.split('/');
-    const label = new Date(yy,mm-1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});
-    selM.innerHTML += `<option value="${m}" ${(curM||meseCorrente)===m?'selected':''}>${label}</option>`;
-  });
-
   const selO = document.getElementById('f-op');
   const curO = selO.value;
   selO.innerHTML = '<option value="">Tutte le operatrici</option>';
-  CONFIG.operatrici.forEach(op => {
-    const nome = op.nome || op;
+  CONFIG.operatrici.filter(op => op.principale !== false).forEach(op => {
+    const nome = op.nome||op;
     selO.innerHTML += `<option value="${nome}" ${curO===nome?'selected':''}>${nome}</option>`;
-  });
-
-  // Filtro per giorno — popola con le date disponibili nel mese selezionato
-  const meseSelezionato = document.getElementById('f-mese').value;
-  const giorniSet = new Set(allRows
-    .filter(r => {
-      if (!meseSelezionato) return true;
-      const p = (parseData(r['Data'])||'').split('/');
-      return p.length===3 && `${p[1]}/${p[2]}` === meseSelezionato;
-    })
-    .map(r => parseData(r['Data']))
-    .filter(Boolean)
-  );
-  const selG = document.getElementById('f-giorno');
-  const curG = selG.value;
-  selG.innerHTML = '<option value="">Tutti i giorni</option>';
-  [...giorniSet].sort((a,b) => {
-    const [da,ma,ya] = a.split('/'); const [db,mb,yb] = b.split('/');
-    return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
-  }).forEach(g => {
-    selG.innerHTML += `<option value="${g}" ${curG===g?'selected':''}>${g}</option>`;
   });
 }
 
 function filteredRows() {
-  const m = document.getElementById('f-mese').value;
-  const o = document.getElementById('f-op').value;
-  const g = document.getElementById('f-giorno').value;
+  const o  = document.getElementById('f-op').value;
+  const fp = window._flatpickr;
+  const dateFrom = fp && fp.selectedDates[0] ? fp.selectedDates[0] : null;
+  const dateTo   = fp && fp.selectedDates[1] ? fp.selectedDates[1] : null;
+
   return allRows.filter(r => {
-    const dataStr = parseData(r['Data']) || '';
-    const p = dataStr.split('/');
-    const rm = p.length===3 ? `${p[1]}/${p[2]}` : '';
-    if (m && rm !== m) return false;
-    if (g && dataStr !== g) return false;
     if (o && r['Operatrice'] !== o) return false;
+    if (dateFrom || dateTo) {
+      const dataStr = parseData(r['Data']) || '';
+      const [dd,mm,yyyy] = dataStr.split('/');
+      const d = new Date(parseInt(yyyy), parseInt(mm)-1, parseInt(dd));
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo) {
+        const toEnd = new Date(dateTo); toEnd.setHours(23,59,59);
+        if (d > toEnd) return false;
+      }
+    }
     return true;
   });
 }
 
-function onMeseChange() {
-  document.getElementById('f-giorno').value = '';
-  populateFilters();
+function clearDateRange(e) {
+  e.stopPropagation();
+  if (window._flatpickr) window._flatpickr.clear();
   render();
 }
 
@@ -714,7 +742,13 @@ function oggiString() {
 function renderKPI(rows) {
   // Se è selezionato un giorno dal filtro, mostra i tagliandi di quel giorno
   // Altrimenti mostra i tagliandi di oggi
-  const giornoFiltro = document.getElementById('f-giorno').value;
+  // Usa la data di fine del range se selezionata, altrimenti oggi
+  const fp = window._flatpickr;
+  const hasSingleDay = fp && fp.selectedDates.length === 2 &&
+    fp.selectedDates[0].toDateString() === fp.selectedDates[1].toDateString();
+  const giornoFiltro = hasSingleDay
+    ? `${String(fp.selectedDates[0].getDate()).padStart(2,'0')}/${String(fp.selectedDates[0].getMonth()+1).padStart(2,'0')}/${fp.selectedDates[0].getFullYear()}`
+    : null;
   const dataRiferimento = giornoFiltro || oggiString();
   const isOggi = !giornoFiltro;
 
@@ -722,7 +756,7 @@ function renderKPI(rows) {
   const kpiGiorno = riferimentoRows.reduce((s,r)=>s+(parseInt(r['Totale Tagliandi'])||0),0);
 
   const meseCorrente = (() => { const d=new Date(); return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })();
-  const meseRows = allRows.filter(r => { const p=(parseData(r['Data'])||'').split('/'); return p.length===3&&`${p[1]}/${p[2]}`===meseCorrente; });
+  const meseRows = allRows.filter(r => { const p=(parseData(r['Data'])||'').split('/'); return p.length===3 && `${p[1]}/${p[2]}`===meseCorrente; });
   const kpiMese = meseRows.reduce((s,r)=>s+(parseInt(r['Totale Tagliandi'])||0),0);
 
   const giorniCount = new Set(rows.map(r=>r['Data'])).size || 1;
@@ -916,7 +950,10 @@ function exportExcel() {
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Report');
-  const m = document.getElementById('f-mese').value.replace('/','_') || 'tutti';
+  const fp = window._flatpickr;
+  const m = fp && fp.selectedDates.length
+    ? fp.input.value.replace(/\s/g,'').replace(/→/,'-')
+    : 'tutti';
   XLSX.writeFile(wb, `report-officina-${m}.xlsx`);
 }
 
@@ -1279,7 +1316,6 @@ function openDettaglio(op) {
     { label: 'Di presenza',  color: '#f8b500', calc: r => parseInt(r['Canali diretti - Di presenza'])||0 },
     { label: 'OSB',          color: '#a78bfa', calc: r => parseInt(r['Canali diretti - OSB'])||0 },
     { label: 'Teams / Skype',color: '#fb7185', calc: r => parseInt(r['Canali diretti - Teams / Skype'])||0 },
-    { label: 'Riprogrammazioni', color: '#94a3b8', calc: r => parseInt(r['Canali diretti - Riprogrammazioni'])||0 },
   ];
 
   const canaliTot = canaliDettaglio.map(c => ({
