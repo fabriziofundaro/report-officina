@@ -139,10 +139,10 @@
   .date-range-wrap:hover { border-color: var(--accent); }
   .date-range-input {
     border: none; background: transparent; font-family: var(--mono);
-    font-size: .75rem; color: var(--ink); cursor: pointer; width: 155px;
-    outline: none;
+    font-size: .75rem; color: var(--ink); cursor: pointer; width: 190px;
+    outline: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .date-range-sep { color: var(--ink-muted); font-family: var(--mono); font-size: .8rem; }
+
   .date-range-icon { font-size: .9rem; color: var(--accent); flex-shrink: 0; }
   .date-range-clear {
     background: none; border: none; color: var(--ink-muted); cursor: pointer;
@@ -405,9 +405,7 @@
       <span class="filters-label">Filtra:</span>
       <div class="date-range-wrap" onclick="document.getElementById('date-from').focus()">
         <span class="date-range-icon">📅</span>
-        <input type="text" id="date-from" class="date-range-input" placeholder="Data inizio" readonly>
-        <span class="date-range-sep">→</span>
-        <input type="text" id="date-to" class="date-range-input" placeholder="Data fine" readonly>
+        <input type="text" id="date-from" class="date-range-input" placeholder="Seleziona periodo" readonly>
         <button class="date-range-clear" onclick="clearDateRange(event)" title="Rimuovi filtro date">✕</button>
       </div>
       <select class="filter-select" id="f-op" onchange="render()">
@@ -591,7 +589,7 @@ function unlockDashboard() {
   document.getElementById('pin-screen').style.display = 'none';
   document.getElementById('dashboard').classList.add('show');
 
-  // Inizializza Flatpickr date range
+  // Inizializza Flatpickr date range su un unico input
   window._flatpickr = flatpickr('#date-from', {
     mode: 'range',
     locale: 'it',
@@ -602,17 +600,6 @@ function unlockDashboard() {
     onChange: function(selectedDates) {
       if (selectedDates.length === 0 || selectedDates.length === 2) render();
     },
-    onReady: function(_, __, fp) {
-      // Sincronizza il secondo input visivo
-      fp.config.onChange.push(() => {
-        const to = document.getElementById('date-to');
-        if (fp.selectedDates.length === 2) {
-          to.value = fp.formatDate(fp.selectedDates[1], 'd/m/Y');
-        } else {
-          to.value = '';
-        }
-      });
-    }
   });
 
   loadData();
@@ -740,36 +727,39 @@ function oggiString() {
 }
 
 function renderKPI(rows) {
-  // Se è selezionato un giorno dal filtro, mostra i tagliandi di quel giorno
-  // Altrimenti mostra i tagliandi di oggi
-  // Usa la data di fine del range se selezionata, altrimenti oggi
   const fp = window._flatpickr;
-  const hasSingleDay = fp && fp.selectedDates.length === 2 &&
-    fp.selectedDates[0].toDateString() === fp.selectedDates[1].toDateString();
-  const giornoFiltro = hasSingleDay
-    ? `${String(fp.selectedDates[0].getDate()).padStart(2,'0')}/${String(fp.selectedDates[0].getMonth()+1).padStart(2,'0')}/${fp.selectedDates[0].getFullYear()}`
-    : null;
-  const dataRiferimento = giornoFiltro || oggiString();
-  const isOggi = !giornoFiltro;
+  const hasRange = fp && fp.selectedDates.length === 2;
 
-  const riferimentoRows = allRows.filter(r => parseData(r['Data']) === dataRiferimento);
-  const kpiGiorno = riferimentoRows.reduce((s,r)=>s+(parseInt(r['Totale Tagliandi'])||0),0);
+  // KPI 1: se c'è un filtro attivo → totale periodo filtrato, altrimenti → oggi
+  let kpiTot, labelTot, subTot;
+  if (hasRange) {
+    kpiTot  = rows.reduce((s,r) => s+(parseInt(r['Totale Tagliandi'])||0), 0);
+    const from = fp.formatDate(fp.selectedDates[0], 'd/m');
+    const to   = fp.formatDate(fp.selectedDates[1], 'd/m');
+    labelTot = 'Tagliandi totali';
+    subTot   = from === to ? from : `${from} → ${to}`;
+  } else {
+    const oggi = oggiString();
+    const oggiRows = allRows.filter(r => parseData(r['Data']) === oggi);
+    kpiTot  = oggiRows.reduce((s,r) => s+(parseInt(r['Totale Tagliandi'])||0), 0);
+    labelTot = 'Tagliandi oggi';
+    subTot   = 'giornata corrente';
+  }
 
+  // KPI mese corrente (sempre su tutti i dati)
   const meseCorrente = (() => { const d=new Date(); return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })();
   const meseRows = allRows.filter(r => { const p=(parseData(r['Data'])||'').split('/'); return p.length===3 && `${p[1]}/${p[2]}`===meseCorrente; });
   const kpiMese = meseRows.reduce((s,r)=>s+(parseInt(r['Totale Tagliandi'])||0),0);
 
   const giorniCount = new Set(rows.map(r=>r['Data'])).size || 1;
-  const totPeriodo = rows.reduce((s,r)=>s+(parseInt(r['Totale Tagliandi'])||0),0);
+  const totPeriodo  = rows.reduce((s,r)=>s+(parseInt(r['Totale Tagliandi'])||0),0);
 
-  // Aggiorna KPI giorno con label dinamica
-  document.getElementById('kpi-oggi').textContent = kpiGiorno;
-  document.getElementById('kpi-oggi-label').textContent = isOggi ? 'Tagliandi oggi' : 'Tagliandi giorno';
-  document.getElementById('kpi-oggi-sub').textContent = isOggi ? 'giornata corrente' : dataRiferimento;
-
-  document.getElementById('kpi-mese').textContent = kpiMese;
-  document.getElementById('kpi-report').textContent = rows.length;
-  document.getElementById('kpi-media').textContent = (totPeriodo/giorniCount).toFixed(1);
+  document.getElementById('kpi-oggi').textContent       = kpiTot;
+  document.getElementById('kpi-oggi-label').textContent = labelTot;
+  document.getElementById('kpi-oggi-sub').textContent   = subTot;
+  document.getElementById('kpi-mese').textContent       = kpiMese;
+  document.getElementById('kpi-report').textContent     = rows.length;
+  document.getElementById('kpi-media').textContent      = (totPeriodo/giorniCount).toFixed(1);
 
   const d=new Date(); document.getElementById('kpi-mese-sub').textContent =
     new Date(d.getFullYear(),d.getMonth()).toLocaleDateString('it-IT',{month:'long',year:'numeric'});
