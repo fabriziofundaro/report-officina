@@ -984,19 +984,17 @@ function aggregaPerOperatrice(rows) {
     const s = stats[op];
     s.ore_presenza += parseFloat(r['Ore presenza']) || 0;
     s.ore_srs      += parseFloat(r['Ore SRS pure']) || 0;
-    s.chiamate     += parseInt(r['Chiamate totali']) || 0;
     s.app_srs      += parseInt(r['Totale SRS']) || 0;
     s.app_tot      += parseInt(r['Totale Tagliandi']) || 0;
     s.giorni.add(parseData(r['Data']));
 
-    // Risposte = somma di tutte le colonne "Risposta" delle 3 sezioni
-    const sezioniConf = CONFIG.sezioni || [];
-    sezioniConf.forEach(sez => {
-      sez.categorie.forEach(cat => {
-        if (cat.label === 'Risposta') {
-          s.risposte += parseInt(r[`${sez.label} - Risposta`]) || 0;
-        }
-      });
+    // Chiamate = Senza risposta + Risposta (per Toshiko, File annullati, File tagliandi)
+    // Escluso: Senza contatto (schede gestite senza contatto telefonico)
+    const sezioniChiamate = (CONFIG.sezioni || []).filter(sez => sez.id !== 'canali_diretti');
+    sezioniChiamate.forEach(sez => {
+      s.chiamate += parseInt(r[`${sez.label} - Senza risposta`]) || 0;
+      s.chiamate += parseInt(r[`${sez.label} - Risposta`])       || 0;
+      s.risposte += parseInt(r[`${sez.label} - Risposta`])       || 0;
     });
   });
 
