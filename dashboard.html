@@ -984,17 +984,24 @@ function aggregaPerOperatrice(rows) {
     const s = stats[op];
     s.ore_presenza += parseFloat(r['Ore presenza']) || 0;
     s.ore_srs      += parseFloat(r['Ore SRS pure']) || 0;
-    s.app_srs      += parseInt(r['Totale SRS']) || 0;
     s.app_tot      += parseInt(r['Totale Tagliandi']) || 0;
     s.giorni.add(parseData(r['Data']));
 
     // Chiamate = Senza risposta + Risposta (per Toshiko, File annullati, File tagliandi)
-    // Escluso: Senza contatto (schede gestite senza contatto telefonico)
+    // Escluso: Senza contatto (non è un contatto telefonico)
+    // Escluso: Canali diretti (WhatsApp, Centralino, ecc. — natura diversa)
     const sezioniChiamate = (CONFIG.sezioni || []).filter(sez => sez.id !== 'canali_diretti');
     sezioniChiamate.forEach(sez => {
       s.chiamate += parseInt(r[`${sez.label} - Senza risposta`]) || 0;
       s.chiamate += parseInt(r[`${sez.label} - Risposta`])       || 0;
       s.risposte += parseInt(r[`${sez.label} - Risposta`])       || 0;
+    });
+
+    // App SRS = solo tagliandi da chiamata telefonica (Toshiko + File ann. + File tag.)
+    // Escluso WhatsApp — non deriva da una risposta telefonica
+    sezioniChiamate.forEach(sez => {
+      const tagCat = sez.categorie.find(c => c.tagliando);
+      if (tagCat) s.app_srs += parseInt(r[`${sez.label} - ${tagCat.label}`]) || 0;
     });
   });
 
