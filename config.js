@@ -116,7 +116,7 @@ const CONFIG = {
         { id: "cd_presenza",        label: "Di presenza",     tagliando: true,  srs: false },
         { id: "cd_osb",             label: "OSB",             tagliando: true,  srs: false },
         { id: "cd_teams_skype",     label: "Teams / Skype",   tagliando: true,  srs: false },
-        { id: "cd_riprogrammazione",label: "Riprogrammazioni",tagliando: false, srs: false }, // ⚠️ non è un tagliando
+        { id: "cd_altro",           label: "Altro",           tagliando: true,  srs: false }, // casi eccezionali (es. noleggiatori)
       ]
     }
 
