@@ -623,6 +623,7 @@ function unlockDashboard() {
     conjunction: ' → ',
     wrap: false,
     disableMobile: true,
+    defaultDate: [new Date(), new Date()], // seleziona oggi come range di default
     onChange: function(selectedDates) {
       if (selectedDates.length === 0 || selectedDates.length === 2) render();
     },
