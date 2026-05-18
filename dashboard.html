@@ -263,7 +263,33 @@
   .state-box p { font-family: var(--sans); font-size: .78rem; }
 
   /* Note cell */
-  .note-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left !important; font-family: var(--sans) !important; color: var(--ink-muted) !important; font-size: .75rem !important; }
+  .note-cell {
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: left !important; font-family: var(--sans) !important;
+    color: var(--ink-muted) !important; font-size: .75rem !important;
+    cursor: pointer; user-select: none;
+    transition: color .2s;
+  }
+  .note-cell:hover { color: var(--accent) !important; }
+  .note-cell.has-note::after {
+    content: ' ▸'; font-size: .65rem; color: var(--accent); opacity: .7;
+  }
+  /* Riga espansa con la nota completa */
+  .note-expanded-row td {
+    background: var(--accent-dim) !important;
+    padding: .6rem 1rem !important;
+    border-bottom: 2px solid var(--accent) !important;
+  }
+  .note-expanded-content {
+    font-family: var(--sans); font-size: .88rem; color: var(--ink);
+    white-space: pre-wrap; line-height: 1.6;
+    max-width: 600px;
+  }
+  .note-expanded-label {
+    font-family: var(--mono); font-size: .6rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: .3rem;
+    font-weight: 600;
+  }
 
   @media (max-width: 600px) {
     .header { padding: .9rem 1rem; }
@@ -907,7 +933,10 @@ function renderTable(rows) {
       <td class="col-sticky-op" style="font-family:var(--sans);font-weight:600">${r['Operatrice']||'—'}</td>
       ${cells}
       <td class="td-tot col-tot">${r['Totale Tagliandi']||0}</td>
-      <td class="note-cell col-note" title="${(r['Note']||'').replace(/"/g,'&quot;')}">${r['Note']||'—'}</td>
+      <td class="note-cell col-note${(r['Note']||'').trim() ? ' has-note' : ''}"
+          data-nota="${(r['Note']||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
+          onclick="toggleNota(this)"
+          >${(r['Note']||'').trim() ? (r['Note'].length > 30 ? r['Note'].substring(0,30)+'…' : r['Note']) : '—'}</td>
     </tr>`;
   }).join('');
 
@@ -1365,4 +1394,27 @@ function backToConfronto() {
 }
 </script>
 </body>
-</html>
+</html>// ── Espansione note ──────────────────────────────────────────
+function toggleNota(cell) {
+  var nota = cell.getAttribute('data-nota') || '';
+  if (!nota || !nota.trim()) return;
+  const row = cell.closest('tr');
+  const colCount = row.cells.length;
+  const next = row.nextElementSibling;
+  if (next && next.classList.contains('note-expanded-row')) {
+    next.remove();
+    cell.classList.remove('expanded');
+    return;
+  }
+  document.querySelectorAll('.note-expanded-row').forEach(function(r) { r.remove(); });
+  document.querySelectorAll('.note-cell.expanded').forEach(function(c) { c.classList.remove('expanded'); });
+  cell.classList.add('expanded');
+  var safe = nota.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var expandedRow = document.createElement('tr');
+  expandedRow.className = 'note-expanded-row';
+  expandedRow.innerHTML = '<td colspan="' + colCount + '"><div class="note-expanded-label">Nota completa</div><div class="note-expanded-content">' + safe + '</div></td>';
+  row.after(expandedRow);
+  expandedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+
