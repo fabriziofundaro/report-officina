@@ -275,21 +275,33 @@
     content: ' ▸'; font-size: .65rem; color: var(--accent); opacity: .7;
   }
   /* Riga espansa con la nota completa */
-  .note-expanded-row td {
-    background: var(--accent-dim) !important;
-    padding: .6rem 1rem !important;
-    border-bottom: 2px solid var(--accent) !important;
+  /* Pannello nota espansa — fuori dalla tabella */
+  .nota-panel {
+    display: none;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: .75rem 1rem;
+    margin-bottom: 1rem;
   }
-  .note-expanded-content {
-    font-family: var(--sans); font-size: .88rem; color: var(--ink);
-    white-space: pre-wrap; line-height: 1.6;
-    max-width: 600px;
-  }
-  .note-expanded-label {
+  .nota-panel.visible { display: block; }
+  .nota-panel-label {
     font-family: var(--mono); font-size: .6rem; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--accent); margin-bottom: .3rem;
+    text-transform: uppercase; color: var(--accent); margin-bottom: .4rem;
     font-weight: 600;
   }
+  .nota-panel-text {
+    font-family: var(--sans); font-size: .92rem; color: var(--ink);
+    white-space: pre-wrap; line-height: 1.6;
+  }
+  .nota-panel-close {
+    float: right; background: none; border: none; color: var(--ink-muted);
+    cursor: pointer; font-size: 1rem; line-height: 1; padding: 0;
+    margin-top: -.2rem;
+  }
+  .nota-panel-close:hover { color: var(--red); }
+  .note-cell.active-note { color: var(--accent) !important; font-weight: 700 !important; }
 
   @media (max-width: 600px) {
     .header { padding: .9rem 1rem; }
@@ -456,6 +468,11 @@
         <div class="table-wrap">
           <div id="table-container"><div class="state-box"><div class="icon">⏳</div><p>Caricamento...</p></div></div>
         </div>
+        <div class="nota-panel" id="nota-panel">
+          <button class="nota-panel-close" onclick="chiudiNota()">✕</button>
+          <div class="nota-panel-label">Nota completa</div>
+          <div class="nota-panel-text" id="nota-panel-text"></div>
+        </div>
       </div>
     </div>
 
@@ -553,23 +570,32 @@
 function toggleNota(cell) {
   var nota = cell.getAttribute('data-nota') || '';
   if (!nota || !nota.trim()) return;
-  const row = cell.closest('tr');
-  const colCount = row.cells.length;
-  const next = row.nextElementSibling;
-  if (next && next.classList.contains('note-expanded-row')) {
-    next.remove();
-    cell.classList.remove('expanded');
+
+  var panel = document.getElementById('nota-panel');
+  var panelText = document.getElementById('nota-panel-text');
+  var activeCell = document.querySelector('.note-cell.active-note');
+
+  // Se clicco sulla stessa cella → chiudo
+  if (activeCell === cell) {
+    chiudiNota();
     return;
   }
-  document.querySelectorAll('.note-expanded-row').forEach(function(r) { r.remove(); });
-  document.querySelectorAll('.note-cell.expanded').forEach(function(c) { c.classList.remove('expanded'); });
-  cell.classList.add('expanded');
-  var safe = nota.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  var expandedRow = document.createElement('tr');
-  expandedRow.className = 'note-expanded-row';
-  expandedRow.innerHTML = '<td colspan="' + colCount + '"><div class="note-expanded-label">Nota completa</div><div class="note-expanded-content">' + safe + '</div></td>';
-  row.after(expandedRow);
-  expandedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Rimuovi classe dalla cella precedente
+  if (activeCell) activeCell.classList.remove('active-note');
+
+  // Mostra nota nel pannello
+  cell.classList.add('active-note');
+  panelText.textContent = nota;
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function chiudiNota() {
+  var panel = document.getElementById('nota-panel');
+  var activeCell = document.querySelector('.note-cell.active-note');
+  if (panel) panel.classList.remove('visible');
+  if (activeCell) activeCell.classList.remove('active-note');
 }
 
 // ── COSTANTI GLOBALI (devono essere prime di tutto) ──────────
