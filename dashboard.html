@@ -936,7 +936,6 @@ function renderTable(rows) {
       <td class="td-tot col-tot">${r['Totale Tagliandi']||0}</td>
       <td class="note-cell col-note${(r['Note']||'').trim() ? ' has-note' : ''}"
           data-nota="${(r['Note']||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
-          onclick="toggleNota(this)"
           >${(r['Note']||'').trim() ? (r['Note'].length > 30 ? r['Note'].substring(0,30)+'…' : r['Note']) : '—'}</td>
     </tr>`;
   }).join('');
@@ -962,6 +961,13 @@ function renderTable(rows) {
   </table>`;
 
   document.getElementById('table-container').innerHTML = html;
+
+  // Event delegation per le note
+  var tc = document.getElementById('table-container');
+  tc.addEventListener('click', function(e) {
+    var cell = e.target.closest && e.target.closest('.note-cell');
+    if (cell) toggleNota(cell);
+  });
 }
 
 function exportExcel() {
