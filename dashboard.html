@@ -693,6 +693,12 @@ function unlockDashboard() {
     },
   });
 
+  // ═══ FIX: Forza il set delle date per popolare selectedDates[] ═══
+  // defaultDate imposta visivamente ma non trigga onChange
+  // setDate() forza il popolamento e trigga l'onChange
+  const today = new Date();
+  window._flatpickr.setDate([today, today], true);
+
   loadData();
 }
 function logout() {
