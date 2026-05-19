@@ -694,10 +694,11 @@ function unlockDashboard() {
   });
 
   // ═══ FIX: Forza il set delle date per popolare selectedDates[] ═══
-  // defaultDate imposta visivamente ma non trigga onChange
-  // setDate() forza il popolamento e trigga l'onChange
+  // defaultDate imposta visivamente ma non popola selectedDates[]
+  // setDate() popola selectedDates[] senza triggerare onChange subito
+  // onChange verrà triggerato dal render() dentro loadData() quando i dati arrivano
   const today = new Date();
-  window._flatpickr.setDate([today, today], true);
+  window._flatpickr.setDate([today, today], false); // false = non trigga onChange
 
   loadData();
 }
