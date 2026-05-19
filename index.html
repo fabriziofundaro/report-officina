@@ -518,9 +518,13 @@ async function submitForm() {
   const bonusRows = getBonusRows();
   const bonusTot = bonusRows.reduce((s, b) => s + b.tagliandi, 0);
 
+  // ═════════════════════════════════════════════════════════
+  // 1️⃣ PAYLOAD PRINCIPALE: Operatrice (SENZA bonus)
+  // ═════════════════════════════════════════════════════════
   const payload = {
     data: new Date().toLocaleDateString('it-IT'),
     operatrice: op,
+    tipo: "Operatrice",                    // ← NUOVO
     ore_presenza: orePresenza,
     ore_assenza: oreAssenza,
     tipo_assenza: assenza,
@@ -529,24 +533,60 @@ async function submitForm() {
     ore_srs: parseFloat(oreSRS.toFixed(2)),
     sezioni: CONFIG.sezioni,
     valori,
-    totale_tagliandi: totaleTaglia + bonusTot,
+    totale_tagliandi: totaleTaglia,      // ← SOLO tagliandi PROPRI (no bonus)
     totale_srs: totaleSRS,
     chiamate_totali: chiamateTot,
-    operatori_bonus: bonusRows,
     note: document.getElementById('note').value.trim()
   };
 
   try {
+    // Invia riga operatrice
     await fetch(CONFIG.googleSheets.scriptUrl, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+
+    // ═════════════════════════════════════════════════════════
+    // 2️⃣ INVIA RIGHE BONUS (una per ogni operatore bonus)
+    // ═════════════════════════════════════════════════════════
+    for (const bonus of bonusRows) {
+      const bonusPayload = {
+        data: new Date().toLocaleDateString('it-IT'),
+        operatrice: bonus.nome,
+        tipo: "Bonus",                    // ← NUOVO
+        registrato_da: op,                 // ← NUOVO: chi ha registrato
+        ore_presenza: null,
+        ore_assenza: null,
+        tipo_assenza: null,
+        ore_extra: null,
+        attivita_extra: null,
+        ore_srs: null,
+        sezioni: CONFIG.sezioni,
+        valori: {},                       // niente categorie per bonus
+        totale_tagliandi: bonus.tagliandi,
+        totale_srs: 0,
+        chiamate_totali: 0,
+        note: null
+      };
+
+      await fetch(CONFIG.googleSheets.scriptUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bonusPayload)
+      });
+    }
+
+    // ═════════════════════════════════════════════════════════
+    // SUCCESS SCREEN
+    // ═════════════════════════════════════════════════════════
     document.getElementById('form-view').style.display = 'none';
     document.getElementById('bottom-bar').style.display = 'none';
     document.getElementById('success-title').textContent = `Ottimo lavoro, ${op}!`;
-    document.getElementById('success-sub').textContent   = `Report del ${payload.data} · ${totaleTaglia} tagliand${totaleTaglia===1?'o':'i'}`;
-    document.getElementById('success-ore').textContent   = `⏱ ${orePresenza}h presenza · ${oreSRS.toFixed(1)}h SRS pure`;
+    
+    const bonusNote = bonusTot > 0 ? ` + ${bonusTot} bonus` : '';
+    document.getElementById('success-sub').textContent = `Report del ${payload.data} · ${totaleTaglia} tagliand${totaleTaglia===1?'o':'i'}${bonusNote}`;
+    document.getElementById('success-ore').textContent = `⏱ ${orePresenza}h presenza · ${oreSRS.toFixed(1)}h SRS pure`;
     document.getElementById('success-view').classList.add('show');
   } catch {
     showToast('Errore di connessione — riprova');

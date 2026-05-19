@@ -257,6 +257,21 @@
   .op-stat-val { font-family: var(--sans); font-weight: 500; }
   .op-stat-val.big { color: var(--accent); font-size: 1rem; }
 
+  /* Card operatori bonus — visual diverso */
+  .op-card-bonus { border: 2px dashed #f97316; background: rgba(249, 115, 22, 0.02); }
+  .op-card-bonus .op-stat-val.big { color: #f97316; }
+  .badge-bonus-card { 
+    display: inline-block; 
+    background: #f97316; 
+    color: white; 
+    padding: 0.15rem 0.5rem; 
+    border-radius: 99px; 
+    font-size: 0.65rem; 
+    font-weight: 700; 
+    margin-left: 0.5rem; 
+    flex-shrink: 0;
+  }
+
   /* Empty / loading */
   .state-box { text-align: center; padding: 3rem 1.5rem; color: var(--ink-muted); background: var(--surface); border-radius: var(--radius); }
   .state-box .icon { font-size: 2.5rem; margin-bottom: .75rem; }
@@ -866,13 +881,22 @@ function renderOpCards(rows) {
   const canaliTop = getCanaliTop();
   const colonne = getColonne().filter(c=>c.tagliando);
   const stats = {};
-  CONFIG.operatrici.forEach(op => { const n=op.nome||op; stats[n] = { tot:0, giorni:new Set(), canali:{} }; });
+  
+  // Inizializza stats per operatrici principali
+  CONFIG.operatrici.forEach(op => { 
+    const n = op.nome || op; 
+    stats[n] = { tot:0, giorni:new Set(), canali:{}, tipo:'Operatrice' }; 
+  });
 
+  // Accumula dati da rows — include SIA operatrici che bonus
   rows.forEach(r => {
     const op = r['Operatrice'];
-    if (!stats[op]) stats[op] = { tot:0, giorni:new Set(), canali:{} };
+    const tipo = r['Tipo'] || 'Operatrice'; // NUOVO: leggi il tipo
+    if (!stats[op]) stats[op] = { tot:0, giorni:new Set(), canali:{}, tipo }; // crea entry per bonus
     stats[op].tot += parseInt(r['Totale Tagliandi'])||0;
     stats[op].giorni.add(r['Data']);
+    stats[op].tipo = tipo; // mantieni aggiornato il tipo
+    
     // Accumula per canale significativo
     Object.entries(canaliTop).forEach(([key, nomeDisplay]) => {
       const v = parseInt(r[key]) || 0;
@@ -880,16 +904,24 @@ function renderOpCards(rows) {
     });
   });
 
-  const opsConDati = CONFIG.operatrici.map(op=>op.nome||op).filter(op=>stats[op]&&stats[op].tot>0);
+  // Renderizza card: include sia operatrici che bonus
+  const opsConDati = Object.keys(stats).filter(op => stats[op].tot > 0);
   if (!opsConDati.length) { container.innerHTML=''; return; }
 
   container.innerHTML = opsConDati.map(op => {
     const s = stats[op];
+    const isBonus = s.tipo === 'Bonus'; // ← NUOVO: distingui bonus
     const topCanale = Object.entries(s.canali).sort((a,b)=>b[1]-a[1]).find(([,v])=>v>0);
     const topLabel = topCanale ? topCanale[0] : null;
-    return `<div class="op-card">
+    
+    const cardClass = isBonus ? 'op-card op-card-bonus' : 'op-card';
+    const badgeBonus = isBonus ? '<span class="badge-bonus-card">💰 Bonus</span>' : '';
+    
+    return `<div class="${cardClass}">
       <div class="op-name">
-        <div class="op-avatar">${op[0]}</div>${op}
+        <div class="op-avatar" style="border-color:${isBonus?'#f97316':opColor(op)};color:${isBonus?'#f97316':opColor(op)}">${op[0]}</div>
+        ${op}
+        ${badgeBonus}
       </div>
       <div class="op-stat"><span class="op-stat-label">Tagliandi totali</span><span class="op-stat-val big">${s.tot}</span></div>
       <div class="op-stat"><span class="op-stat-label">Giorni lavorati</span><span class="op-stat-val">${s.giorni.size}</span></div>
