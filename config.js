@@ -48,6 +48,7 @@ const CONFIG = {
     "Gestione fatturati",
     "Sistemazione planner",
     "Gestione cellulare aziendale",
+    "Report RTurno",
     "Altro"
   ],
 
