@@ -34,6 +34,13 @@ const CONFIG = {
       ]
     },
     {
+      nome: "Fabiana",
+      principale: true,
+      orario: [
+        { dalle: "08:30", alle: "14:30" }
+      ]
+    },
+    {
       nome: "Nasca",
       principale: false,
       orario: []
