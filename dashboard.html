@@ -675,46 +675,31 @@ function toggleAttivita(cell, orePresenza) {
   const oreExtra = attivita.reduce((s, a) => s + a.ore, 0);
   const oreSRS = (parseFloat(orePresenza) || 0) - oreExtra;
   
-  // Costruisci il contenuto del panel
-  let html = `
-    <div style="font-family:var(--sans); line-height:1.6;">
-      <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #ddd; margin-bottom:0.5rem;">
-        <span>⏱ Ore presenza:</span>
-        <strong>${(parseFloat(orePresenza) || 0).toFixed(2)}h</strong>
-      </div>
-      <div style="padding:0.5rem 0; color:#666; font-size:0.95rem;">
-        <div style="font-weight:600; margin-bottom:0.3rem;">🏢 Attività extra SRS:</div>
-  `;
+  // Costruisci il contenuto del panel (compatto)
+  let html = `<div style="font-family:var(--sans); font-size:0.85rem; line-height:1.4;">`;
+  
+  html += `<div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #ddd; margin-bottom:0.3rem;">
+    <span>Ore presenza:</span>
+    <strong>${(parseFloat(orePresenza) || 0).toFixed(2)}h</strong>
+  </div>`;
   
   if (attivita.length > 0) {
     attivita.forEach(a => {
-      html += `
-        <div style="display:flex; justify-content:space-between; padding:0.3rem 0 0.3rem 1rem; font-size:0.9rem;">
-          <span>${a.nome}:</span>
-          <strong>${a.ore.toFixed(2)}h</strong>
-        </div>
-      `;
+      html += `<div style="display:flex; justify-content:space-between; padding:0.2rem 0; color:#666;">
+        <span>${a.nome}:</span>
+        <strong>${a.ore.toFixed(2)}h</strong>
+      </div>`;
     });
-    html += `
-        <div style="display:flex; justify-content:space-between; padding:0.5rem 0 0.5rem 1rem; border-top:1px solid #ddd; font-weight:600;">
-          <span>Totale attività:</span>
-          <strong>${oreExtra.toFixed(2)}h</strong>
-        </div>
-    `;
-  } else {
-    html += `
-        <div style="padding:0.3rem 0 0.3rem 1rem; font-size:0.9rem; color:#999;">Nessuna attività registrata</div>
-    `;
+    html += `<div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-top:1px solid #ddd; border-bottom:1px solid #ddd; margin-top:0.3rem; font-weight:600; margin-bottom:0.3rem;">
+      <span>Totale:</span>
+      <strong>${oreExtra.toFixed(2)}h</strong>
+    </div>`;
   }
   
-  html += `
-      </div>
-      <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-top:2px solid #0f1117; margin-top:0.5rem; font-weight:700; font-size:1rem;">
-        <span>= Ore SRS pure: ${(parseFloat(orePresenza) || 0).toFixed(2)}h - ${oreExtra.toFixed(2)}h = </span>
-        <strong style="color:#0f1117;">${oreSRS.toFixed(2)}h</strong>
-      </div>
-    </div>
-  `;
+  html += `<div style="display:flex; justify-content:space-between; padding:0.3rem 0; font-weight:700;">
+    <span>Ore SRS: ${(parseFloat(orePresenza) || 0).toFixed(2)}h - ${oreExtra.toFixed(2)}h =</span>
+    <strong>${oreSRS.toFixed(2)}h</strong>
+  </div></div>`;
   
   // Mostra attività nel pannello
   cell.classList.add('active-attivita');
