@@ -12,25 +12,37 @@ const CONFIG = {
     {
       nome: "Martina",
       principale: true,
-      orario: [
-        { dalle: "09:00", alle: "13:00" },
-        { dalle: "14:00", alle: "18:00" }
-      ]
+      orario: {
+        noSabato: [
+          { dalle: "08:00", alle: "13:00" },
+          { dalle: "14:00", alle: "18:00" }
+        ],
+        conSabato: [
+          { dalle: "08:15", alle: "13:00" },
+          { dalle: "15:00", alle: "17:30" }
+        ]
+      }
     },
     {
       nome: "Matilde",
       principale: true,
-      orario: [
-        { dalle: "09:00", alle: "13:00" },
-        { dalle: "14:00", alle: "17:00" }
-      ]
+      orario: {
+        noSabato: [
+          { dalle: "08:30", alle: "12:30" },
+          { dalle: "14:30", alle: "17:30" }
+        ],
+        conSabato: [
+          { dalle: "09:00", alle: "12:00" },
+          { dalle: "14:00", alle: "17:15" }
+        ]
+      }
     },
     {
       nome: "Amelia",
       principale: true,
       orario: [
-        { dalle: "09:30", alle: "13:00" },
-        { dalle: "14:00", alle: "16:30" }
+        { dalle: "08:30", alle: "12:00" },
+        { dalle: "15:00", alle: "17:30" }
       ]
     },
     {
