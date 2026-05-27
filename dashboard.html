@@ -213,6 +213,7 @@
   .col-num { min-width: 65px; white-space: nowrap; }
   .col-tot { min-width: 55px; }
   .col-note { min-width: 100px; }
+  .col-attivita { min-width: 100px; }
   .th-toshiko        { background: #1e3a5f; color: #93c5fd; }
   .th-toshiko-sub    { background: #2a4f7a; color: #bfdbfe; }
   .th-annullati      { background: #7c2d12; color: #fdba74; }
@@ -317,6 +318,20 @@
   }
   .nota-panel-close:hover { color: var(--red); }
   .note-cell.active-note { color: var(--accent) !important; font-weight: 700 !important; }
+  
+  /* Attività cell */
+  .attivita-cell {
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-align: left !important; font-family: var(--sans) !important;
+    color: var(--ink-muted) !important; font-size: .75rem !important;
+    cursor: pointer; user-select: none;
+    transition: color .2s;
+  }
+  .attivita-cell:hover { color: #10b981 !important; }
+  .attivita-cell.has-attivita::after {
+    content: ' ▸'; font-size: .65rem; color: #10b981; opacity: .7;
+  }
+  .attivita-cell.active-attivita { color: #10b981 !important; font-weight: 700 !important; }
 
   @media (max-width: 600px) {
     .header { padding: .9rem 1rem; }
@@ -488,6 +503,11 @@
           <div class="nota-panel-label">Nota completa</div>
           <div class="nota-panel-text" id="nota-panel-text"></div>
         </div>
+        <div class="nota-panel" id="attivita-panel" style="display:none;">
+          <button class="nota-panel-close" onclick="chiudiAttivita()">✕</button>
+          <div class="nota-panel-label">Dettagli Attività Extra SRS</div>
+          <div class="nota-panel-text" id="attivita-panel-content"></div>
+        </div>
       </div>
     </div>
 
@@ -611,6 +631,107 @@ function chiudiNota() {
   var activeCell = document.querySelector('.note-cell.active-note');
   if (panel) panel.classList.remove('visible');
   if (activeCell) activeCell.classList.remove('active-note');
+}
+
+// ── ATTIVITÀ EXTRA ────────────────────────────────────
+function parseAttivitaExtra(attivitaStr) {
+  // Input: "Accoglienza (2h), Centralino (0.5h)"
+  // Output: [ { nome: "Accoglienza", ore: 2 }, { nome: "Centralino", ore: 0.5 } ]
+  if (!attivitaStr || attivitaStr.trim() === '') return [];
+  
+  const regex = /([^(]+)\s*\(([0-9.]+)h\)/g;
+  const result = [];
+  let match;
+  
+  while ((match = regex.exec(attivitaStr)) !== null) {
+    result.push({
+      nome: match[1].trim(),
+      ore: parseFloat(match[2])
+    });
+  }
+  
+  return result;
+}
+
+function toggleAttivita(cell, orePresenza) {
+  var attivitaStr = cell.getAttribute('data-attivita') || '';
+  if (!attivitaStr || !attivitaStr.trim()) return;
+  
+  var panel = document.getElementById('attivita-panel');
+  var panelContent = document.getElementById('attivita-panel-content');
+  var activeCell = document.querySelector('.attivita-cell.active-attivita');
+  
+  // Se clicco sulla stessa cella → chiudo
+  if (activeCell === cell) {
+    chiudiAttivita();
+    return;
+  }
+  
+  // Rimuovi classe dalla cella precedente
+  if (activeCell) activeCell.classList.remove('active-attivita');
+  
+  // Parsa le attività
+  const attivita = parseAttivitaExtra(attivitaStr);
+  const oreExtra = attivita.reduce((s, a) => s + a.ore, 0);
+  const oreSRS = (parseFloat(orePresenza) || 0) - oreExtra;
+  
+  // Costruisci il contenuto del panel
+  let html = `
+    <div style="font-family:var(--sans); line-height:1.6;">
+      <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #ddd; margin-bottom:0.5rem;">
+        <span>⏱ Ore presenza:</span>
+        <strong>${(parseFloat(orePresenza) || 0).toFixed(2)}h</strong>
+      </div>
+      <div style="padding:0.5rem 0; color:#666; font-size:0.95rem;">
+        <div style="font-weight:600; margin-bottom:0.3rem;">🏢 Attività extra SRS:</div>
+  `;
+  
+  if (attivita.length > 0) {
+    attivita.forEach(a => {
+      html += `
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0 0.3rem 1rem; font-size:0.9rem;">
+          <span>${a.nome}:</span>
+          <strong>${a.ore.toFixed(2)}h</strong>
+        </div>
+      `;
+    });
+    html += `
+        <div style="display:flex; justify-content:space-between; padding:0.5rem 0 0.5rem 1rem; border-top:1px solid #ddd; font-weight:600;">
+          <span>Totale attività:</span>
+          <strong>${oreExtra.toFixed(2)}h</strong>
+        </div>
+    `;
+  } else {
+    html += `
+        <div style="padding:0.3rem 0 0.3rem 1rem; font-size:0.9rem; color:#999;">Nessuna attività registrata</div>
+    `;
+  }
+  
+  html += `
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-top:2px solid #0f1117; margin-top:0.5rem; font-weight:700; font-size:1rem;">
+        <span>= Ore SRS pure: ${(parseFloat(orePresenza) || 0).toFixed(2)}h - ${oreExtra.toFixed(2)}h = </span>
+        <strong style="color:#0f1117;">${oreSRS.toFixed(2)}h</strong>
+      </div>
+    </div>
+  `;
+  
+  // Mostra attività nel pannello
+  cell.classList.add('active-attivita');
+  panelContent.innerHTML = html;
+  panel.style.display = 'block';
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function chiudiAttivita() {
+  var panel = document.getElementById('attivita-panel');
+  var activeCell = document.querySelector('.attivita-cell.active-attivita');
+  if (panel) {
+    panel.classList.remove('visible');
+    setTimeout(() => panel.style.display = 'none', 300);
+  }
+  if (activeCell) activeCell.classList.remove('active-attivita');
 }
 
 // ── COSTANTI GLOBALI (devono essere prime di tutto) ──────────
@@ -984,6 +1105,7 @@ function renderTable(rows) {
     ).join('')}
     <th class="th-base col-tot"></th>
     <th class="th-base col-note"></th>
+    <th class="th-base col-attivita"></th>
   </tr>`;
 
   // Riga 2: sottointestazioni
@@ -997,6 +1119,7 @@ function renderTable(rows) {
     ).join('')}
     <th class="th-base col-tot">Tot.</th>
     <th class="th-base col-note">Note</th>
+    <th class="th-base col-attivita">Attività</th>
   </tr>`;
 
   // Righe dati con separatori tra giorni diversi
@@ -1025,6 +1148,10 @@ function renderTable(rows) {
       <td class="note-cell col-note${(r['Note']||'').trim() ? ' has-note' : ''}"
           data-nota="${(r['Note']||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
           >${(r['Note']||'').trim() ? (r['Note'].length > 30 ? r['Note'].substring(0,30)+'…' : r['Note']) : '—'}</td>
+      <td class="attivita-cell col-attivita${(r['Attività extra']||'').trim() ? ' has-attivita' : ''}"
+          data-attivita="${(r['Attività extra']||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
+          data-ore-presenza="${r['Ore presenza'] || 0}"
+          >${(r['Attività extra']||'').trim() ? (r['Attività extra'].length > 30 ? r['Attività extra'].substring(0,30)+'…' : r['Attività extra']) : '—'}</td>
     </tr>`;
   }).join('');
 
@@ -1044,7 +1171,7 @@ function renderTable(rows) {
       <td class="col-sticky-data" style="text-align:left;font-weight:700">TOTALE</td>
       <td class="col-sticky-op" style="text-align:left;font-weight:700">PERIODO</td>
       ${footerCells}
-      <td class="td-tot col-tot">${footerTot}</td><td class="col-note"></td>
+      <td class="td-tot col-tot">${footerTot}</td><td class="col-note"></td><td class="col-attivita"></td>
     </tr></tfoot>
   </table>`;
 
@@ -1055,6 +1182,15 @@ function renderTable(rows) {
   tc.addEventListener('click', function(e) {
     var cell = e.target.closest && e.target.closest('.note-cell');
     if (cell) toggleNota(cell);
+  });
+  
+  // Event delegation per le attività
+  tc.addEventListener('click', function(e) {
+    var cell = e.target.closest && e.target.closest('.attivita-cell');
+    if (cell) {
+      var orePresenza = cell.getAttribute('data-ore-presenza') || '0';
+      toggleAttivita(cell, orePresenza);
+    }
   });
 }
 
