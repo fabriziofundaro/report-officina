@@ -103,6 +103,8 @@
   .extra-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: .7rem .9rem; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
   .extra-item .select-wrap { max-width: 170px; flex: 1; }
   .extra-time { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+  .extra-specifica { display: flex; align-items: center; gap: .4rem; }
+  .extra-specifica input { flex: 1; min-width: 150px; padding: .4rem .6rem; font-size: .9rem; border: 1px solid var(--border); border-radius: var(--radius); font-family: var(--sans); }
   .extra-dur { width: 65px; border: 1px solid var(--border-strong); border-radius: var(--radius); padding: .4rem .5rem; font-family: var(--mono); font-size: .82rem; text-align: center; background: var(--bg); }
   .extra-dur:focus { outline: none; border-color: var(--accent); }
   .remove-btn { background: none; border: none; color: var(--ink-muted); font-size: 1.1rem; cursor: pointer; padding: .2rem; line-height: 1; margin-left: auto; flex-shrink: 0; }
@@ -419,9 +421,12 @@ function addExtraRow() {
   item.id = `extra-${id}`;
   item.innerHTML = `
     <div class="select-wrap">
-      <select id="extra-tipo-${id}" onchange="ricalcolaOreSRS()">
+      <select id="extra-tipo-${id}" onchange="onExtraTypeChange(${id}); ricalcolaOreSRS()">
         ${CONFIG.attivitaExtra.map(a => `<option value="${a}">${a}</option>`).join('')}
       </select>
+    </div>
+    <div class="extra-specifica" id="extra-specifica-${id}" style="display:none;">
+      <input type="text" id="extra-altro-text-${id}" placeholder="Es: Corso apprendistato" maxlength="50">
     </div>
     <div class="extra-time">
       <input type="time" class="time-input" id="extra-dalle-${id}" oninput="onExtraTimeInput(${id})">
@@ -435,6 +440,17 @@ function addExtraRow() {
   list.appendChild(item);
   ricalcolaOreSRS();
 }
+
+function onExtraTypeChange(id) {
+  const select = document.getElementById(`extra-tipo-${id}`);
+  const specificaDiv = document.getElementById(`extra-specifica-${id}`);
+  if (select.value === 'Altro') {
+    specificaDiv.style.display = 'flex';
+  } else {
+    specificaDiv.style.display = 'none';
+  }
+}
+
 function onExtraTimeInput(id) { document.getElementById(`extra-min-${id}`).value = ''; ricalcolaOreSRS(); }
 function onExtraDurInput(id)  { document.getElementById(`extra-dalle-${id}`).value = ''; document.getElementById(`extra-alle-${id}`).value = ''; ricalcolaOreSRS(); }
 function removeExtra(id)      { document.getElementById(`extra-${id}`)?.remove(); ricalcolaOreSRS(); }
@@ -443,10 +459,19 @@ function getExtraItems() {
   const items = [];
   document.querySelectorAll('.extra-item').forEach(el => {
     const id    = el.id.replace('extra-', '');
-    const tipo  = document.getElementById(`extra-tipo-${id}`)?.value || '';
+    let tipo    = document.getElementById(`extra-tipo-${id}`)?.value || '';
     const dalle = document.getElementById(`extra-dalle-${id}`)?.value || '';
     const alle  = document.getElementById(`extra-alle-${id}`)?.value  || '';
     const min   = parseInt(document.getElementById(`extra-min-${id}`)?.value) || 0;
+    
+    // Se tipo è "Altro", aggiungi il testo libero
+    if (tipo === 'Altro') {
+      const altroText = document.getElementById(`extra-altro-text-${id}`)?.value?.trim() || '';
+      if (altroText) {
+        tipo = altroText; // Usa il testo libero come tipo
+      }
+    }
+    
     let minuti  = dalle && alle ? timeToMin(alle) - timeToMin(dalle) : min;
     if (minuti > 0) items.push({ tipo, dalle, alle, minuti });
   });
