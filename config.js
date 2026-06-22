@@ -1,7 +1,16 @@
+// ============================================================
+//  CONFIG.JS — L'UNICO FILE DA MODIFICARE
+// ============================================================
+
 const CONFIG = {
 
   sede: "Via Biagi",
   dashboardPin: "1234",
+
+  // --- ORARIO SABATO RIDOTTO ---
+  orarioSabato: [
+    { dalle: "08:45", alle: "12:30" }  // 3.75 ore
+  ],
 
   // --- OPERATRICI ---
   operatrici: [
@@ -11,7 +20,7 @@ const CONFIG = {
       orario: {
         noSabato: [
           { dalle: "08:00", alle: "13:00" },
-          { dalle: "15:00", alle: "18:00" }
+          { dalle: "14:00", alle: "18:00" }
         ],
         conSabato: [
           { dalle: "08:15", alle: "13:00" },
@@ -72,7 +81,7 @@ const CONFIG = {
   // e le sue categorie.
   //
   // Per ogni categoria:
-  //   id:         identificatore univoco
+  //   id:         identificatore univoco — NON cambiare se hai già dati
   //   label:      nome mostrato nel form
   //   tagliando:  true  = conta nel TOTALE TAGLIANDI
   //   srs:        true  = conta nel TOTALE SRS
@@ -145,7 +154,7 @@ const CONFIG = {
 
 };
 
-// ══ HELPERS ══════════════════════════════════
+// ══ HELPERS (non modificare) ══════════════════════════════════
 
 // Tutte le categorie in un array piatto
 function tutteLeCategorie() {

@@ -214,6 +214,12 @@
           <span>Questa settimana con turno sabato?</span>
         </label>
       </div>
+      <div id="checkbox-sabato-ridotto-row" class="field-row">
+        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem;">
+          <input type="checkbox" id="checkbox-sabato-ridotto" onchange="onOperatriceChange()">
+          <span>Oggi è sabato (turno ridotto 3.75h)?</span>
+        </label>
+      </div>
       <div id="ore-manuale-row" class="field-row" style="display:none">
         <span class="field-label muted">Ore di presenza oggi</span>
         <input type="number" id="ore-manuale" class="num-input" min="0" max="12" step="0.5" value="8" oninput="ricalcolaOreSRS()">
@@ -364,7 +370,20 @@ function onOperatriceChange() {
   const manRow  = document.getElementById('ore-manuale-row');
   const sabRow  = document.getElementById('checkbox-sabato-row');
   const chkSab  = document.getElementById('checkbox-sabato');
+  const chkSabRidotto = document.getElementById('checkbox-sabato-ridotto');
   
+  // Se spuntato "È sabato?" → usa orario ridotto sabato
+  if (chkSabRidotto && chkSabRidotto.checked) {
+    const ore = calcolaOrePresenza(CONFIG.orarioSabato);
+    document.getElementById('ore-auto-label').textContent =
+      `${ore}h (${CONFIG.orarioSabato.map(f => f.dalle+'–'+f.alle).join(', ')})`;
+    autoRow.style.display = 'flex';
+    manRow.style.display  = 'none';
+    sabRow.style.display  = 'none'; // Nascondi il vecchio checkbox sabato
+    return;
+  }
+  
+  // Altrimenti, usa logica normale
   if (op && op.orario) {
     // Controlla se è un oggetto con noSabato/conSabato
     const isVariabile = typeof op.orario === 'object' && !Array.isArray(op.orario) && op.orario.noSabato;
@@ -426,7 +445,7 @@ function addExtraRow() {
       </select>
     </div>
     <div class="extra-specifica" id="extra-specifica-${id}" style="display:none;">
-      <input type="text" id="extra-altro-text-${id}" placeholder="Inserisci altra attività" maxlength="50">
+      <input type="text" id="extra-altro-text-${id}" placeholder="Es: Corso apprendistato" maxlength="50">
     </div>
     <div class="extra-time">
       <input type="time" class="time-input" id="extra-dalle-${id}" oninput="onExtraTimeInput(${id})">
@@ -550,11 +569,15 @@ async function submitForm() {
   // Calcola ore
   const opObj = getOperatrice(op);
   let orePresenza;
+  const chkSabRidotto = document.getElementById('checkbox-sabato-ridotto').checked;
   
-  if (opObj && opObj.orario) {
+  // Se "È sabato?" è spuntato, usa orario sabato ridotto
+  if (chkSabRidotto) {
+    orePresenza = calcolaOrePresenza(CONFIG.orarioSabato);
+  } else if (opObj && opObj.orario) {
     const isVariabile = typeof opObj.orario === 'object' && !Array.isArray(opObj.orario) && opObj.orario.noSabato;
     if (isVariabile) {
-      // Leggi in base al checkbox
+      // Leggi in base al checkbox "Settimana con turno sabato?"
       const chkSab = document.getElementById('checkbox-sabato').checked;
       const orePerWeek = chkSab ? opObj.orario.conSabato : opObj.orario.noSabato;
       orePresenza = calcolaOrePresenza(orePerWeek);
