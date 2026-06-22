@@ -380,11 +380,7 @@ function onOperatriceChange() {
     autoRow.style.display = 'flex';
     manRow.style.display  = 'none';
     sabRow.style.display  = 'none'; // Nascondi il vecchio checkbox sabato
-    return;
-  }
-  
-  // Altrimenti, usa logica normale
-  if (op && op.orario) {
+  } else if (op && op.orario) {
     // Controlla se è un oggetto con noSabato/conSabato
     const isVariabile = typeof op.orario === 'object' && !Array.isArray(op.orario) && op.orario.noSabato;
     
