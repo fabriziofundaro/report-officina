@@ -498,10 +498,26 @@ function ricalcolaOreSRS() {
   const nome = document.getElementById('sel-operatrice').value;
   const op   = getOperatrice(nome);
   const assenza = document.querySelector('input[name=assenza]:checked')?.value || 'nessuna';
+  const chkSabRidotto = document.getElementById('checkbox-sabato-ridotto')?.checked;
 
-  let orePresenza = op && op.orario && op.orario.length > 0
-    ? calcolaOrePresenza(op.orario)
-    : parseFloat(document.getElementById('ore-manuale')?.value) || 0;
+  // Se "È sabato?" è spuntato, usa orario sabato ridotto
+  let orePresenza;
+  if (chkSabRidotto) {
+    orePresenza = calcolaOrePresenza(CONFIG.orarioSabato);
+  } else if (op && op.orario) {
+    const isVariabile = typeof op.orario === 'object' && !Array.isArray(op.orario) && op.orario.noSabato;
+    if (isVariabile) {
+      const chkSab = document.getElementById('checkbox-sabato')?.checked;
+      const orePerWeek = chkSab ? op.orario.conSabato : op.orario.noSabato;
+      orePresenza = calcolaOrePresenza(orePerWeek);
+    } else if (Array.isArray(op.orario) && op.orario.length > 0) {
+      orePresenza = calcolaOrePresenza(op.orario);
+    } else {
+      orePresenza = parseFloat(document.getElementById('ore-manuale')?.value) || 0;
+    }
+  } else {
+    orePresenza = parseFloat(document.getElementById('ore-manuale')?.value) || 0;
+  }
 
   let oreAssenza = 0;
   if (assenza === 'ferie') {
