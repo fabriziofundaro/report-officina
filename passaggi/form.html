@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report Passaggi Officina</title>
+  <style>
+    :root {
+      --primary: #0052CC;
+      --primary-light: #4A90E2;
+      --accent: #10b981;
+      --bg: #f5f5f5;
+      --border: #ddd;
+      --ink: #222;
+      --ink-muted: #666;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: "Monaco", "Menlo", monospace;
+      --radius: 6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .header p { opacity: 0.9; }
+
+    .main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .date-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-end;
+    }
+    .date-row label { flex: 1; }
+    .date-row input { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
+
+    .accettatore-group {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .accettatore-card {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .accettatore-card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.8rem;
+    }
+    .input-field {
+      display: flex;
+      flex-direction: column;
+    }
+    .input-field label {
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+    .input-field input {
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+    }
+    .input-field input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0,82,204,0.1);
+    }
+
+    .totali-row {
+      background: linear-gradient(135deg, rgba(0,82,204,0.05) 0%, rgba(16,185,129,0.05) 100%);
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-top: 1rem;
+      border-left: 4px solid var(--primary);
+    }
+    .totali-row h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+    }
+    .totali-display {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .simple-field {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    .simple-field label { flex: 1; }
+    .simple-field input {
+      width: 150px;
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+    }
+
+    .extra-field {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-top: 1rem;
+    }
+    .extra-field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .extra-field input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+    button {
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .btn-submit {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-submit:hover {
+      background: #0040a8;
+    }
+    .btn-reset {
+      background: var(--bg);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    .btn-reset:hover {
+      background: #f0f0f0;
+    }
+
+    .success-msg {
+      display: none;
+      background: #d4edda;
+      color: #155724;
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      border: 1px solid #c3e6cb;
+    }
+    .success-msg.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>🔧 Report Passaggi Officina</h1>
+    <p>R Motors — Via Biagi</p>
+  </div>
+
+  <div class="main">
+    <div class="success-msg" id="success-msg">✅ Report inviato con successo!</div>
+
+    <form id="form-passaggi">
+
+      <!-- DATA -->
+      <div class="section">
+        <div class="date-row">
+          <div style="flex: 1;">
+            <label for="data">📅 Data</label>
+            <input type="date" id="data" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOYOTA -->
+      <div class="section">
+        <h2>🚗 TOYOTA</h2>
+        <div id="toyota-container" class="accettatore-group"></div>
+        <div class="totali-row">
+          <h4>📊 Totali Toyota</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+            <div><span style="color: var(--ink-muted); font-size: 0.85rem;">Passaggi:</span> <span class="totali-display" id="toyota-passaggi-tot">0</span></div>
+            <div><span style="color: var(--ink-muted); font-size: 0.85rem;">Gomme:</span> <span class="totali-display" id="toyota-gomme-tot">0</span></div>
+            <div><span style="color: var(--ink-muted); font-size: 0.85rem;">Tappetini:</span> <span class="totali-display" id="toyota-tappetini-tot">0</span></div>
+            <div><span style="color: var(--ink-muted); font-size: 0.85rem;">EasyPay:</span> <span class="totali-display" id="toyota-easypay-tot">0</span></div>
+          </div>
+        </div>
+        <div class="extra-field">
+          <label for="toyota-extra">👤 Aiutante occasionale (es: Guardi)</label>
+          <input type="text" id="toyota-extra" placeholder="Nome...">
+          <div class="input-row" style="margin-top: 0.5rem;">
+            <div class="input-field">
+              <label>Passaggi</label>
+              <input type="number" id="toyota-extra-passaggi" min="0" value="0">
+            </div>
+            <div class="input-field">
+              <label>Gomme</label>
+              <input type="number" id="toyota-extra-gomme" min="0" value="0">
+            </div>
+            <div class="input-field">
+              <label>Tappetini</label>
+              <input type="number" id="toyota-extra-tappetini" min="0" value="0">
+            </div>
+            <div class="input-field">
+              <label>EasyPay</label>
+              <input type="number" id="toyota-extra-easypay" min="0" value="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VOLVO -->
+      <div class="section">
+        <h2>🔵 VOLVO</h2>
+        <div class="simple-field">
+          <label for="volvo-passaggi">Passaggi totali:</label>
+          <input type="number" id="volvo-passaggi" min="0" value="0">
+        </div>
+      </div>
+
+      <!-- REVISIONI -->
+      <div class="section">
+        <h2>🔧 REVISIONI</h2>
+        <div class="simple-field">
+          <label for="revisioni">Revisioni totali:</label>
+          <input type="number" id="revisioni" min="0" value="0">
+        </div>
+      </div>
+
+      <!-- CARROZZERIA -->
+      <div class="section">
+        <h2>🎨 CARROZZERIA</h2>
+        <div id="carrozzeria-container" class="accettatore-group"></div>
+        <div class="totali-row">
+          <h4>📊 Totali Carrozzeria</h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+            <div><span style="color: var(--ink-muted); font-size: 0.85rem;">Passaggi:</span> <span class="totali-display" id="carrozzeria-passaggi-tot">0</span></div>
+            <div><span style="color: var(--ink-muted); font-size: 0.85rem;">EasyPay:</span> <span class="totali-display" id="carrozzeria-easypay-tot">0</span></div>
+          </div>
+        </div>
+        <div class="extra-field">
+          <label for="carrozzeria-odl">📋 ODL effettuati</label>
+          <input type="number" id="carrozzeria-odl" min="0" value="0" placeholder="Numero ODL...">
+        </div>
+      </div>
+
+      <!-- PULSANTI -->
+      <div class="button-row">
+        <button type="submit" class="btn-submit">✅ Invia Report</button>
+        <button type="reset" class="btn-reset">🔄 Cancella</button>
+      </div>
+
+    </form>
+  </div>
+
+  <script src="../srs/config.js"></script>
+  <script src="config.js"></script>
+  <script>
+    // Imposta data odierna
+    document.getElementById('data').valueAsDate = new Date();
+
+    // Genera campi Toyota
+    function generaToyota() {
+      const container = document.getElementById('toyota-container');
+      CONFIG.accettatori_toyota.forEach(acc => {
+        const card = document.createElement('div');
+        card.className = 'accettatore-card';
+        card.innerHTML = `
+          <h3>${acc}</h3>
+          <div class="input-row">
+            <div class="input-field">
+              <label>Passaggi</label>
+              <input type="number" id="${acc}-passaggi" min="0" value="0" onchange="ricalcolaTotali()">
+            </div>
+            <div class="input-field">
+              <label>Gomme</label>
+              <input type="number" id="${acc}-gomme" min="0" value="0" onchange="ricalcolaTotali()">
+            </div>
+            <div class="input-field">
+              <label>Tappetini</label>
+              <input type="number" id="${acc}-tappetini" min="0" value="0" onchange="ricalcolaTotali()">
+            </div>
+            <div class="input-field">
+              <label>EasyPay</label>
+              <input type="number" id="${acc}-easypay" min="0" value="0" onchange="ricalcolaTotali()">
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Genera campi Carrozzeria
+    function generaCarrozzeria() {
+      const container = document.getElementById('carrozzeria-container');
+      CONFIG.accettatori_carrozzeria.forEach(acc => {
+        const card = document.createElement('div');
+        card.className = 'accettatore-card';
+        card.innerHTML = `
+          <h3>${acc}</h3>
+          <div class="input-row">
+            <div class="input-field">
+              <label>Passaggi</label>
+              <input type="number" id="${acc}-passaggi" min="0" value="0" onchange="ricalcolaTotali()">
+            </div>
+            <div class="input-field">
+              <label>EasyPay</label>
+              <input type="number" id="${acc}-easypay" min="0" value="0" onchange="ricalcolaTotali()">
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Ricalcola totali
+    function ricalcolaTotali() {
+      // Toyota
+      let toyotaPass = 0, toyotaGomme = 0, toyotaTapp = 0, toyotaEasy = 0;
+      CONFIG.accettatori_toyota.forEach(acc => {
+        toyotaPass += parseInt(document.getElementById(`${acc}-passaggi`)?.value || 0);
+        toyotaGomme += parseInt(document.getElementById(`${acc}-gomme`)?.value || 0);
+        toyotaTapp += parseInt(document.getElementById(`${acc}-tappetini`)?.value || 0);
+        toyotaEasy += parseInt(document.getElementById(`${acc}-easypay`)?.value || 0);
+      });
+      // Aggiungi aiutante occasionale
+      toyotaPass += parseInt(document.getElementById('toyota-extra-passaggi')?.value || 0);
+      toyotaGomme += parseInt(document.getElementById('toyota-extra-gomme')?.value || 0);
+      toyotaTapp += parseInt(document.getElementById('toyota-extra-tappetini')?.value || 0);
+      toyotaEasy += parseInt(document.getElementById('toyota-extra-easypay')?.value || 0);
+
+      document.getElementById('toyota-passaggi-tot').textContent = toyotaPass;
+      document.getElementById('toyota-gomme-tot').textContent = toyotaGomme;
+      document.getElementById('toyota-tappetini-tot').textContent = toyotaTapp;
+      document.getElementById('toyota-easypay-tot').textContent = toyotaEasy;
+
+      // Carrozzeria
+      let carrozzeriaPass = 0, carrozzeriaEasy = 0;
+      CONFIG.accettatori_carrozzeria.forEach(acc => {
+        carrozzeriaPass += parseInt(document.getElementById(`${acc}-passaggi`)?.value || 0);
+        carrozzeriaEasy += parseInt(document.getElementById(`${acc}-easypay`)?.value || 0);
+      });
+
+      document.getElementById('carrozzeria-passaggi-tot').textContent = carrozzeriaPass;
+      document.getElementById('carrozzeria-easypay-tot').textContent = carrozzeriaEasy;
+    }
+
+    // Submit form
+    document.getElementById('form-passaggi').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const data = {
+        data: document.getElementById('data').value,
+        toyota: {},
+        volvo: parseInt(document.getElementById('volvo-passaggi').value),
+        revisioni: parseInt(document.getElementById('revisioni').value),
+        carrozzeria: {},
+        carrozzeria_odl: parseInt(document.getElementById('carrozzeria-odl').value)
+      };
+
+      // Raccogli dati Toyota
+      CONFIG.accettatori_toyota.forEach(acc => {
+        data.toyota[acc] = {
+          passaggi: parseInt(document.getElementById(`${acc}-passaggi`)?.value || 0),
+          gomme: parseInt(document.getElementById(`${acc}-gomme`)?.value || 0),
+          tappetini: parseInt(document.getElementById(`${acc}-tappetini`)?.value || 0),
+          easypay: parseInt(document.getElementById(`${acc}-easypay`)?.value || 0)
+        };
+      });
+
+      // Aiutante Toyota
+      const nomeExtra = document.getElementById('toyota-extra').value;
+      if (nomeExtra) {
+        data.toyota[nomeExtra] = {
+          passaggi: parseInt(document.getElementById('toyota-extra-passaggi')?.value || 0),
+          gomme: parseInt(document.getElementById('toyota-extra-gomme')?.value || 0),
+          tappetini: parseInt(document.getElementById('toyota-extra-tappetini')?.value || 0),
+          easypay: parseInt(document.getElementById('toyota-extra-easypay')?.value || 0)
+        };
+      }
+
+      // Raccogli dati Carrozzeria
+      CONFIG.accettatori_carrozzeria.forEach(acc => {
+        data.carrozzeria[acc] = {
+          passaggi: parseInt(document.getElementById(`${acc}-passaggi`)?.value || 0),
+          easypay: parseInt(document.getElementById(`${acc}-easypay`)?.value || 0)
+        };
+      });
+
+      console.log('Dati da inviare:', data);
+
+      // TODO: Inviare a Google Sheets tramite google-apps-script.js
+      alert('✅ Report pronto per l\'invio!\n\nDati raccolti:\n' + JSON.stringify(data, null, 2));
+
+      // Mostra messaggio di successo
+      const successMsg = document.getElementById('success-msg');
+      successMsg.classList.add('show');
+      setTimeout(() => successMsg.classList.remove('show'), 3000);
+    });
+
+    // Inizializza
+    generaToyota();
+    generaCarrozzeria();
+    ricalcolaTotali();
+  </script>
+
+</body>
+</html>
