@@ -501,12 +501,29 @@
         };
       });
 
-      console.log('Dati da inviare:', data);
-      alert('✅ Report pronto!\n\n' + JSON.stringify(data, null, 2));
-
-      const successMsg = document.getElementById('success-msg');
-      successMsg.classList.add('show');
-      setTimeout(() => successMsg.classList.remove('show'), 3000);
+      // Invia a Google Apps Script
+      fetch(CONFIG.googleSheets.scriptUrl, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          const successMsg = document.getElementById('success-msg');
+          successMsg.classList.add('show');
+          setTimeout(() => {
+            successMsg.classList.remove('show');
+            document.getElementById('form-passaggi').reset();
+            document.getElementById('data').valueAsDate = new Date();
+          }, 2000);
+        } else {
+          alert('❌ Errore: ' + result.error);
+        }
+      })
+      .catch(error => {
+        alert('❌ Errore di connessione: ' + error);
+        console.error('Errore:', error);
+      });
     });
 
     generaToyota();
