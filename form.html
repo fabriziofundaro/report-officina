@@ -2,20 +2,30 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Report Passaggi Officina</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>Report passaggi officina</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
   <style>
     :root {
       --primary: #0052CC;
+      --accent: #4a7fc1;
       --bg: #f5f5f5;
       --border: #ddd;
+      --border-header: #dde1e9;
       --ink: #222;
       --ink-muted: #666;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --radius: 6px;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
     body {
       font-family: var(--sans);
       background: var(--bg);
@@ -23,15 +33,56 @@
       line-height: 1.6;
     }
 
+    /* --- HEADER --- */
     .header {
-      background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
-      color: white;
-      padding: 2rem;
-      text-align: center;
+      background: #ffffff;
+      color: var(--ink);
+      padding: .85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 3px solid var(--accent);
+      box-shadow: 0 2px 12px rgba(74,127,193,.1);
+      font-family: 'Nunito', sans-serif;
     }
-    .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-    .header p { opacity: 0.9; }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .logo-riolo {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.55rem;
+      color: var(--accent);
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .header-divider { width: 1px; height: 24px; background: var(--border-header); }
+    .header-sede {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+    .header-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: .1rem;
+    }
+    .header-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: white;
+      background: var(--accent);
+      padding: .25rem .65rem;
+      border-radius: 99px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
 
+    /* --- STRUTTURA PRINCIPALE --- */
     .main {
       max-width: 1200px;
       margin: 2rem auto;
@@ -53,15 +104,21 @@
       border-bottom: 2px solid var(--primary);
     }
 
+    /* --- CAMPI INPUT GLOBALI --- */
+    input {
+      box-sizing: border-box;
+      min-width: 0; /* Risolve il bug dell'overflow orizzontale */
+      width: 100%;
+    }
+
     .date-row {
       display: flex;
       gap: 1rem;
       align-items: flex-end;
       margin-bottom: 1.5rem;
     }
-    .date-row label { flex: 1; }
+    .date-row label { flex: 1; display: block; margin-bottom: 0.5rem; font-weight: 600; }
     .date-row input { 
-      width: 100%; 
       padding: 0.6rem; 
       border: 1px solid var(--border); 
       border-radius: var(--radius); 
@@ -76,7 +133,7 @@
 
     .accettatore-row {
       display: grid;
-      grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: 120px repeat(auto-fit, minmax(80px, 1fr));
       gap: 0.8rem;
       align-items: flex-end;
       background: var(--bg);
@@ -93,32 +150,36 @@
       padding: 0.8rem 1rem;
       border: 1px solid var(--primary);
     }
-
-    .accettatore-row.header-row > div {
-      padding: 0.2rem 0;
-    }
+    .accettatore-row.header-row > div { padding: 0.2rem 0; }
 
     .accettatore-name {
-      font-weight: 600;
+      font-weight: 700;
       color: var(--primary);
-      padding-right: 0.5rem;
     }
 
     .input-field {
       display: flex;
       flex-direction: column;
+      width: 100%;
     }
+    
+    /* Etichette: nascoste su PC (tranne che per la riga extra), visibili su mobile */
     .input-field label {
+      display: none;
+    }
+    .extra-row .input-field label {
+      display: block;
       font-size: 0.75rem;
       color: var(--ink-muted);
-      margin-bottom: 0.2rem;
-      font-weight: 500;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
     }
+
     .input-field input {
-      padding: 0.5rem;
+      padding: 0.6rem 0.5rem;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     .input-field input:focus {
       outline: none;
@@ -126,69 +187,38 @@
       box-shadow: 0 0 0 2px rgba(0,82,204,0.1);
     }
 
-    .totali-box {
-      background: linear-gradient(135deg, rgba(0,82,204,0.05) 0%, rgba(16,185,129,0.05) 100%);
-      padding: 1rem;
-      border-radius: var(--radius);
-      border-left: 4px solid var(--primary);
-      margin-top: 1rem;
-    }
-    .totali-box h4 {
-      font-size: 0.95rem;
-      margin-bottom: 0.8rem;
-      color: var(--primary);
-    }
-    .totali-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
-    }
-    .totale-item {
-      display: flex;
-      flex-direction: column;
-    }
-    .totale-label {
-      font-size: 0.85rem;
-      color: var(--ink-muted);
-      margin-bottom: 0.3rem;
-    }
-    .totale-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
+    /* --- SEZIONE EXTRA --- */
     .extra-field {
       background: var(--bg);
-      padding: 1rem;
+      padding: 1.2rem;
       border-radius: var(--radius);
       margin-top: 1rem;
       border: 1px solid var(--border);
     }
-    .extra-field label {
+    .extra-field > label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
       font-size: 0.95rem;
     }
     .extra-field input[type="text"] {
-      width: 100%;
       padding: 0.6rem;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 0.95rem;
-      margin-bottom: 0.8rem;
+      margin-bottom: 1rem;
     }
     .extra-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
       gap: 0.8rem;
     }
 
+    /* --- CAMPI SEMPLICI (Volvo, Revisioni) --- */
     .simple-field {
       display: flex;
       gap: 1rem;
-      align-items: flex-end;
+      align-items: center;
       margin-bottom: 1rem;
     }
     .simple-field label { 
@@ -203,6 +233,40 @@
       font-size: 1rem;
     }
 
+    /* --- TOTALI --- */
+    .totali-box {
+      background: linear-gradient(135deg, rgba(0,82,204,0.05) 0%, rgba(16,185,129,0.05) 100%);
+      padding: 1.2rem;
+      border-radius: var(--radius);
+      border-left: 4px solid var(--primary);
+      margin-top: 1rem;
+    }
+    .totali-box h4 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+    .totali-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+    }
+    .totale-item { display: flex; flex-direction: column; }
+    .totale-label {
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .totale-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* --- PULSANTI E MESSAGGI --- */
     .button-row {
       display: flex;
       gap: 1rem;
@@ -218,21 +282,10 @@
       font-weight: 600;
       transition: 0.2s;
     }
-    .btn-submit {
-      background: var(--primary);
-      color: white;
-    }
-    .btn-submit:hover {
-      background: #0040a8;
-    }
-    .btn-reset {
-      background: var(--bg);
-      color: var(--ink);
-      border: 1px solid var(--border);
-    }
-    .btn-reset:hover {
-      background: #f0f0f0;
-    }
+    .btn-submit { background: var(--primary); color: white; }
+    .btn-submit:hover { background: #0040a8; }
+    .btn-reset { background: var(--bg); color: var(--ink); border: 1px solid var(--border); }
+    .btn-reset:hover { background: #e0e0e0; }
 
     .success-msg {
       display: none;
@@ -242,17 +295,96 @@
       border-radius: var(--radius);
       margin-bottom: 1rem;
       border: 1px solid #c3e6cb;
+      text-align: center;
+      font-weight: 600;
     }
-    .success-msg.show {
-      display: block;
+    .success-msg.show { display: block; }
+
+    /* =========================================
+       MEDIA QUERIES - FIX PER SMARTPHONE
+       ========================================= */
+    @media (max-width: 768px) {
+      /* Ottimizzazione spazi esterni per recuperare larghezza */
+      .main { padding: 0 0.5rem; margin: 1rem auto; }
+      .section { padding: 1.2rem 0.8rem; }
+      .extra-field { padding: 1.2rem 0.8rem; }
+
+      /* Header Compattato */
+      .header { padding: 0.75rem 1rem; }
+      .header-left { gap: 0.6rem; }
+      .logo-riolo { font-size: 1.3rem; }
+      .header-title { font-size: 0.75rem; }
+      .header-date { display: none; } /* Nascosta per evitare sovrapposizioni su schermi stretti */
+
+      /* Nasconde l'intestazione tabellare su mobile */
+      .accettatore-row.header-row { display: none; }
+      
+      /* Griglia a 2 colonne per i nomi e gli input */
+      .accettatore-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+        padding: 1.2rem 0.8rem;
+      }
+      .extra-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+      }
+
+      /* Il nome dell'accettatore si prende tutta la riga (100%) in alto */
+      .accettatore-name {
+        grid-column: 1 / -1; 
+        font-size: 1.2rem;
+        text-align: center;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 0.6rem;
+        margin-bottom: 0.4rem;
+      }
+
+      /* Mostra sempre le etichette ("Passaggi", "Gomme"...) sopra agli input */
+      .input-field label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+      }
+
+      /* FIX ANTI-ZOOM iOS: Impedisce ad iPhone di zoomare cliccando sugli input */
+      input[type="number"], input[type="text"], input[type="date"] {
+        font-size: 16px !important;
+      }
+
+      /* Campi a riga singola incollonati */
+      .simple-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .simple-field input { width: 100%; }
+
+      /* Griglia totali forzata a 2 colonne */
+      .totali-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      
+      .button-row { flex-direction: column; }
+      .button-row button { width: 100%; padding: 1rem; }
     }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h1>🔧 Report Passaggi Officina</h1>
-    <p>R Motors — Via Biagi</p>
+    <div class="header-left">
+      <span class="logo-riolo">riolo</span>
+      <div class="header-divider"></div>
+      <div>
+        <div class="header-sede">Via E.Biagi, 8</div>
+        <div class="header-title">Report passaggi officina</div>
+      </div>
+    </div>
+    <span class="header-date" id="header-date"></span>
   </div>
 
   <div class="main">
@@ -260,17 +392,15 @@
 
     <form id="form-passaggi">
 
-      <!-- DATA -->
       <div class="section">
         <div class="date-row">
           <div style="flex: 1;">
-            <label for="data">📅 Data</label>
+            <label for="data">📅 Data di riferimento</label>
             <input type="date" id="data" required>
           </div>
         </div>
       </div>
 
-      <!-- TOYOTA -->
       <div class="section">
         <h2>🚗 TOYOTA</h2>
         
@@ -286,8 +416,8 @@
         </div>
 
         <div class="extra-field">
-          <label for="toyota-extra">👤 Aiutante occasionale (es: Guardi)</label>
-          <input type="text" id="toyota-extra" placeholder="Nome..." onchange="ricalcolaTotali()">
+          <label for="toyota-extra">👤 Accettatore bonus</label>
+          <input type="text" id="toyota-extra" placeholder="Inserisci Nome..." onchange="ricalcolaTotali()">
           <div class="extra-row">
             <div class="input-field">
               <label>Passaggi</label>
@@ -331,25 +461,22 @@
         </div>
       </div>
 
-      <!-- VOLVO -->
       <div class="section">
         <h2>🔵 VOLVO</h2>
         <div class="simple-field">
-          <label for="volvo-passaggi">Passaggi totali:</label>
+          <label for="volvo-passaggi">Passaggi totali di oggi:</label>
           <input type="number" id="volvo-passaggi" min="0" value="0">
         </div>
       </div>
 
-      <!-- REVISIONI -->
       <div class="section">
         <h2>🔧 REVISIONI</h2>
         <div class="simple-field">
-          <label for="revisioni">Revisioni totali:</label>
+          <label for="revisioni">Revisioni totali effettuate:</label>
           <input type="number" id="revisioni" min="0" value="0">
         </div>
       </div>
 
-      <!-- CARROZZERIA -->
       <div class="section">
         <h2>🎨 CARROZZERIA</h2>
         
@@ -363,7 +490,7 @@
         </div>
 
         <div class="totali-box">
-          <h4>📊 Totali Carrozzeria</h4>
+          <h4>📊 Totali carrozzeria</h4>
           <div class="totali-grid">
             <div class="totale-item">
               <span class="totale-label">Passaggi</span>
@@ -373,18 +500,17 @@
               <span class="totale-label">EasyPay</span>
               <span class="totale-value" id="carrozzeria-easypay-tot">0</span>
             </div>
+            <div class="totale-item">
+              <span class="totale-label">di cui ODL</span>
+              <input type="number" id="carrozzeria-odl" min="0" value="0" style="font-size: 1.6rem; font-weight: 800; color: var(--primary); padding: 0.4rem; border: 1px solid var(--border); border-radius: var(--radius); width: 100%; box-sizing: border-box;">
+            </div>
           </div>
-        </div>
-
-        <div class="extra-field">
-          <label for="carrozzeria-odl">📋 ODL effettuati</label>
-          <input type="number" id="carrozzeria-odl" min="0" value="0" placeholder="Numero ODL...">
         </div>
       </div>
 
       <div class="button-row">
-        <button type="submit" class="btn-submit">✅ Invia Report</button>
-        <button type="reset" class="btn-reset">🔄 Cancella</button>
+        <button type="submit" class="btn-submit">✅ Invia report passaggi</button>
+      
       </div>
 
     </form>
@@ -392,8 +518,16 @@
 
   <script src="config.js"></script>
   <script>
+    // Inizializza Date
+    const now = new Date();
+    const giorni = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+    const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    document.getElementById('header-date').textContent = 
+      `${giorni[now.getDay()]} ${now.getDate()} ${mesi[now.getMonth()]} ${now.getFullYear()}`;
+    
     document.getElementById('data').valueAsDate = new Date();
 
+    // Generazione dinamica con etichette pronte per il CSS mobile
     function generaToyota() {
       const container = document.getElementById('toyota-container');
       CONFIG.accettatori_toyota.forEach(acc => {
@@ -402,15 +536,19 @@
         row.innerHTML = `
           <div class="accettatore-name">${acc}</div>
           <div class="input-field">
+            <label>Passaggi</label>
             <input type="number" id="${acc}-passaggi" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label>Gomme</label>
             <input type="number" id="${acc}-gomme" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label>Tappetini</label>
             <input type="number" id="${acc}-tappetini" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label>EasyPay</label>
             <input type="number" id="${acc}-easypay" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
         `;
@@ -426,9 +564,11 @@
         row.innerHTML = `
           <div class="accettatore-name">${acc}</div>
           <div class="input-field">
+            <label>Passaggi</label>
             <input type="number" id="${acc}-passaggi" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label>EasyPay</label>
             <input type="number" id="${acc}-easypay" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
         `;
@@ -502,12 +642,28 @@
         };
       });
 
-      console.log('Dati da inviare:', data);
-      alert('✅ Report pronto!\n\n' + JSON.stringify(data, null, 2));
-
-      const successMsg = document.getElementById('success-msg');
-      successMsg.classList.add('show');
-      setTimeout(() => successMsg.classList.remove('show'), 3000);
+      fetch(CONFIG.googleSheets.scriptUrl, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          const successMsg = document.getElementById('success-msg');
+          successMsg.classList.add('show');
+          setTimeout(() => {
+            successMsg.classList.remove('show');
+            document.getElementById('form-passaggi').reset();
+            document.getElementById('data').valueAsDate = new Date();
+          }, 2000);
+        } else {
+          alert('❌ Errore: ' + result.error);
+        }
+      })
+      .catch(error => {
+        alert('❌ Errore di connessione: ' + error);
+        console.error('Errore:', error);
+      });
     });
 
     generaToyota();
