@@ -18,7 +18,7 @@ const CONFIG = {
 
   // --- ACCETTATORI CARROZZERIA ---
   accettatori_carrozzeria: [
-    "Guardi",
+    "Guardì",
     "Colletti",
     "Corsale",
     "Orlando",
