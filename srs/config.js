@@ -20,7 +20,7 @@ const CONFIG = {
       orario: {
         noSabato: [
           { dalle: "08:00", alle: "13:00" },
-          { dalle: "14:00", alle: "18:00" }
+          { dalle: "15:00", alle: "18:00" }
         ],
         conSabato: [
           { dalle: "08:15", alle: "13:00" },
