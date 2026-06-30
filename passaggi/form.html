@@ -4,11 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Report Passaggi Officina</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --primary: #0052CC;
+      --primary: #0052CC; /* Mantenuto per coerenza con il resto del form */
+      --accent: #4a7fc1; /* Colore header da index.html */
       --bg: #f5f5f5;
       --border: #ddd;
+      --border-header: #dde1e9;
       --ink: #222;
       --ink-muted: #666;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -23,15 +28,55 @@
       line-height: 1.6;
     }
 
+    /* --- NUOVO HEADER (Identico a index.html) --- */
     .header {
-      background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
-      color: white;
-      padding: 2rem;
-      text-align: center;
+      background: #ffffff;
+      color: var(--ink);
+      padding: .85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 3px solid var(--accent);
+      box-shadow: 0 2px 12px rgba(74,127,193,.1);
+      font-family: 'Nunito', sans-serif;
     }
-    .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-    .header p { opacity: 0.9; }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .logo-riolo {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.55rem;
+      color: var(--accent);
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .header-divider { width: 1px; height: 24px; background: var(--border-header); }
+    .header-sede {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+    .header-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: .1rem;
+    }
+    .header-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: white;
+      background: var(--accent);
+      padding: .25rem .65rem;
+      border-radius: 99px;
+      font-weight: 600;
+    }
 
+    /* --- STILI PRINCIPALI FORM --- */
     .main {
       max-width: 1200px;
       margin: 2rem auto;
@@ -108,12 +153,25 @@
       display: flex;
       flex-direction: column;
     }
-    .input-field label {
+    
+    /* Etichetta mobile (nascosta di default su PC) */
+    .mobile-label {
+      display: none;
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      margin-bottom: 0.2rem;
+      font-weight: 600;
+    }
+
+    /* Etichetta per il campo extra-row (sempre visibile su PC) */
+    .extra-row .input-field label {
+      display: block;
       font-size: 0.75rem;
       color: var(--ink-muted);
       margin-bottom: 0.2rem;
       font-weight: 500;
     }
+
     .input-field input {
       padding: 0.5rem;
       border: 1px solid var(--border);
@@ -165,7 +223,7 @@
       margin-top: 1rem;
       border: 1px solid var(--border);
     }
-    .extra-field label {
+    .extra-field > label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
@@ -246,13 +304,69 @@
     .success-msg.show {
       display: block;
     }
+
+    /* --- MEDIA QUERIES (MOBILE FIX) --- */
+    @media (max-width: 768px) {
+      /* Nasconde l'header testuale con i titoli (usiamo le etichette individuali) */
+      .accettatore-row.header-row {
+        display: none;
+      }
+      
+      /* Griglia a 2 colonne per gli accettatori su smartphone */
+      .accettatore-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        padding: 1.2rem 1rem;
+      }
+
+      /* Il nome dell'accettatore prende tutta la riga in alto */
+      .accettatore-name {
+        grid-column: 1 / -1; 
+        font-size: 1.15rem;
+        text-align: center;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.2rem;
+      }
+
+      /* Mostra le etichette per ogni input */
+      .mobile-label {
+        display: block;
+      }
+
+      /* Griglia a 2 colonne anche per la riga extra */
+      .extra-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* Aggiustamenti layout Header per schermi piccoli */
+      .header { padding: 0.85rem 1rem; }
+      .logo-riolo { font-size: 1.3rem; }
+      
+      /* Aggiustamenti campi a riga singola (Volvo, Revisioni) */
+      .simple-field {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .simple-field input {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h1>🔧 Report Passaggi Officina</h1>
-    <p>R Motors — Via Biagi</p>
+    <div class="header-left">
+      <span class="logo-riolo">riolo</span>
+      <div class="header-divider"></div>
+      <div>
+        <div class="header-sede">Via Biagi</div>
+        <div class="header-title">Report Passaggi Officina</div>
+      </div>
+    </div>
+    <span class="header-date" id="header-date"></span>
   </div>
 
   <div class="main">
@@ -260,7 +374,6 @@
 
     <form id="form-passaggi">
 
-      <!-- DATA -->
       <div class="section">
         <div class="date-row">
           <div style="flex: 1;">
@@ -270,12 +383,8 @@
         </div>
       </div>
 
-      <!-- TOYOTA -->
       <div class="section">
-        <h2><div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;">
-  <img src="./images/toyota_logo.png" alt="Toyota" style="height: 40px;">
-  <h2 style="margin: 0;">TOYOTA</h2>
-</div></h2>
+        <h2>🚗 TOYOTA</h2>
         
         <div class="accettatori-list">
           <div class="accettatore-row header-row">
@@ -334,7 +443,6 @@
         </div>
       </div>
 
-      <!-- VOLVO -->
       <div class="section">
         <h2>🔵 VOLVO</h2>
         <div class="simple-field">
@@ -343,7 +451,6 @@
         </div>
       </div>
 
-      <!-- REVISIONI -->
       <div class="section">
         <h2>🔧 REVISIONI</h2>
         <div class="simple-field">
@@ -352,7 +459,6 @@
         </div>
       </div>
 
-      <!-- CARROZZERIA -->
       <div class="section">
         <h2>🎨 CARROZZERIA</h2>
         
@@ -366,22 +472,22 @@
         </div>
 
         <div class="totali-box">
-  <h4>📊 Totali Carrozzeria</h4>
-  <div class="totali-grid">
-    <div class="totale-item">
-      <span class="totale-label">Passaggi</span>
-      <span class="totale-value" id="carrozzeria-passaggi-tot">0</span>
-    </div>
-    <div class="totale-item">
-      <span class="totale-label">EasyPay</span>
-      <span class="totale-value" id="carrozzeria-easypay-tot">0</span>
-    </div>
-    <div class="totale-item">
-      <span class="totale-label">di cui ODL</span>
-      <input type="number" id="carrozzeria-odl" min="0" value="0" style="font-size: 1.2rem; padding: 0.4rem; border: 1px solid var(--border); border-radius: var(--radius); width: 100%;">
-    </div>
-  </div>
-</div>
+          <h4>📊 Totali Carrozzeria</h4>
+          <div class="totali-grid">
+            <div class="totale-item">
+              <span class="totale-label">Passaggi</span>
+              <span class="totale-value" id="carrozzeria-passaggi-tot">0</span>
+            </div>
+            <div class="totale-item">
+              <span class="totale-label">EasyPay</span>
+              <span class="totale-value" id="carrozzeria-easypay-tot">0</span>
+            </div>
+            <div class="totale-item">
+              <span class="totale-label">di cui ODL</span>
+              <input type="number" id="carrozzeria-odl" min="0" value="0" style="font-size: 1.2rem; padding: 0.4rem; border: 1px solid var(--border); border-radius: var(--radius); width: 100%;">
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="button-row">
@@ -394,8 +500,16 @@
 
   <script src="config.js"></script>
   <script>
+    // Generazione Data per il Nuovo Header
+    const now = new Date();
+    const giorni = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+    const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    document.getElementById('header-date').textContent = 
+      `${giorni[now.getDay()]} ${now.getDate()} ${mesi[now.getMonth()]} ${now.getFullYear()}`;
+
     document.getElementById('data').valueAsDate = new Date();
 
+    // Modifiche funzioni genera: ora includono label per mobile
     function generaToyota() {
       const container = document.getElementById('toyota-container');
       CONFIG.accettatori_toyota.forEach(acc => {
@@ -404,15 +518,19 @@
         row.innerHTML = `
           <div class="accettatore-name">${acc}</div>
           <div class="input-field">
+            <label class="mobile-label">Passaggi</label>
             <input type="number" id="${acc}-passaggi" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label class="mobile-label">Gomme</label>
             <input type="number" id="${acc}-gomme" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label class="mobile-label">Tappetini</label>
             <input type="number" id="${acc}-tappetini" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label class="mobile-label">EasyPay</label>
             <input type="number" id="${acc}-easypay" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
         `;
@@ -428,9 +546,11 @@
         row.innerHTML = `
           <div class="accettatore-name">${acc}</div>
           <div class="input-field">
+            <label class="mobile-label">Passaggi</label>
             <input type="number" id="${acc}-passaggi" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
           <div class="input-field">
+            <label class="mobile-label">EasyPay</label>
             <input type="number" id="${acc}-easypay" min="0" value="0" onchange="ricalcolaTotali()">
           </div>
         `;
