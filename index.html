@@ -178,6 +178,16 @@
       background: white;
     }
 
+    /* COLONNA CARD + PULSANTE */
+    .card-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .card-col .card {
+      flex: 1;
+    }
+
     /* RESPONSIVE */
     @media (max-width: 600px) {
       .cards { grid-template-columns: 1fr; }
@@ -194,43 +204,45 @@
       <span class="logo-riolo">riolo</span>
       <div class="header-divider"></div>
       <div>
-        <div class="header-sede">Via Biagi</div>
-        <div class="header-title">Report Officina</div>
+        <div class="header-sede">Via Enzo Biagi, 8</div>
+        <div class="header-title">Report passaggi officina</div>
       </div>
     </div>
     <span class="header-date" id="header-date"></span>
   </div>
 
   <!-- CARDS -->
-<div class="container">
-  <div class="cards">
+  <div class="container">
+    <div class="cards">
 
-    <!-- CARD SRS -->
-    <a class="card" href="/report-officina/srs/">
-      <img class="card-image" src="./passaggi/images/centralino.jpg" alt="SRS Tagliandi">
-      <div class="card-body">
-        <div class="card-title">📋 Tagliandi SRS</div>
-        <div class="card-desc">Compila il report giornaliero dei tagliandi SRS</div>
-        <a href="https://fabriziofundaro.github.io/report-officina/srs/dashboard" 
-           class="btn btn-secondary" 
-           onclick="event.stopPropagation()">📊 Dashboard SRS</a>
+      <!-- COLONNA SRS -->
+      <div class="card-col">
+        <a class="card" href="/report-officina/srs/">
+          <img class="card-image" src="./passaggi/images/centralino.jpg" alt="SRS Tagliandi">
+          <div class="card-body">
+            <div class="card-title">📋 Tagliandi SRS</div>
+            <div class="card-desc">Compila il report giornaliero dei tagliandi SRS</div>
+          </div>
+        </a>
+        <a href="https://fabriziofundaro.github.io/report-officina/srs/dashboard"
+           class="btn btn-secondary">📊 Dashboard SRS</a>
       </div>
-    </a>
 
-    <!-- CARD PASSAGGI -->
-    <a class="card" href="/report-officina/passaggi/form.html">
-      <img class="card-image" src="./passaggi/images/accettazione.jpg" alt="Passaggi Officina">
-      <div class="card-body">
-        <div class="card-title">🔧 Passaggi officina</div>
-        <div class="card-desc">Compila il report giornaliero dei passaggi in officina e carrozzeria</div>
-        <a href="https://fabriziofundaro.github.io/report-officina/passaggi/dashboard" 
-           class="btn btn-secondary" 
-           onclick="event.stopPropagation()">📊 Dashboard Passaggi</a>
+      <!-- COLONNA PASSAGGI -->
+      <div class="card-col">
+        <a class="card" href="/report-officina/passaggi/form.html">
+          <img class="card-image" src="./passaggi/images/accettazione.jpg" alt="Passaggi Officina">
+          <div class="card-body">
+            <div class="card-title">🔧 Passaggi officina</div>
+            <div class="card-desc">Compila il report giornaliero dei passaggi in officina e carrozzeria</div>
+          </div>
+        </a>
+        <a href="https://fabriziofundaro.github.io/report-officina/passaggi/dashboard"
+           class="btn btn-secondary">📊 Dashboard Passaggi</a>
       </div>
-    </a>
 
+    </div>
   </div>
-</div>
 
   <!-- FOOTER -->
   <div class="footer">
