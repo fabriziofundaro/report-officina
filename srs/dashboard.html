@@ -650,81 +650,98 @@ function chiudiNota() {
 }
 
 // ── ATTIVITÀ EXTRA ────────────────────────────────────
+let attivitaCloseTimer = null;
+
+function parseNumeroOre(valore) {
+  if (valore === null || valore === undefined || valore === '') return 0;
+  if (typeof valore === 'number') return Number.isFinite(valore) ? valore : 0;
+
+  const numero = Number(String(valore).trim().replace(/\s/g, '').replace(',', '.'));
+  return Number.isFinite(numero) ? numero : 0;
+}
+
 function parseAttivitaExtra(attivitaStr) {
-  // Input: "Accoglienza (2h), Centralino (0.5h)"
-  // Output: [ { nome: "Accoglienza", ore: 2 }, { nome: "Centralino", ore: 0.5 } ]
+  // Accetta sia il punto sia la virgola: "Centralino (0.5h)" / "Centralino (0,5h)"
   if (!attivitaStr || attivitaStr.trim() === '') return [];
-  
-  const regex = /([^(]+)\s*\(([0-9.]+)h\)/g;
+
+  const regex = /([^(]+)\s*\(([0-9]+(?:[.,][0-9]+)?)h\)/g;
   const result = [];
   let match;
-  
+
   while ((match = regex.exec(attivitaStr)) !== null) {
     result.push({
-      nome: match[1].trim(),
-      ore: parseFloat(match[2])
+      nome: match[1].trim().replace(/^,\s*/, ''),
+      ore: parseNumeroOre(match[2])
     });
   }
-  
+
   return result;
 }
 
-function toggleAttivita(cell, orePresenza) {
-  var attivitaStr = cell.getAttribute('data-attivita') || '';
-  if (!attivitaStr || !attivitaStr.trim()) return;
-  
-  var panel = document.getElementById('attivita-panel');
-  var panelContent = document.getElementById('attivita-panel-content');
-  var activeCell = document.querySelector('.attivita-cell.active-attivita');
-  
-  // Se clicco sulla stessa cella → chiudo
+function toggleAttivita(cell) {
+  const attivitaStr = cell.getAttribute('data-attivita') || '';
+  if (!attivitaStr.trim()) return;
+
+  const panel = document.getElementById('attivita-panel');
+  const panelContent = document.getElementById('attivita-panel-content');
+  const activeCell = document.querySelector('.attivita-cell.active-attivita');
+
+  // Evita che un vecchio timeout di chiusura nasconda un pannello appena riaperto.
+  if (attivitaCloseTimer) {
+    clearTimeout(attivitaCloseTimer);
+    attivitaCloseTimer = null;
+  }
+
+  // Un secondo clic sulla stessa cella chiude il pannello.
   if (activeCell === cell) {
     chiudiAttivita();
     return;
   }
-  
-  // Rimuovi classe dalla cella precedente
+
   if (activeCell) activeCell.classList.remove('active-attivita');
-  
-  // Parsa le attività
+  chiudiNota();
+
+  const orePresenza = parseNumeroOre(cell.getAttribute('data-ore-presenza'));
+  const oreAssenza = parseNumeroOre(cell.getAttribute('data-ore-assenza'));
+  const oreExtraRegistrate = parseNumeroOre(cell.getAttribute('data-ore-extra'));
+  const oreSRSCalcolate = Math.max(0, orePresenza - oreAssenza - oreExtraRegistrate);
+
   const attivita = parseAttivitaExtra(attivitaStr);
-  const oreExtra = attivita.reduce((s, a) => s + a.ore, 0);
-  const oreSRS = (parseFloat(orePresenza) || 0) - oreExtra;
-  
-  // Costruisci il contenuto del panel (formato tabellare pulito)
   let html = `<div style="font-family:var(--sans); font-size:0.85rem; line-height:1.5;">`;
-  
-  // Ore presenza (header)
-  html += `<div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:2px solid #ddd; margin-bottom:0.5rem; font-weight:600;">
+
+  html += `<div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:2px solid #ddd; font-weight:600;">
     <span>Ore presenza</span>
-    <strong>${(parseFloat(orePresenza) || 0).toFixed(2)}h</strong>
+    <strong>${orePresenza.toFixed(2)}h</strong>
   </div>`;
-  
-  // Elenco attività (formato tabellare)
+
+  if (oreAssenza > 0) {
+    html += `<div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid #ddd; color:#cc1c2e; font-weight:600;">
+      <span>Ore assenza / permesso</span>
+      <strong>−${oreAssenza.toFixed(2)}h</strong>
+    </div>`;
+  }
+
   if (attivita.length > 0) {
-    html += `<div style="margin-bottom:0.5rem;">`;
-    attivita.forEach(a => {
+    html += `<div style="margin-top:0.5rem; margin-bottom:0.5rem;">`;
+    attivita.forEach(attivita => {
       html += `<div style="display:flex; justify-content:space-between; padding:0.25rem 0; color:#555;">
-        <span>${a.nome}</span>
-        <strong style="text-align:right; min-width:50px;">${a.ore.toFixed(2)}h</strong>
+        <span>${attivita.nome}</span>
+        <strong style="text-align:right; min-width:50px;">${attivita.ore.toFixed(2)}h</strong>
       </div>`;
     });
     html += `</div>`;
-    
-    // Totale attività
-    html += `<div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-top:1px solid #ddd; border-bottom:1px solid #ddd; font-weight:600; margin-bottom:0.5rem;">
-      <span>Totale attività</span>
-      <strong style="text-align:right; min-width:50px;">${oreExtra.toFixed(2)}h</strong>
-    </div>`;
   }
-  
-  // Ore SRS finale (footer)
-  html += `<div style="display:flex; justify-content:space-between; padding:0.4rem 0; font-weight:700; color:#0f1117; font-size:0.9rem;">
+
+  html += `<div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-top:1px solid #ddd; border-bottom:1px solid #ddd; font-weight:600; margin-bottom:0.5rem;">
+    <span>Totale attività extra SRS</span>
+    <strong style="text-align:right; min-width:50px;">${oreExtraRegistrate.toFixed(2)}h</strong>
+  </div>`;
+
+  html += `<div style="display:flex; justify-content:space-between; padding:0.5rem 0 0.2rem; font-weight:700; color:#0f1117; font-size:0.9rem;">
     <span>Ore SRS pure</span>
-    <strong style="text-align:right; min-width:50px;">${oreSRS.toFixed(2)}h</strong>
+    <strong style="text-align:right; min-width:50px;">${oreSRSCalcolate.toFixed(2)}h</strong>
   </div></div>`;
-  
-  // Mostra attività nel pannello
+
   cell.classList.add('active-attivita');
   panelContent.innerHTML = html;
   panel.style.display = 'block';
@@ -733,12 +750,19 @@ function toggleAttivita(cell, orePresenza) {
 }
 
 function chiudiAttivita() {
-  var panel = document.getElementById('attivita-panel');
-  var activeCell = document.querySelector('.attivita-cell.active-attivita');
+  const panel = document.getElementById('attivita-panel');
+  const activeCell = document.querySelector('.attivita-cell.active-attivita');
+
+  if (attivitaCloseTimer) clearTimeout(attivitaCloseTimer);
+
   if (panel) {
     panel.classList.remove('visible');
-    setTimeout(() => panel.style.display = 'none', 300);
+    attivitaCloseTimer = setTimeout(() => {
+      panel.style.display = 'none';
+      attivitaCloseTimer = null;
+    }, 300);
   }
+
   if (activeCell) activeCell.classList.remove('active-attivita');
 }
 
@@ -1159,6 +1183,8 @@ function renderTable(rows) {
       <td class="attivita-cell col-attivita${(r['Attività extra']||'').trim() ? ' has-attivita' : ''}"
           data-attivita="${(r['Attività extra']||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
           data-ore-presenza="${r['Ore presenza'] || 0}"
+          data-ore-assenza="${r['Ore assenza'] || 0}"
+          data-ore-extra="${r['Ore extra SRS'] || 0}"
           >${(r['Attività extra']||'').trim() ? (r['Attività extra'].length > 30 ? r['Attività extra'].substring(0,30)+'…' : r['Attività extra']) : '—'}</td>
     </tr>`;
   }).join('');
@@ -1185,21 +1211,19 @@ function renderTable(rows) {
 
   document.getElementById('table-container').innerHTML = html;
 
-  // Event delegation per le note
+  // Un solo gestore per clic: usando onclick lo sostituiamo a ogni render,
+  // evitando l'accumulo di listener che apriva e richiudeva subito il pannello.
   var tc = document.getElementById('table-container');
-  tc.addEventListener('click', function(e) {
-    var cell = e.target.closest && e.target.closest('.note-cell');
-    if (cell) toggleNota(cell);
-  });
-  
-  // Event delegation per le attività
-  tc.addEventListener('click', function(e) {
-    var cell = e.target.closest && e.target.closest('.attivita-cell');
-    if (cell) {
-      var orePresenza = cell.getAttribute('data-ore-presenza') || '0';
-      toggleAttivita(cell, orePresenza);
+  tc.onclick = function(e) {
+    var noteCell = e.target.closest && e.target.closest('.note-cell');
+    if (noteCell) {
+      toggleNota(noteCell);
+      return;
     }
-  });
+
+    var attivitaCell = e.target.closest && e.target.closest('.attivita-cell');
+    if (attivitaCell) toggleAttivita(attivitaCell);
+  };
 }
 
 function exportExcel() {
@@ -1634,4 +1658,3 @@ function backToConfronto() {
 </script>
 </body>
 </html>
-
