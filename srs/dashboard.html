@@ -582,6 +582,15 @@
           </div>
         </div>
 
+        <!-- Distribuzione aggregata per canale: Martina + Matilde + Amelia -->
+        <div class="chart-card" style="margin-bottom:1.5rem;">
+          <div class="chart-title">
+            Distribuzione per canale — Totale team
+            <span class="chart-formula">% tagliandi aggregati per sezione</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-canali-team" height="220"></canvas></div>
+        </div>
+
       </div><!-- /confronto -->
 
       <!-- Vista dettaglio operatrice -->
@@ -1329,6 +1338,7 @@ function renderAnalytics() {
   renderChartKpiBars(stats);
   renderChartTorta(stats);
   renderChartOreSRS(stats);
+  renderChartCanaliTeam(rows);
 }
 
 // ── Tabella riepilogo ────────────────────────────────────────
@@ -1513,6 +1523,84 @@ function renderChartOreSRS(stats) {
       scales: {
         x: { ticks: { color: '#0d1117' }, grid: { color: '#e8ecf2' } },
         y: { ticks: { color: '#6b7280', callback: v => v+'%' }, grid: { color: '#e8ecf2' }, max: 100 }
+      }
+    }
+  });
+}
+
+// ── Torta distribuzione canali aggregata per il team ──────────
+function renderChartCanaliTeam(rows) {
+  destroyChart('canali-team');
+
+  const teamRows = rows.filter(r => PRINCIPALI.includes(r['Operatrice']));
+  const canvas = document.getElementById('chart-canali-team');
+  if (!canvas) return;
+
+  const canaliTeam = [
+    {
+      label: 'SRS',
+      color: '#4ade80',
+      calc: r => [
+        'Toshiko - Tagliandi',
+        'File annullati - Tagliandi',
+        'File tagliandi - Tagliandi'
+      ].reduce((totale, chiave) => totale + (parseInt(r[chiave], 10) || 0), 0)
+    },
+    { label: 'WhatsApp',      color: '#60a5fa', calc: r => parseInt(r['Canali diretti - WhatsApp'], 10) || 0 },
+    { label: 'Centralino',    color: '#f97316', calc: r => parseInt(r['Canali diretti - Centralino'], 10) || 0 },
+    { label: 'Di presenza',   color: '#f8b500', calc: r => parseInt(r['Canali diretti - Di presenza'], 10) || 0 },
+    { label: 'OSB',           color: '#a78bfa', calc: r => parseInt(r['Canali diretti - OSB'], 10) || 0 },
+    { label: 'Teams / Skype', color: '#fb7185', calc: r => parseInt(r['Canali diretti - Teams / Skype'], 10) || 0 },
+    { label: 'Altro',         color: '#94a3b8', calc: r => parseInt(r['Canali diretti - Altro'], 10) || 0 },
+  ];
+
+  const canaliTotali = canaliTeam
+    .map(canale => ({
+      ...canale,
+      tot: teamRows.reduce((somma, riga) => somma + canale.calc(riga), 0)
+    }))
+    .filter(canale => canale.tot > 0);
+
+  const totaleCanali = canaliTotali.reduce((somma, canale) => somma + canale.tot, 0);
+
+  _charts['canali-team'] = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: canaliTotali.map(canale => canale.label),
+      datasets: [{
+        data: canaliTotali.map(canale => canale.tot),
+        backgroundColor: canaliTotali.map(canale => canale.color + 'cc'),
+        borderColor: canaliTotali.map(canale => canale.color),
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#0d1117', font: { size: 11 }, padding: 12 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const percentuale = totaleCanali > 0
+                ? (ctx.parsed / totaleCanali * 100).toFixed(1)
+                : '0.0';
+              return ` ${ctx.label}: ${ctx.parsed} (${percentuale}%)`;
+            }
+          }
+        },
+        datalabels: {
+          display: true,
+          color: '#fff',
+          font: { size: 13, weight: 'bold', family: 'JetBrains Mono' },
+          formatter: valore => {
+            if (valore <= 0 || totaleCanali <= 0) return '';
+            return `${(valore / totaleCanali * 100).toFixed(1)}%`;
+          }
+        }
       }
     }
   });
