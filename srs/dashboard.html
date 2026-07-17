@@ -384,6 +384,22 @@
   .chart-formula { font-size: .68rem; color: var(--ink-muted); font-style: italic; font-family: var(--mono); font-weight: 400; }
   .chart-wrap { position: relative; }
 
+  /* Grafico aggregato team: dimensioni compatte e centrate */
+  .chart-wrap-team {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    height: 300px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 600px) {
+    .chart-wrap-team {
+      max-width: 100%;
+      height: 260px;
+    }
+  }
+
   /* Tabella riepilogo KPI */
   .kpi-table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
   .kpi-table { width: 100%; border-collapse: collapse; background: var(--surface);
@@ -588,7 +604,7 @@
             Distribuzione per canale — Totale team
             <span class="chart-formula">% tagliandi aggregati per sezione</span>
           </div>
-          <div class="chart-wrap"><canvas id="chart-canali-team" height="220"></canvas></div>
+          <div class="chart-wrap-team"><canvas id="chart-canali-team"></canvas></div>
         </div>
 
       </div><!-- /confronto -->
@@ -1576,7 +1592,7 @@ function renderChartCanaliTeam(rows) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           position: 'bottom',
