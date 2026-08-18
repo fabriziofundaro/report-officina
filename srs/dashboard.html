@@ -1412,33 +1412,48 @@ function renderKpiSummaryTable(stats) {
 // ── Grafici a barre KPI ──────────────────────────────────────
 function renderChartKpiBars(stats) {
   destroyChart('kpi-bars');
-  const labels = PRINCIPALI;
-  const colors = PRINCIPALI.map(op => opColor(op, 0.8));
-  const borderColors = PRINCIPALI.map(op => opColor(op));
 
-  // 5 dataset, uno per KPI
+  // I primi due KPI sono già percentuali e mantengono il loro valore reale
+  // anche come lunghezza della barra. I tre KPI di produttività vengono invece
+  // normalizzati separatamente sul migliore valore del KPI, così il confronto
+  // tra operatrici resta proporzionale senza alterare i valori mostrati.
   const kpis = [
-    { label: 'Tasso risposta (%)',  key: 'tasso_risposta', formula: 'Risposte / Chiamate × 100' },
-    { label: 'Tasso conversione (%)', key: 'tasso_conv',   formula: 'App.SRS / Risposte × 100' },
-    { label: 'Chiamate/Ora SRS',    key: 'chiam_ora',      formula: 'Chiamate / Ore SRS' },
-    { label: 'Tg.Totali/Ore SRS',   key: 'tg_tot_ore',    formula: 'App.Totali / Ore SRS' },
-    { label: 'Tg.SRS/Ore SRS',      key: 'tg_srs_ore',    formula: 'App.SRS / Ore SRS' },
+    { label: 'Tasso risposta (%)',    key: 'tasso_risposta', formula: 'Risposte / Chiamate × 100', normalizza: false },
+    { label: 'Tasso conversione (%)', key: 'tasso_conv',     formula: 'App.SRS / Risposte × 100', normalizza: false },
+    { label: 'Chiamate/Ora SRS',      key: 'chiam_ora',      formula: 'Chiamate / Ore SRS',       normalizza: true  },
+    { label: 'Tg.Totali/Ore SRS',     key: 'tg_tot_ore',     formula: 'App.Totali / Ore SRS',     normalizza: true  },
+    { label: 'Tg.SRS/Ore SRS',        key: 'tg_srs_ore',     formula: 'App.SRS / Ore SRS',        normalizza: true  },
   ];
 
-  // Grafico con 5 gruppi di barre, una per KPI — usiamo grouped bar chart orizzontale
+  // Valore massimo reale per ogni KPI: serve solo per la scala grafica
+  // dei KPI normalizzati. I dati numerici originali non vengono modificati.
+  const maxPerKpi = kpis.map(k => Math.max(
+    ...PRINCIPALI.map(op => Number(stats[op][k.key]) || 0)
+  ));
+
   const ctx = document.getElementById('chart-kpi-bars').getContext('2d');
   _charts['kpi-bars'] = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: kpis.map(k => k.label),
-      datasets: PRINCIPALI.map(op => ({
-        label: op,
-        data: kpis.map(k => parseFloat(stats[op][k.key].toFixed(2))),
-        backgroundColor: opColor(op, 0.75),
-        borderColor: opColor(op),
-        borderWidth: 1,
-        borderRadius: 3,
-      }))
+      datasets: PRINCIPALI.map(op => {
+        const valoriReali = kpis.map(k => Number(stats[op][k.key]) || 0);
+        const valoriGrafici = valoriReali.map((valore, i) => {
+          if (!kpis[i].normalizza) return parseFloat(valore.toFixed(2));
+          const max = maxPerKpi[i];
+          return max > 0 ? parseFloat((valore / max * 100).toFixed(4)) : 0;
+        });
+
+        return {
+          label: op,
+          data: valoriGrafici,
+          valoriReali: valoriReali,
+          backgroundColor: opColor(op, 0.75),
+          borderColor: opColor(op),
+          borderWidth: 1,
+          borderRadius: 3,
+        };
+      })
     },
     options: {
       indexAxis: 'y',
@@ -1449,7 +1464,8 @@ function renderChartKpiBars(stats) {
           callbacks: {
             label: ctx => {
               const kpi = kpis[ctx.dataIndex];
-              return ` ${ctx.dataset.label}: ${ctx.parsed.x.toFixed(2)}  (${kpi.formula})`;
+              const valoreReale = ctx.dataset.valoriReali[ctx.dataIndex] || 0;
+              return ` ${ctx.dataset.label}: ${valoreReale.toFixed(2)}  (${kpi.formula})`;
             }
           }
         },
@@ -1457,14 +1473,17 @@ function renderChartKpiBars(stats) {
           display: true,
           anchor: 'end', align: 'end',
           color: '#0d1117', font: { size: 13, weight: 'bold', family: 'JetBrains Mono' },
-          formatter: v => v > 0 ? v.toFixed(2) : '',
+          formatter: (v, ctx) => {
+            const valoreReale = ctx.dataset.valoriReali[ctx.dataIndex] || 0;
+            return valoreReale > 0 ? valoreReale.toFixed(2) : '';
+          },
           clip: false,
           padding: { left: 4 }
         }
       },
       layout: { padding: { right: 55 } },
       scales: {
-        x: { ticks: { color: '#6b7280' }, grid: { color: '#e8ecf2' } },
+        x: { min: 0, suggestedMax: 100, ticks: { color: '#6b7280' }, grid: { color: '#e8ecf2' } },
         y: { ticks: { color: '#0d1117', font: { size: 11 } }, grid: { color: '#e8ecf2' } }
       }
     }
