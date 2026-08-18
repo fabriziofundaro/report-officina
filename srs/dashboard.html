@@ -1475,7 +1475,9 @@ function renderChartKpiBars(stats) {
           color: '#0d1117', font: { size: 13, weight: 'bold', family: 'JetBrains Mono' },
           formatter: (v, ctx) => {
             const valoreReale = ctx.dataset.valoriReali[ctx.dataIndex] || 0;
-            return valoreReale > 0 ? valoreReale.toFixed(2) : '';
+            const kpi = kpis[ctx.dataIndex];
+            const suffisso = kpi.normalizza ? '' : '%';
+            return valoreReale > 0 ? valoreReale.toFixed(2) + suffisso : '';
           },
           clip: false,
           padding: { left: 4 }
