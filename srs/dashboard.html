@@ -1304,9 +1304,10 @@ function aggregaPerOperatrice(rows) {
     s.app_tot      += parseInt(r['Totale Tagliandi']) || 0;
     s.giorni.add(parseData(r['Data']));
 
-    // Chiamate = Senza risposta + Risposta (per Toshiko, File annullati, File tagliandi)
-    // Escluso: Senza contatto (non è un contatto telefonico)
-    // Escluso: Canali diretti (WhatsApp, Centralino, ecc. — natura diversa)
+    // Chiamate = Senza risposta + Risposta (Toshiko, File annullati, File tagliandi)
+    // + Teams / Skype: ogni tagliando Teams/Skype equivale a una chiamata con risposta.
+    // Escluso: Senza contatto (non è un contatto telefonico).
+    // Gli altri canali diretti restano esclusi dalle chiamate.
     const sezioniChiamate = (CONFIG.sezioni || []).filter(sez => sez.id !== 'canali_diretti');
     sezioniChiamate.forEach(sez => {
       s.chiamate += parseInt(r[`${sez.label} - Senza risposta`]) || 0;
@@ -1314,12 +1315,17 @@ function aggregaPerOperatrice(rows) {
       s.risposte += parseInt(r[`${sez.label} - Risposta`])       || 0;
     });
 
-    // App SRS = solo tagliandi da chiamata telefonica (Toshiko + File ann. + File tag.)
-    // Escluso WhatsApp — non deriva da una risposta telefonica
+    const teamsSkype = parseInt(r['Canali diretti - Teams / Skype']) || 0;
+    s.chiamate += teamsSkype;
+    s.risposte += teamsSkype;
+
+    // App SRS = tagliandi da chiamata telefonica + Teams / Skype.
+    // WhatsApp e gli altri canali diretti mantengono il comportamento precedente.
     sezioniChiamate.forEach(sez => {
       const tagCat = sez.categorie.find(c => c.tagliando);
       if (tagCat) s.app_srs += parseInt(r[`${sez.label} - ${tagCat.label}`]) || 0;
     });
+    s.app_srs += teamsSkype;
   });
 
   // Calcola KPI derivati
@@ -1554,7 +1560,7 @@ function renderChartCanaliTeam(rows) {
 
   const canaliTeam = [
     {
-      label: 'SRS',
+      label: 'SRS telefonico',
       color: '#4ade80',
       calc: r => [
         'Toshiko - Tagliandi',
@@ -1692,7 +1698,7 @@ function openDettaglio(op) {
   });
 
   // Grafico torta dettaglio — categorie specifiche:
-  // SRS (Toshiko + File ann. + File tag.), WhatsApp, Centralino, Di presenza, OSB, Teams/Skype, Riprogrammazioni
+  // SRS telefonico (Toshiko + File ann. + File tag.), Teams/Skype separato, poi gli altri canali diretti.
   destroyChart('detail-canali');
 
   const canaliDettaglio = [
@@ -1702,11 +1708,11 @@ function openDettaglio(op) {
       calc: r => ['Toshiko - Tagliandi','File annullati - Tagliandi','File tagliandi - Tagliandi']
                    .reduce((s,k) => s + (parseInt(r[k])||0), 0)
     },
-    { label: 'WhatsApp',     color: '#60a5fa', calc: r => parseInt(r['Canali diretti - WhatsApp'])||0 },
-    { label: 'Centralino',   color: '#f97316', calc: r => parseInt(r['Canali diretti - Centralino'])||0 },
-    { label: 'Di presenza',  color: '#f8b500', calc: r => parseInt(r['Canali diretti - Di presenza'])||0 },
-    { label: 'OSB',          color: '#a78bfa', calc: r => parseInt(r['Canali diretti - OSB'])||0 },
-    { label: 'Teams / Skype',color: '#fb7185', calc: r => parseInt(r['Canali diretti - Teams / Skype'])||0 },
+    { label: 'WhatsApp',      color: '#60a5fa', calc: r => parseInt(r['Canali diretti - WhatsApp'])||0 },
+    { label: 'Centralino',    color: '#f97316', calc: r => parseInt(r['Canali diretti - Centralino'])||0 },
+    { label: 'Di presenza',   color: '#f8b500', calc: r => parseInt(r['Canali diretti - Di presenza'])||0 },
+    { label: 'OSB',           color: '#a78bfa', calc: r => parseInt(r['Canali diretti - OSB'])||0 },
+    { label: 'Teams / Skype', color: '#fb7185', calc: r => parseInt(r['Canali diretti - Teams / Skype'])||0 },
   ];
 
   const canaliTot = canaliDettaglio.map(c => ({

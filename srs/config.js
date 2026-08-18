@@ -140,7 +140,7 @@ const CONFIG = {
         { id: "cd_centralino",      label: "Centralino",      tagliando: true,  srs: false },
         { id: "cd_presenza",        label: "Di presenza",     tagliando: true,  srs: false },
         { id: "cd_osb",             label: "OSB",             tagliando: true,  srs: false },
-        { id: "cd_teams_skype",     label: "Teams / Skype",   tagliando: true,  srs: false },
+        { id: "cd_teams_skype",     label: "Teams / Skype",   tagliando: true,  srs: true  },
         { id: "cd_altro",           label: "Altro",           tagliando: true,  srs: false }, // casi eccezionali (es. noleggiatori)
       ]
     }
