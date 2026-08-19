@@ -1713,7 +1713,6 @@ function buildManagementReportHTML(rows, stats) {
         <div class="left-col">
           <div class="report-export-chart-card">
             <div class="report-export-chart-title">Confronto KPI performance</div>
-            <div class="report-export-chart-sub">Stessa struttura del report web · etichette con valori reali</div>
             <div class="report-export-kpi-canvas-wrap">
               <canvas id="export-chart-kpi" class="report-export-kpi-canvas" width="760" height="520"></canvas>
             </div>
@@ -1971,9 +1970,10 @@ function aggregaPerOperatrice(rows) {
     s.giorni.add(parseData(r['Data']));
 
     // Chiamate = Senza risposta + Risposta (Toshiko, File annullati, File tagliandi)
-    // + Teams / Skype: ogni tagliando Teams/Skype equivale a una chiamata con risposta.
+    // + Teams / Skype, WhatsApp e OSB: ogni tagliando di questi canali diretti
+    // equivale a una chiamata con risposta.
     // Escluso: Senza contatto (non è un contatto telefonico).
-    // Gli altri canali diretti restano esclusi dalle chiamate.
+    // Restano esclusi gli altri canali diretti non confermati.
     const sezioniChiamate = (CONFIG.sezioni || []).filter(sez => sez.id !== 'canali_diretti');
     sezioniChiamate.forEach(sez => {
       s.chiamate += parseInt(r[`${sez.label} - Senza risposta`]) || 0;
@@ -1982,11 +1982,15 @@ function aggregaPerOperatrice(rows) {
     });
 
     const teamsSkype = parseInt(r['Canali diretti - Teams / Skype']) || 0;
-    s.chiamate += teamsSkype;
-    s.risposte += teamsSkype;
+    const whatsapp   = parseInt(r['Canali diretti - WhatsApp']) || 0;
+    const osb        = parseInt(r['Canali diretti - OSB']) || 0;
+    const direttiConRisposta = teamsSkype + whatsapp + osb;
+    s.chiamate += direttiConRisposta;
+    s.risposte += direttiConRisposta;
 
     // App SRS = tagliandi da chiamata telefonica + Teams / Skype.
-    // WhatsApp e gli altri canali diretti mantengono il comportamento precedente.
+    // WhatsApp e OSB aumentano chiamate, risposte e tagliandi presi totali,
+    // ma NON rientrano tra gli App. SRS.
     sezioniChiamate.forEach(sez => {
       const tagCat = sez.categorie.find(c => c.tagliando);
       if (tagCat) s.app_srs += parseInt(r[`${sez.label} - ${tagCat.label}`]) || 0;
