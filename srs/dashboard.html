@@ -452,40 +452,94 @@
     opacity: 0;
   }
   .report-export-page {
-    width: 1080px;
-    background: #dbe8cb;
-    color: #111827;
+    width: 1120px;
+    background: #f4f7fb;
+    color: #122033;
     font-family: var(--sans);
-    border: 3px solid #0f172a;
-    padding: 14px;
+    padding: 18px;
+    border: 1px solid #d8e0ea;
+  }
+  .report-export-header {
+    background: linear-gradient(135deg, #15334b 0%, #224d6d 100%);
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .report-export-title-block {
+    flex: 1;
   }
   .report-export-title {
-    text-align: center;
+    font-size: 29px;
     font-weight: 900;
-    font-size: 26px;
-    line-height: 1.1;
+    line-height: 1.08;
     margin-bottom: 6px;
-    color: #111827;
+    letter-spacing: -0.02em;
   }
   .report-export-subtitle {
-    text-align: center;
-    font-size: 13px;
-    color: #334155;
-    margin-bottom: 8px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.92);
     font-weight: 700;
   }
-  .report-export-box {
-    background: rgba(255,255,255,0.2);
-    border: 3px solid #17324d;
-    border-radius: 22px;
-    padding: 10px 12px 12px;
+  .report-export-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
   }
-  .report-export-box + .report-export-box { margin-top: 12px; }
-  .report-export-box-title {
-    font-size: 16px;
+  .report-export-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px;
+    padding: 8px 12px;
+    min-width: 120px;
+    backdrop-filter: blur(4px);
+  }
+  .report-export-badge .label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .85;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+  .report-export-badge .value {
+    display: block;
+    font-size: 19px;
     font-weight: 900;
-    margin-bottom: 8px;
-    color: #111827;
+    line-height: 1;
+  }
+  .report-export-panel {
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 18px;
+    padding: 14px 16px 16px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+  .report-export-panel + .report-export-panel {
+    margin-top: 12px;
+  }
+  .report-export-panel-title {
+    font-size: 17px;
+    font-weight: 900;
+    color: #17324d;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .report-export-panel-title .sub {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
   }
   .report-export-summary-table,
   .report-export-mini-table {
@@ -497,17 +551,21 @@
   .report-export-summary-table td,
   .report-export-mini-table th,
   .report-export-mini-table td {
-    border: 2px solid rgba(17,24,39,0.82);
-    padding: 4px 6px;
+    border: 1px solid #d7e2ec;
+    padding: 8px 8px;
     text-align: center;
-    font-size: 14px;
-    line-height: 1.02;
+    font-size: 15px;
+    line-height: 1.08;
   }
   .report-export-summary-table th,
   .report-export-mini-table th {
-    background: #c9e37c;
+    background: #e9f2fb;
+    color: #17324d;
     font-weight: 900;
-    color: #111827;
+  }
+  .report-export-summary-table tbody tr:nth-child(odd),
+  .report-export-mini-table tbody tr:nth-child(odd) {
+    background: #f8fbfe;
   }
   .report-export-summary-table td:first-child,
   .report-export-mini-table td:first-child {
@@ -517,35 +575,35 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 12px;
   }
   .report-export-kpi-chip {
-    background: rgba(255,255,255,0.45);
-    border: 2px solid rgba(23,50,77,0.85);
+    background: linear-gradient(180deg, #f8fbff 0%, #eff5fb 100%);
+    border: 1px solid #d9e2ec;
     border-radius: 14px;
-    padding: 7px 10px;
+    padding: 10px 12px;
     text-align: center;
   }
   .report-export-kpi-chip .label {
     display: block;
     font-size: 11px;
-    letter-spacing: .06em;
+    letter-spacing: .08em;
     text-transform: uppercase;
-    color: #334155;
+    color: #64748b;
     font-weight: 800;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
   .report-export-kpi-chip .value {
     display: block;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 900;
-    color: #0f172a;
+    color: #122033;
     line-height: 1;
   }
   .report-export-main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 230px;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 268px;
+    gap: 12px;
     align-items: stretch;
   }
   .report-export-main .left-col,
@@ -554,16 +612,31 @@
     flex-direction: column;
     gap: 12px;
   }
+  .report-export-chart-card {
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 18px;
+    padding: 12px 14px 14px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
   .report-export-chart-title {
     font-size: 17px;
     font-weight: 900;
     margin-bottom: 8px;
-    color: #111827;
+    color: #17324d;
+  }
+  .report-export-chart-sub {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    margin-top: -2px;
+    margin-bottom: 6px;
   }
   .report-export-chart-title.small {
-    font-size: 14px;
+    font-size: 15px;
     text-align: center;
-    margin-bottom: 6px;
   }
   .report-export-chart-img {
     width: 100%;
@@ -571,21 +644,24 @@
     background: transparent;
   }
   .report-export-chart-img.big {
-    height: 340px;
+    height: 360px;
     object-fit: contain;
   }
   .report-export-chart-img.small {
-    height: 170px;
+    height: 190px;
     object-fit: contain;
   }
-  .report-export-note {
+  .report-export-footer-note {
     margin-top: 8px;
     font-size: 11px;
-    color: #475569;
+    color: #64748b;
     text-align: right;
     font-weight: 700;
   }
-
+  .report-export-emphasis {
+    color: #0f172a;
+    font-weight: 900;
+  }
 </style>
   <link rel="icon" type="image/png" href="/report-officina/favicon.png">
 </head>
@@ -1525,7 +1601,7 @@ function restoreViewState(state) {
 
 function buildManagementReportHTML(rows, stats) {
   const periodo = getPeriodoExportLabel(rows);
-  const totali = getTotaliStats(stats);
+  const sedeLabel = document.getElementById('dash-sede')?.textContent || 'Report SRS';
   const extra = getTeamExtraKpi(rows, stats);
   const chartKpi = getChartImage('kpi-bars');
   const chartTorta = getChartImage('torta');
@@ -1535,7 +1611,7 @@ function buildManagementReportHTML(rows, stats) {
     const s = stats[op];
     return `
       <tr>
-        <td>${op}</td>
+        <td style="color:${opColor(op)}">${op}</td>
         <td>${formatNumeroIT(s.ore_presenza, 1)}</td>
         <td>${formatNumeroIT(s.ore_srs, 1)}</td>
         <td>${formatNumeroIT(s.chiamate, 0)}</td>
@@ -1549,7 +1625,7 @@ function buildManagementReportHTML(rows, stats) {
     const s = stats[op];
     return `
       <tr>
-        <td style="text-align:left"><span style="display:inline-block;width:10px;height:10px;background:${opColor(op)};border:1px solid #17324d;margin-right:6px;vertical-align:middle"></span>${op}</td>
+        <td style="text-align:left;color:${opColor(op)}"><span style="display:inline-block;width:10px;height:10px;background:${opColor(op)};border-radius:3px;margin-right:7px;vertical-align:middle"></span>${op}</td>
         <td>${formatNumeroIT(s.tg_srs_ore, 1)}</td>
         <td>${formatNumeroIT(s.tg_tot_ore, 1)}</td>
         <td>${formatNumeroIT(s.chiam_ora, 1)}</td>
@@ -1558,18 +1634,31 @@ function buildManagementReportHTML(rows, stats) {
       </tr>`;
   }).join('');
 
-  const subtitle = periodo.subtitle ? `<div class="report-export-subtitle">${periodo.subtitle}</div>` : '';
+  const subtitle = periodo.subtitle || `Periodo filtrato: ${periodo.title}`;
 
   return `
     <div class="report-export-page">
-      <div class="report-export-title">${periodo.title} - Analisi performance reparto SRS</div>
-      ${subtitle}
-      <div class="report-export-box">
-        <div class="report-export-box-title">Riepilogo dati SRS</div>
+      <div class="report-export-header">
+        <div class="report-export-title-block">
+          <div class="report-export-title">${periodo.title} · Analisi performance reparto SRS</div>
+          <div class="report-export-subtitle">${sedeLabel} · ${subtitle}</div>
+        </div>
+        <div class="report-export-badges">
+          <div class="report-export-badge"><span class="label">Tagliandi team</span><span class="value">${formatNumeroIT(extra.tagliandiTeam, 0)}</span></div>
+          <div class="report-export-badge"><span class="label">Media / giorno</span><span class="value">${formatNumeroIT(extra.mediaGiorno, 1)}</span></div>
+          <div class="report-export-badge"><span class="label">Report nel periodo</span><span class="value">${formatNumeroIT(extra.report, 0)}</span></div>
+        </div>
+      </div>
+
+      <div class="report-export-panel">
+        <div class="report-export-panel-title">
+          <span>Riepilogo dati SRS</span>
+          <span class="sub">Valori aggregati per operatrice</span>
+        </div>
         <table class="report-export-summary-table">
           <thead>
             <tr>
-              <th></th>
+              <th>Operatrice</th>
               <th>Ore presenza</th>
               <th>Ore SRS</th>
               <th>Chiamate</th>
@@ -1582,52 +1671,53 @@ function buildManagementReportHTML(rows, stats) {
             ${summaryRows}
           </tbody>
         </table>
-        <div class="report-export-kpi-strip">
-          <div class="report-export-kpi-chip"><span class="label">Tagliandi team</span><span class="value">${formatNumeroIT(extra.tagliandiTeam, 0)}</span></div>
-          <div class="report-export-kpi-chip"><span class="label">Media / giorno</span><span class="value">${formatNumeroIT(extra.mediaGiorno, 1)}</span></div>
-          <div class="report-export-kpi-chip"><span class="label">Report nel periodo</span><span class="value">${formatNumeroIT(extra.report, 0)}</span></div>
+      </div>
+
+      <div class="report-export-main" style="margin-top:12px;">
+        <div class="left-col">
+          <div class="report-export-chart-card">
+            <div class="report-export-chart-title">Confronto KPI performance</div>
+            <div class="report-export-chart-sub">Stessa struttura del report web · etichette con valori reali</div>
+            <img class="report-export-chart-img big" src="${chartKpi}" alt="Confronto KPI performance">
+          </div>
+          <div class="report-export-panel">
+            <div class="report-export-panel-title">
+              <span>Tabella KPI sintetica</span>
+              <span class="sub">Lettura rapida per confronto tra operatrici</span>
+            </div>
+            <table class="report-export-mini-table">
+              <thead>
+                <tr>
+                  <th>Operatrice</th>
+                  <th>Tg. SRS/Ore SRS</th>
+                  <th>Tg. Totali/Ore SRS</th>
+                  <th>Chiamate/Ora</th>
+                  <th>Tasso di risposta</th>
+                  <th>Tasso di convers.</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${miniTableRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="report-export-chart-card">
+            <div class="report-export-chart-title small">Tagliandi per operatrice</div>
+            <div class="report-export-chart-sub" style="text-align:center">Percentuale sul totale team</div>
+            <img class="report-export-chart-img small" src="${chartTorta}" alt="Tagliandi per operatrice">
+          </div>
+          <div class="report-export-chart-card">
+            <div class="report-export-chart-title small">Ore SRS / Ore presenza</div>
+            <div class="report-export-chart-sub" style="text-align:center">Incidenza delle ore SRS sul tempo di presenza</div>
+            <img class="report-export-chart-img small" src="${chartOre}" alt="Ore SRS su Ore presenza">
+          </div>
         </div>
       </div>
 
-      <div class="report-export-box" style="margin-top:12px;">
-        <div class="report-export-main">
-          <div class="left-col">
-            <div>
-              <div class="report-export-chart-title">Confronto KPI performance</div>
-              <img class="report-export-chart-img big" src="${chartKpi}" alt="Confronto KPI performance">
-            </div>
-            <div>
-              <table class="report-export-mini-table">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Tg. SRS/Ore SRS</th>
-                    <th>Tg. Totali/Ore SRS</th>
-                    <th>Chiamate/Ora</th>
-                    <th>Tasso di risposta</th>
-                    <th>Tasso di convers.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${miniTableRows}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="right-col">
-            <div>
-              <div class="report-export-chart-title small">Tagliandi per operatrice (%)</div>
-              <img class="report-export-chart-img small" src="${chartTorta}" alt="Tagliandi per operatrice">
-            </div>
-            <div>
-              <div class="report-export-chart-title small">Ore SRS/Ore presenza</div>
-              <img class="report-export-chart-img small" src="${chartOre}" alt="Ore SRS su Ore presenza">
-            </div>
-          </div>
-        </div>
-        <div class="report-export-note">Report sintetico per condivisione rapida su WhatsApp / PDF direzionale</div>
-      </div>
+      <div class="report-export-footer-note">Report sintetico ottimizzato per condivisione rapida su WhatsApp e per esportazione PDF A4.</div>
     </div>`;
 }
 
@@ -1664,7 +1754,7 @@ async function captureManagementReportCanvas() {
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
     const canvas = await html2canvas(reportNode, {
-      scale: 2,
+      scale: 3,
       backgroundColor: '#dbe8cb',
       useCORS: true,
       logging: false
