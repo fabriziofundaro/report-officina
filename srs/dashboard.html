@@ -488,16 +488,38 @@
   .report-export-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
     justify-content: flex-end;
   }
   .report-export-badge {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 999px;
-    padding: 8px 12px;
-    min-width: 120px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 18px;
+    padding: 12px 16px;
+    min-width: 172px;
     backdrop-filter: blur(4px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .report-export-badge-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.18);
+    font-size: 22px;
+    line-height: 1;
+    flex: 0 0 42px;
+  }
+  .report-export-badge-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
   }
   .report-export-badge .label {
     display: block;
@@ -506,11 +528,12 @@
     text-transform: uppercase;
     opacity: .85;
     font-weight: 800;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
+    white-space: nowrap;
   }
   .report-export-badge .value {
     display: block;
-    font-size: 19px;
+    font-size: 28px;
     font-weight: 900;
     line-height: 1;
   }
@@ -520,6 +543,7 @@
     border-radius: 18px;
     padding: 14px 16px 16px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
   }
   .report-export-panel + .report-export-panel {
     margin-top: 12px;
@@ -562,6 +586,19 @@
     background: #e9f2fb;
     color: #17324d;
     font-weight: 900;
+  }
+  .report-export-summary-table th {
+    font-size: 12px;
+    line-height: 1.15;
+    letter-spacing: .05em;
+    white-space: normal;
+    word-break: normal;
+  }
+  .report-export-mini-table th {
+    font-size: 12px;
+    line-height: 1.15;
+    letter-spacing: .04em;
+    white-space: normal;
   }
   .report-export-summary-table tbody tr:nth-child(odd),
   .report-export-mini-table tbody tr:nth-child(odd) {
@@ -640,23 +677,15 @@
   }
   .report-export-chart-img {
     width: 100%;
+    height: auto;
     display: block;
     background: transparent;
   }
   .report-export-chart-img.big {
-    height: 360px;
-    object-fit: contain;
+    max-height: 460px;
   }
   .report-export-chart-img.small {
-    height: 190px;
-    object-fit: contain;
-  }
-  .report-export-footer-note {
-    margin-top: 8px;
-    font-size: 11px;
-    color: #64748b;
-    text-align: right;
-    font-weight: 700;
+    max-height: 250px;
   }
   .report-export-emphasis {
     color: #0f172a;
@@ -1644,9 +1673,20 @@ function buildManagementReportHTML(rows, stats) {
           <div class="report-export-subtitle">${sedeLabel} · ${subtitle}</div>
         </div>
         <div class="report-export-badges">
-          <div class="report-export-badge"><span class="label">Tagliandi team</span><span class="value">${formatNumeroIT(extra.tagliandiTeam, 0)}</span></div>
-          <div class="report-export-badge"><span class="label">Media / giorno</span><span class="value">${formatNumeroIT(extra.mediaGiorno, 1)}</span></div>
-          <div class="report-export-badge"><span class="label">Report nel periodo</span><span class="value">${formatNumeroIT(extra.report, 0)}</span></div>
+          <div class="report-export-badge">
+            <div class="report-export-badge-icon">🎫</div>
+            <div class="report-export-badge-copy">
+              <span class="label">Tagliandi team</span>
+              <span class="value">${formatNumeroIT(extra.tagliandiTeam, 0)}</span>
+            </div>
+          </div>
+          <div class="report-export-badge">
+            <div class="report-export-badge-icon">📈</div>
+            <div class="report-export-badge-copy">
+              <span class="label">Media / giorno</span>
+              <span class="value">${formatNumeroIT(extra.mediaGiorno, 1)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1659,12 +1699,12 @@ function buildManagementReportHTML(rows, stats) {
           <thead>
             <tr>
               <th>Operatrice</th>
-              <th>Ore presenza</th>
+              <th>Ore pres.</th>
               <th>Ore SRS</th>
               <th>Chiamate</th>
-              <th>Chiamate con risposta</th>
-              <th>App. fissati da SRS</th>
-              <th>Appuntamenti totali</th>
+              <th>Chiam. con risp.</th>
+              <th>App. da SRS</th>
+              <th>App. totali</th>
             </tr>
           </thead>
           <tbody>
@@ -1716,8 +1756,6 @@ function buildManagementReportHTML(rows, stats) {
           </div>
         </div>
       </div>
-
-      <div class="report-export-footer-note">Report sintetico ottimizzato per condivisione rapida su WhatsApp e per esportazione PDF A4.</div>
     </div>`;
 }
 
