@@ -6,6 +6,8 @@
 <title>Dashboard report tagliandi</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/it.js"></script>
@@ -436,6 +438,154 @@
   .detail-kpi-label { font-family: var(--mono); font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: .3rem; }
   .detail-kpi-val { font-size: 1.5rem; font-weight: 700; color: var(--accent); line-height: 1; }
   .detail-kpi-sub { font-family: var(--mono); font-size: .62rem; color: var(--ink-muted); margin-top: .2rem; }
+
+
+  /* ── EXPORT REPORT DIREZIONE ── */
+  .export-stage {
+    position: fixed;
+    left: -20000px;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .report-export-page {
+    width: 1080px;
+    background: #dbe8cb;
+    color: #111827;
+    font-family: var(--sans);
+    border: 3px solid #0f172a;
+    padding: 14px;
+  }
+  .report-export-title {
+    text-align: center;
+    font-weight: 900;
+    font-size: 26px;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    color: #111827;
+  }
+  .report-export-subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #334155;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .report-export-box {
+    background: rgba(255,255,255,0.2);
+    border: 3px solid #17324d;
+    border-radius: 22px;
+    padding: 10px 12px 12px;
+  }
+  .report-export-box + .report-export-box { margin-top: 12px; }
+  .report-export-box-title {
+    font-size: 16px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    color: #111827;
+  }
+  .report-export-summary-table,
+  .report-export-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .report-export-summary-table th,
+  .report-export-summary-table td,
+  .report-export-mini-table th,
+  .report-export-mini-table td {
+    border: 2px solid rgba(17,24,39,0.82);
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.02;
+  }
+  .report-export-summary-table th,
+  .report-export-mini-table th {
+    background: #c9e37c;
+    font-weight: 900;
+    color: #111827;
+  }
+  .report-export-summary-table td:first-child,
+  .report-export-mini-table td:first-child {
+    font-weight: 900;
+  }
+  .report-export-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .report-export-kpi-chip {
+    background: rgba(255,255,255,0.45);
+    border: 2px solid rgba(23,50,77,0.85);
+    border-radius: 14px;
+    padding: 7px 10px;
+    text-align: center;
+  }
+  .report-export-kpi-chip .label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #334155;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+  .report-export-kpi-chip .value {
+    display: block;
+    font-size: 20px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1;
+  }
+  .report-export-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .report-export-main .left-col,
+  .report-export-main .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .report-export-chart-title {
+    font-size: 17px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    color: #111827;
+  }
+  .report-export-chart-title.small {
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .report-export-chart-img {
+    width: 100%;
+    display: block;
+    background: transparent;
+  }
+  .report-export-chart-img.big {
+    height: 340px;
+    object-fit: contain;
+  }
+  .report-export-chart-img.small {
+    height: 170px;
+    object-fit: contain;
+  }
+  .report-export-note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #475569;
+    text-align: right;
+    font-weight: 700;
+  }
+
 </style>
   <link rel="icon" type="image/png" href="/report-officina/favicon.png">
 </head>
@@ -487,6 +637,8 @@
     </div>
     <div class="header-right">
       <button class="btn green" onclick="exportExcel()">⬇ Esporta Excel</button>
+      <button class="btn" onclick="exportManagementReportImage()">🖼 Report WhatsApp</button>
+      <button class="btn" onclick="exportManagementReportPdf()">🧾 Esporta PDF</button>
     </div>
   </div>
 
@@ -639,6 +791,8 @@
 
   </div>
 </div>
+
+<div id="export-report-stage" class="export-stage" aria-hidden="true"></div>
 
 <script src="config.js"></script>
 <script>
@@ -1262,6 +1416,300 @@ function exportExcel() {
     ? fp.input.value.replace(/\s/g,'').replace(/→/,'-')
     : 'tutti';
   XLSX.writeFile(wb, `report-officina-${m}.xlsx`);
+}
+
+
+function formatNumeroIT(valore, decimali) {
+  const num = Number(valore);
+  if (!Number.isFinite(num)) return '—';
+  return num.toLocaleString('it-IT', {
+    minimumFractionDigits: decimali,
+    maximumFractionDigits: decimali
+  });
+}
+
+function capitalizzaTesto(testo) {
+  if (!testo) return '';
+  return testo.charAt(0).toUpperCase() + testo.slice(1);
+}
+
+function getPeriodoExportLabel(rows) {
+  const fp = window._flatpickr;
+  if (fp && fp.selectedDates.length === 2) {
+    const from = fp.selectedDates[0];
+    const to = fp.selectedDates[1];
+    const sameMonth = from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear();
+    const periodShort = from.getTime() === to.getTime()
+      ? fp.formatDate(from, 'd/m/Y')
+      : `${fp.formatDate(from, 'd/m/Y')} → ${fp.formatDate(to, 'd/m/Y')}`;
+
+    const periodTitle = sameMonth
+      ? capitalizzaTesto(new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(from))
+      : periodShort;
+
+    return { title: periodTitle, subtitle: `Periodo filtrato: ${periodShort}` };
+  }
+
+  const dati = rows
+    .map(r => parseData(r['Data']))
+    .filter(Boolean)
+    .map(str => {
+      const [dd, mm, yyyy] = str.split('/').map(Number);
+      return new Date(yyyy, mm - 1, dd);
+    })
+    .sort((a, b) => a - b);
+
+  if (!dati.length) return { title: 'Periodo selezionato', subtitle: '' };
+  const first = dati[0];
+  const last = dati[dati.length - 1];
+  const sameMonth = first.getMonth() === last.getMonth() && first.getFullYear() === last.getFullYear();
+  const label = sameMonth
+    ? capitalizzaTesto(new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(first))
+    : `${String(first.getDate()).padStart(2, '0')}/${String(first.getMonth()+1).padStart(2, '0')}/${first.getFullYear()} → ${String(last.getDate()).padStart(2, '0')}/${String(last.getMonth()+1).padStart(2, '0')}/${last.getFullYear()}`;
+
+  return { title: label, subtitle: '' };
+}
+
+function getTotaliStats(stats) {
+  return PRINCIPALI.reduce((acc, op) => {
+    const s = stats[op];
+    acc.ore_presenza += s.ore_presenza;
+    acc.ore_srs += s.ore_srs;
+    acc.chiamate += s.chiamate;
+    acc.risposte += s.risposte;
+    acc.app_srs += s.app_srs;
+    acc.app_tot += s.app_tot;
+    return acc;
+  }, { ore_presenza:0, ore_srs:0, chiamate:0, risposte:0, app_srs:0, app_tot:0 });
+}
+
+function getTeamExtraKpi(rows, stats) {
+  const totali = getTotaliStats(stats);
+  const giorni = new Set(rows.map(r => parseData(r['Data']) || r['Data'])).size || 1;
+  return {
+    tagliandiTeam: totali.app_tot,
+    mediaGiorno: totali.app_tot / Math.max(giorni, 1),
+    report: rows.length
+  };
+}
+
+function getChartImage(chartId) {
+  const chart = _charts[chartId];
+  if (!chart) return '';
+  try {
+    return chart.toBase64Image('image/png', 1);
+  } catch (e) {
+    return chart.canvas ? chart.canvas.toDataURL('image/png') : '';
+  }
+}
+
+function preserveViewState() {
+  const activeTabBtn = document.querySelector('.tab-btn.active');
+  const activeTab = activeTabBtn ? activeTabBtn.id.replace('tab-btn-', '') : 'report';
+  const detailVisible = document.getElementById('analytics-dettaglio')?.style.display !== 'none';
+  const detailOp = detailVisible ? (document.getElementById('detail-nome')?.textContent || '') : '';
+  return { activeTab, detailVisible, detailOp };
+}
+
+function restoreViewState(state) {
+  if (!state) return;
+  if (state.activeTab && state.activeTab !== 'analytics') {
+    switchTab(state.activeTab);
+    return;
+  }
+  if (state.activeTab === 'analytics') {
+    switchTab('analytics');
+    if (state.detailVisible && state.detailOp) openDettaglio(state.detailOp);
+  }
+}
+
+function buildManagementReportHTML(rows, stats) {
+  const periodo = getPeriodoExportLabel(rows);
+  const totali = getTotaliStats(stats);
+  const extra = getTeamExtraKpi(rows, stats);
+  const chartKpi = getChartImage('kpi-bars');
+  const chartTorta = getChartImage('torta');
+  const chartOre = getChartImage('ore-srs');
+
+  const summaryRows = PRINCIPALI.map(op => {
+    const s = stats[op];
+    return `
+      <tr>
+        <td>${op}</td>
+        <td>${formatNumeroIT(s.ore_presenza, 1)}</td>
+        <td>${formatNumeroIT(s.ore_srs, 1)}</td>
+        <td>${formatNumeroIT(s.chiamate, 0)}</td>
+        <td>${formatNumeroIT(s.risposte, 0)}</td>
+        <td>${formatNumeroIT(s.app_srs, 0)}</td>
+        <td>${formatNumeroIT(s.app_tot, 0)}</td>
+      </tr>`;
+  }).join('');
+
+  const miniTableRows = PRINCIPALI.map(op => {
+    const s = stats[op];
+    return `
+      <tr>
+        <td style="text-align:left"><span style="display:inline-block;width:10px;height:10px;background:${opColor(op)};border:1px solid #17324d;margin-right:6px;vertical-align:middle"></span>${op}</td>
+        <td>${formatNumeroIT(s.tg_srs_ore, 1)}</td>
+        <td>${formatNumeroIT(s.tg_tot_ore, 1)}</td>
+        <td>${formatNumeroIT(s.chiam_ora, 1)}</td>
+        <td>${formatNumeroIT(s.tasso_risposta, 0)}%</td>
+        <td>${formatNumeroIT(s.tasso_conv, 0)}%</td>
+      </tr>`;
+  }).join('');
+
+  const subtitle = periodo.subtitle ? `<div class="report-export-subtitle">${periodo.subtitle}</div>` : '';
+
+  return `
+    <div class="report-export-page">
+      <div class="report-export-title">${periodo.title} - Analisi performance reparto SRS</div>
+      ${subtitle}
+      <div class="report-export-box">
+        <div class="report-export-box-title">Riepilogo dati SRS</div>
+        <table class="report-export-summary-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Ore presenza</th>
+              <th>Ore SRS</th>
+              <th>Chiamate</th>
+              <th>Chiamate con risposta</th>
+              <th>App. fissati da SRS</th>
+              <th>Appuntamenti totali</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${summaryRows}
+          </tbody>
+        </table>
+        <div class="report-export-kpi-strip">
+          <div class="report-export-kpi-chip"><span class="label">Tagliandi team</span><span class="value">${formatNumeroIT(extra.tagliandiTeam, 0)}</span></div>
+          <div class="report-export-kpi-chip"><span class="label">Media / giorno</span><span class="value">${formatNumeroIT(extra.mediaGiorno, 1)}</span></div>
+          <div class="report-export-kpi-chip"><span class="label">Report nel periodo</span><span class="value">${formatNumeroIT(extra.report, 0)}</span></div>
+        </div>
+      </div>
+
+      <div class="report-export-box" style="margin-top:12px;">
+        <div class="report-export-main">
+          <div class="left-col">
+            <div>
+              <div class="report-export-chart-title">Confronto KPI performance</div>
+              <img class="report-export-chart-img big" src="${chartKpi}" alt="Confronto KPI performance">
+            </div>
+            <div>
+              <table class="report-export-mini-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Tg. SRS/Ore SRS</th>
+                    <th>Tg. Totali/Ore SRS</th>
+                    <th>Chiamate/Ora</th>
+                    <th>Tasso di risposta</th>
+                    <th>Tasso di convers.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${miniTableRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="right-col">
+            <div>
+              <div class="report-export-chart-title small">Tagliandi per operatrice (%)</div>
+              <img class="report-export-chart-img small" src="${chartTorta}" alt="Tagliandi per operatrice">
+            </div>
+            <div>
+              <div class="report-export-chart-title small">Ore SRS/Ore presenza</div>
+              <img class="report-export-chart-img small" src="${chartOre}" alt="Ore SRS su Ore presenza">
+            </div>
+          </div>
+        </div>
+        <div class="report-export-note">Report sintetico per condivisione rapida su WhatsApp / PDF direzionale</div>
+      </div>
+    </div>`;
+}
+
+function waitForReportAssets(container) {
+  const images = Array.from(container.querySelectorAll('img'));
+  return Promise.all(images.map(img => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+  }));
+}
+
+async function captureManagementReportCanvas() {
+  const rows = filteredRows();
+  if (!rows.length) {
+    alert('Nessun dato da esportare nel periodo selezionato');
+    return null;
+  }
+
+  const state = preserveViewState();
+  try {
+    if (document.getElementById('analytics-dettaglio')?.style.display !== 'none') backToConfronto();
+    if (!document.getElementById('tab-analytics')?.classList.contains('active')) switchTab('analytics');
+    renderAnalytics();
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    const stats = aggregaPerOperatrice(rows);
+    const stage = document.getElementById('export-report-stage');
+    stage.innerHTML = buildManagementReportHTML(rows, stats);
+    const reportNode = stage.firstElementChild;
+    await waitForReportAssets(reportNode);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const canvas = await html2canvas(reportNode, {
+      scale: 2,
+      backgroundColor: '#dbe8cb',
+      useCORS: true,
+      logging: false
+    });
+
+    return { canvas, rows, stats };
+  } finally {
+    restoreViewState(state);
+  }
+}
+
+async function exportManagementReportImage() {
+  const result = await captureManagementReportCanvas();
+  if (!result || !result.canvas) return;
+  const rows = result.rows || filteredRows();
+  const periodo = getPeriodoExportLabel(rows).title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-àèéìòù]/gi, '');
+  const link = document.createElement('a');
+  link.href = result.canvas.toDataURL('image/png');
+  link.download = `report-direzione-${periodo || 'periodo'}.png`;
+  link.click();
+}
+
+async function exportManagementReportPdf() {
+  const result = await captureManagementReportCanvas();
+  if (!result || !result.canvas) return;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 6;
+  const maxW = pageW - margin * 2;
+  const maxH = pageH - margin * 2;
+  let imgW = maxW;
+  let imgH = result.canvas.height * imgW / result.canvas.width;
+  if (imgH > maxH) {
+    imgH = maxH;
+    imgW = result.canvas.width * imgH / result.canvas.height;
+  }
+  const x = (pageW - imgW) / 2;
+  const y = (pageH - imgH) / 2;
+  pdf.addImage(result.canvas.toDataURL('image/png'), 'PNG', x, y, imgW, imgH, undefined, 'FAST');
+
+  const rows = result.rows || filteredRows();
+  const periodo = getPeriodoExportLabel(rows).title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-àèéìòù]/gi, '');
+  pdf.save(`report-direzione-${periodo || 'periodo'}.pdf`);
 }
 
 // ══════════════════════════════════════════════════════════════
