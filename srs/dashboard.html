@@ -1595,8 +1595,14 @@ function getChartImage(chartId) {
   const chart = _charts[chartId];
   if (!chart) return '';
   try {
+    if (typeof chart.stop === 'function') chart.stop();
+    if (typeof chart.update === 'function') chart.update('none');
     return chart.toBase64Image('image/png', 1);
   } catch (e) {
+    try {
+      if (typeof chart.stop === 'function') chart.stop();
+      if (typeof chart.update === 'function') chart.update('none');
+    } catch (_) {}
     return chart.canvas ? chart.canvas.toDataURL('image/png') : '';
   }
 }
@@ -1863,7 +1869,7 @@ async function captureManagementReportCanvas() {
     if (document.getElementById('analytics-dettaglio')?.style.display !== 'none') backToConfronto();
     if (!document.getElementById('tab-analytics')?.classList.contains('active')) switchTab('analytics');
     renderAnalytics();
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 900));
 
     const stats = aggregaPerOperatrice(rows);
     const stage = document.getElementById('export-report-stage');
