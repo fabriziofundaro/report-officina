@@ -492,28 +492,12 @@
     justify-content: flex-end;
   }
   .report-export-badge {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     background: rgba(255,255,255,0.14);
     border: 1px solid rgba(255,255,255,0.22);
     border-radius: 18px;
-    padding: 12px 16px;
-    min-width: 172px;
-    backdrop-filter: blur(4px);
+    padding: 14px 18px;
+    min-width: 182px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-  .report-export-badge-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255,255,255,0.18);
-    font-size: 22px;
-    line-height: 1;
-    flex: 0 0 42px;
   }
   .report-export-badge-copy {
     display: flex;
@@ -523,17 +507,17 @@
   }
   .report-export-badge .label {
     display: block;
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: .08em;
     text-transform: uppercase;
-    opacity: .85;
+    opacity: .88;
     font-weight: 800;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     white-space: nowrap;
   }
   .report-export-badge .value {
     display: block;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 900;
     line-height: 1;
   }
@@ -682,7 +666,16 @@
     background: transparent;
   }
   .report-export-chart-img.big {
-    max-height: 460px;
+    max-height: 250px;
+  }
+  .report-export-kpi-canvas-wrap {
+    width: 100%;
+    height: 520px;
+  }
+  .report-export-kpi-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
   }
   .report-export-chart-img.small {
     max-height: 250px;
@@ -1632,7 +1625,6 @@ function buildManagementReportHTML(rows, stats) {
   const periodo = getPeriodoExportLabel(rows);
   const sedeLabel = document.getElementById('dash-sede')?.textContent || 'Report SRS';
   const extra = getTeamExtraKpi(rows, stats);
-  const chartKpi = getChartImage('kpi-bars');
   const chartTorta = getChartImage('torta');
   const chartOre = getChartImage('ore-srs');
 
@@ -1674,14 +1666,12 @@ function buildManagementReportHTML(rows, stats) {
         </div>
         <div class="report-export-badges">
           <div class="report-export-badge">
-            <div class="report-export-badge-icon">🎫</div>
             <div class="report-export-badge-copy">
               <span class="label">Tagliandi team</span>
               <span class="value">${formatNumeroIT(extra.tagliandiTeam, 0)}</span>
             </div>
           </div>
           <div class="report-export-badge">
-            <div class="report-export-badge-icon">📈</div>
             <div class="report-export-badge-copy">
               <span class="label">Media / giorno</span>
               <span class="value">${formatNumeroIT(extra.mediaGiorno, 1)}</span>
@@ -1718,7 +1708,9 @@ function buildManagementReportHTML(rows, stats) {
           <div class="report-export-chart-card">
             <div class="report-export-chart-title">Confronto KPI performance</div>
             <div class="report-export-chart-sub">Stessa struttura del report web · etichette con valori reali</div>
-            <img class="report-export-chart-img big" src="${chartKpi}" alt="Confronto KPI performance">
+            <div class="report-export-kpi-canvas-wrap">
+              <canvas id="export-chart-kpi" class="report-export-kpi-canvas" width="760" height="520"></canvas>
+            </div>
           </div>
           <div class="report-export-panel">
             <div class="report-export-panel-title">
@@ -1759,6 +1751,95 @@ function buildManagementReportHTML(rows, stats) {
     </div>`;
 }
 
+function renderExportKpiChart(canvas, stats) {
+  if (!canvas) return null;
+
+  const kpis = [
+    { label: 'Tasso risposta (%)',    key: 'tasso_risposta', formula: 'Risposte / Chiamate × 100', normalizza: false },
+    { label: 'Tasso conversione (%)', key: 'tasso_conv',     formula: 'App.SRS / Risposte × 100', normalizza: false },
+    { label: 'Chiamate/Ora SRS',      key: 'chiam_ora',      formula: 'Chiamate / Ore SRS',       normalizza: true  },
+    { label: 'Tg.Totali/Ore SRS',     key: 'tg_tot_ore',     formula: 'App.Totali / Ore SRS',     normalizza: true  },
+    { label: 'Tg.SRS/Ore SRS',        key: 'tg_srs_ore',     formula: 'App.SRS / Ore SRS',        normalizza: true  },
+  ];
+
+  const maxPerKpi = kpis.map(k => Math.max(...PRINCIPALI.map(op => Number(stats[op][k.key]) || 0)));
+  const ctx = canvas.getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: kpis.map(k => k.label),
+      datasets: PRINCIPALI.map(op => {
+        const valoriReali = kpis.map(k => Number(stats[op][k.key]) || 0);
+        const valoriGrafici = valoriReali.map((valore, i) => {
+          if (!kpis[i].normalizza) return parseFloat(valore.toFixed(2));
+          const max = maxPerKpi[i];
+          return max > 0 ? parseFloat((valore / max * 100).toFixed(4)) : 0;
+        });
+        return {
+          label: op,
+          data: valoriGrafici,
+          valoriReali,
+          backgroundColor: opColor(op, 0.78),
+          borderColor: opColor(op),
+          borderWidth: 1,
+          borderRadius: 4,
+          barThickness: 16,
+          maxBarThickness: 18,
+          categoryPercentage: 0.72,
+          barPercentage: 0.9,
+        };
+      })
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: {
+          labels: { color: '#0d1117', font: { family: 'Nunito', size: 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const kpi = kpis[ctx.dataIndex];
+              const valoreReale = ctx.dataset.valoriReali[ctx.dataIndex] || 0;
+              return ` ${ctx.dataset.label}: ${valoreReale.toFixed(2)} (${kpi.formula})`;
+            }
+          }
+        },
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'end',
+          color: '#0d1117',
+          font: { size: 12, weight: 'bold', family: 'JetBrains Mono' },
+          formatter: (v, ctx) => {
+            const valoreReale = ctx.dataset.valoriReali[ctx.dataIndex] || 0;
+            const kpi = kpis[ctx.dataIndex];
+            const suffisso = kpi.normalizza ? '' : '%';
+            return valoreReale > 0 ? valoreReale.toFixed(2) + suffisso : '';
+          },
+          clip: false,
+          padding: { left: 4 }
+        }
+      },
+      layout: { padding: { top: 6, right: 48, bottom: 4, left: 4 } },
+      scales: {
+        x: {
+          min: 0,
+          suggestedMax: 100,
+          ticks: { color: '#6b7280', maxTicksLimit: 6 },
+          grid: { color: '#e8ecf2' }
+        },
+        y: {
+          ticks: { color: '#0d1117', font: { size: 11 } },
+          grid: { color: '#e8ecf2' }
+        }
+      }
+    }
+  });
+}
+
 function waitForReportAssets(container) {
   const images = Array.from(container.querySelectorAll('img'));
   return Promise.all(images.map(img => {
@@ -1788,16 +1869,19 @@ async function captureManagementReportCanvas() {
     const stage = document.getElementById('export-report-stage');
     stage.innerHTML = buildManagementReportHTML(rows, stats);
     const reportNode = stage.firstElementChild;
+    const exportKpiChart = renderExportKpiChart(reportNode.querySelector('#export-chart-kpi'), stats);
     await waitForReportAssets(reportNode);
+    await new Promise(resolve => setTimeout(resolve, 250));
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
     const canvas = await html2canvas(reportNode, {
       scale: 3,
-      backgroundColor: '#dbe8cb',
+      backgroundColor: '#f4f7fb',
       useCORS: true,
       logging: false
     });
 
+    if (exportKpiChart) exportKpiChart.destroy();
     return { canvas, rows, stats };
   } finally {
     restoreViewState(state);
