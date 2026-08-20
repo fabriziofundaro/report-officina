@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard passaggi officina</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/it.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root {
+    --bg: #f2f4f7;
+    --surface: #ffffff;
+    --surface2: #f8f9fb;
+    --border: #dde1e9;
+    --border-strong: #b8bfcc;
+    --ink: #0d1117;
+    --ink-muted: #6b7280;
+    --accent: #4a7fc1;
+    --accent-dim: rgba(74,127,193,.10);
+    --accent-dark: #1e3a5f;
+    --green: #1a7a4a;
+    --green-dim: rgba(26,122,74,.10);
+    --orange: #f97316;
+    --orange-dim: rgba(249,115,22,.09);
+    --purple: #7c3aed;
+    --purple-dim: rgba(124,58,237,.08);
+    --teal: #0f766e;
+    --teal-dim: rgba(15,118,110,.08);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Nunito', sans-serif;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); min-height: 100vh; font-size: 15px; }
+
+  .header {
+    background: #fff; border-bottom: 3px solid var(--accent);
+    padding: .85rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: .75rem;
+    box-shadow: 0 2px 12px rgba(74,127,193,.10);
+  }
+  .header-left { display:flex; align-items:center; }
+  .header-logo { font-weight:800; font-size:1.4rem; color:var(--accent); letter-spacing:-.03em; line-height:1; }
+  .header-divider { width:1px; height:22px; background:var(--border); margin:0 .75rem; }
+  .header-left .sede { font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted); }
+  .header-left .title { font-size:.88rem; font-weight:700; }
+  .header-right { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+  .btn {
+    border:1px solid var(--border); border-radius:var(--radius); padding:.45rem .9rem;
+    font-family:var(--sans); font-size:.72rem; text-transform:uppercase; cursor:pointer; font-weight:700;
+    transition:all .2s; background:var(--surface); color:var(--ink-muted); display:flex; align-items:center; gap:.35rem;
+  }
+  .btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+  .btn.green { background:var(--green-dim); border-color:rgba(26,122,74,.45); color:var(--green); }
+  .btn input { display:none; }
+
+  .main { padding:1.5rem; max-width:1280px; margin:0 auto; min-height:100vh; }
+
+  .status-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+  .status { font-size:.68rem; color:var(--ink-muted); display:flex; align-items:center; gap:.4rem; }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:var(--border-strong); }
+  .status.ok .status-dot { background:var(--green); }
+  .status.warn .status-dot { background:var(--orange); }
+  .status.error .status-dot { background:#cc1c2e; }
+  .hint { font-size:.68rem; color:var(--ink-muted); }
+
+  .filters { display:flex; gap:.75rem; margin-bottom:1.2rem; flex-wrap:wrap; align-items:center; }
+  .filters-label { font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-muted); }
+  .date-range-wrap {
+    display:flex; align-items:center; gap:.5rem; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:.35rem .9rem; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .date-range-wrap:hover { border-color:var(--accent); }
+  .date-range-input { border:none; background:transparent; font-family:var(--mono); font-size:.75rem; color:var(--ink); cursor:pointer; width:190px; outline:none; }
+  .date-range-clear { background:none; border:none; color:var(--ink-muted); cursor:pointer; font-size:.8rem; }
+  .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background:var(--accent)!important; border-color:var(--accent)!important; }
+  .flatpickr-day.inRange { background:var(--accent-dim)!important; border-color:transparent!important; box-shadow:none!important; }
+
+  .kpi-row { display:grid; grid-template-columns:repeat(5, minmax(150px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+  .kpi { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.05rem 1.2rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .kpi-label { font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:.4rem; }
+  .kpi-value { font-size:2rem; font-weight:900; line-height:1; }
+  .kpi-sub { font-size:.68rem; color:var(--ink-muted); margin-top:.35rem; }
+  .kpi.primary { border-color:rgba(74,127,193,.35); background:var(--accent-dim); }
+  .kpi.primary .kpi-value { color:var(--accent); }
+  .kpi.toyota { border-color:rgba(74,127,193,.26); }
+  .kpi.toyota .kpi-value { color:#3567a8; }
+  .kpi.volvo .kpi-value { color:#2563eb; }
+  .kpi.carrozzeria .kpi-value { color:var(--purple); }
+  .kpi.revisioni .kpi-value { color:var(--teal); }
+
+  .section { margin-bottom:1.5rem; }
+  .section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:.7rem; flex-wrap:wrap; }
+  .section-title { font-size:1.05rem; font-weight:900; color:var(--ink); }
+  .section-sub { font-size:.7rem; color:var(--ink-muted); }
+
+  .charts-grid { display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+  .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem; box-shadow:0 1px 4px rgba(0,0,0,.06); min-width:0; }
+  .chart-title { font-size:.76rem; text-transform:uppercase; font-weight:800; margin-bottom:.9rem; display:flex; justify-content:space-between; gap:.75rem; align-items:center; }
+  .chart-formula { font-size:.65rem; color:var(--ink-muted); text-transform:none; font-family:var(--mono); font-weight:400; }
+  .chart-wrap { position:relative; width:100%; height:270px; }
+  .chart-wrap.small { height:270px; }
+
+  .cards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.85rem; }
+  .op-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.1rem; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  .op-card.bonus { border:2px dashed var(--orange); background:var(--orange-dim); }
+  .op-name { display:flex; align-items:center; gap:.55rem; font-weight:800; margin-bottom:.75rem; }
+  .op-avatar { width:30px; height:30px; border-radius:50%; border:2px solid var(--accent); color:var(--accent); background:var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:900; flex-shrink:0; }
+  .op-card.carrozzeria .op-avatar { border-color:var(--purple); color:var(--purple); background:var(--purple-dim); }
+  .badge { margin-left:auto; font-size:.57rem; border-radius:99px; padding:.15rem .45rem; background:var(--orange); color:#fff; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .op-main { display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:.55rem; margin-bottom:.35rem; }
+  .op-main-label { color:var(--ink-muted); font-size:.72rem; }
+  .op-main-value { font-size:1.65rem; font-weight:900; color:var(--accent); }
+  .op-card.carrozzeria .op-main-value { color:var(--purple); }
+  .op-stat { display:flex; justify-content:space-between; gap:.75rem; padding:.28rem 0; font-size:.78rem; border-bottom:1px solid rgba(221,225,233,.75); }
+  .op-stat:last-child { border-bottom:none; }
+  .op-stat-label { color:var(--ink-muted); }
+  .op-stat-val { font-family:var(--mono); font-weight:600; }
+
+  .mini-kpis { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:.75rem; }
+  .mini-kpi { background:var(--surface); border:1px solid var(--border); border-radius:99px; padding:.35rem .7rem; display:flex; gap:.45rem; align-items:baseline; }
+  .mini-kpi span { font-size:.62rem; text-transform:uppercase; color:var(--ink-muted); font-weight:800; letter-spacing:.05em; }
+  .mini-kpi strong { font-family:var(--mono); font-size:.82rem; }
+
+  .table-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .table-header { padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:1rem; align-items:center; }
+  .table-title { font-size:.85rem; font-weight:800; }
+  .table-note { font-size:.66rem; color:var(--ink-muted); }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:720px; }
+  thead tr { background:var(--accent-dark); }
+  th { color:#fff; text-transform:uppercase; letter-spacing:.07em; font-family:var(--mono); font-size:.58rem; padding:.6rem .7rem; text-align:right; white-space:nowrap; }
+  th:first-child { text-align:left; }
+  td { padding:.6rem .7rem; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:.76rem; text-align:right; }
+  td:first-child { text-align:left; font-family:var(--sans); font-weight:800; }
+  tbody tr:hover { background:var(--accent-dim); }
+  tfoot td { border-top:2px solid var(--accent); background:var(--surface2); font-weight:800; }
+
+  .odl-card { display:inline-flex; align-items:center; gap:.6rem; background:var(--purple-dim); border:1px solid rgba(124,58,237,.24); border-radius:var(--radius); padding:.5rem .8rem; }
+  .odl-card span { color:var(--ink-muted); font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; font-weight:800; }
+  .odl-card strong { color:var(--purple); font-size:1rem; font-family:var(--mono); }
+
+  .state-box { text-align:center; padding:2.5rem 1rem; color:var(--ink-muted); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
+  .state-box .icon { font-size:2rem; margin-bottom:.5rem; }
+
+  @media (max-width: 1000px) {
+    .kpi-row { grid-template-columns:repeat(3,1fr); }
+    .charts-grid { grid-template-columns:1fr; }
+    .chart-wrap, .chart-wrap.small { height:300px; }
+  }
+  @media (max-width: 650px) {
+    .header { padding:.8rem 1rem; }
+    .main { padding:1rem; }
+    .kpi-row { grid-template-columns:repeat(2,1fr); gap:.7rem; }
+    .kpi:first-child { grid-column:1/-1; }
+    .kpi-value { font-size:1.65rem; }
+    .cards-grid { grid-template-columns:1fr; }
+    .chart-wrap, .chart-wrap.small { height:260px; }
+    .date-range-input { width:160px; }
+  }
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <span class="header-logo">riolo</span>
+      <div class="header-divider"></div>
+      <div>
+        <div class="sede" id="dash-sede">—</div>
+        <div class="title">Dashboard passaggi officina</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn" onclick="loadData()">↻ Aggiorna</button>
+      <label class="btn" for="excel-file">📂 Carica Excel<input type="file" id="excel-file" accept=".xlsx,.xls"></label>
+      <button class="btn green" onclick="exportExcel()">⬇ Esporta Excel</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="status-row">
+      <div class="status" id="data-status"><span class="status-dot"></span><span id="data-status-text">Caricamento dati…</span></div>
+      <div class="hint">Revisioni escluse dal totale passaggi</div>
+    </div>
+
+    <div class="filters">
+      <span class="filters-label">Periodo:</span>
+      <div class="date-range-wrap" onclick="document.getElementById('date-from').focus()">
+        <span>📅</span>
+        <input type="text" id="date-from" class="date-range-input" placeholder="Seleziona periodo" readonly>
+        <button class="date-range-clear" onclick="clearDateRange(event)" title="Rimuovi filtro date">✕</button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi primary">
+        <div class="kpi-label" id="kpi-passaggi-label">Passaggi oggi</div>
+        <div class="kpi-value" id="kpi-passaggi">—</div>
+        <div class="kpi-sub" id="kpi-passaggi-sub">Toyota + Volvo + Carrozzeria</div>
+      </div>
+      <div class="kpi toyota"><div class="kpi-label">Toyota</div><div class="kpi-value" id="kpi-toyota">—</div><div class="kpi-sub" id="kpi-toyota-sub">passaggi</div></div>
+      <div class="kpi volvo"><div class="kpi-label">Volvo</div><div class="kpi-value" id="kpi-volvo">—</div><div class="kpi-sub">passaggi</div></div>
+      <div class="kpi carrozzeria"><div class="kpi-label">Carrozzeria</div><div class="kpi-value" id="kpi-carrozzeria">—</div><div class="kpi-sub" id="kpi-carrozzeria-sub">passaggi</div></div>
+      <div class="kpi revisioni"><div class="kpi-label">Revisioni</div><div class="kpi-value" id="kpi-revisioni">—</div><div class="kpi-sub">indicatore separato</div></div>
+    </div>
+
+    <div id="empty-state" class="state-box" style="display:none"><div class="icon">📭</div><div>Nessun dato nel periodo selezionato.</div></div>
+
+    <div id="dashboard-content">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Passaggi giornalieri per reparto <span class="chart-formula">Toyota + Volvo + Carrozzeria</span></div>
+          <div class="chart-wrap"><canvas id="chart-andamento"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Distribuzione passaggi <span class="chart-formula">% sul totale periodo</span></div>
+          <div class="chart-wrap small"><canvas id="chart-reparti"></canvas></div>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Toyota — dettaglio accettatori</div>
+            <div class="section-sub">Passaggi e attività di upselling registrate nel periodo</div>
+          </div>
+          <div class="mini-kpis">
+            <div class="mini-kpi"><span>Gomme</span><strong id="tot-gomme">0</strong></div>
+            <div class="mini-kpi"><span>Tappetini</span><strong id="tot-tappetini">0</strong></div>
+            <div class="mini-kpi"><span>EasyPay</span><strong id="tot-easypay-toyota">0</strong></div>
+          </div>
+        </div>
+        <div class="cards-grid" id="toyota-cards"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Carrozzeria — dettaglio accettatori</div>
+            <div class="section-sub">Passaggi ed EasyPay per operatore</div>
+          </div>
+          <div class="odl-card"><span>ODL totali</span><strong id="tot-odl">0</strong></div>
+        </div>
+        <div class="cards-grid" id="carrozzeria-cards"></div>
+      </section>
+
+      <section class="section">
+        <div class="table-section">
+          <div class="table-header">
+            <span class="table-title">Riepilogo Toyota — Passaggi e Upselling</span>
+            <span class="table-note" id="table-period-note"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Accettatore</th><th>Passaggi</th><th>Media/giorno</th><th>Gomme</th><th>Tappetini</th><th>EasyPay</th></tr></thead>
+              <tbody id="toyota-table-body"></tbody>
+              <tfoot><tr id="toyota-table-footer"></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+<script src="config.js"></script>
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.plugins.datalabels = { display: false };
+
+let allRows = [];
+let dataSource = '';
+const charts = {};
+
+function n(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  const x = Number(String(v).replace(',', '.'));
+  return Number.isFinite(x) ? x : 0;
+}
+
+function parseDateValue(raw) {
+  if (!raw) return null;
+  if (raw instanceof Date && !isNaN(raw)) return new Date(raw.getFullYear(), raw.getMonth(), raw.getDate());
+  if (typeof raw === 'number') {
+    const d = XLSX.SSF.parse_date_code(raw);
+    if (d) return new Date(d.y, d.m - 1, d.d);
+  }
+  const s = String(raw).trim();
+  if (!s) return null;
+  const iso = /^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/.exec(s);
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  const ita = /^([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})/.exec(s);
+  if (ita) return new Date(Number(ita[3]), Number(ita[2]) - 1, Number(ita[1]));
+  const d = new Date(s);
+  return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function dateKey(raw) {
+  const d = parseDateValue(raw);
+  if (!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateShort(key) {
+  const [y,m,d] = key.split('-').map(Number);
+  const dt = new Date(y,m-1,d);
+  const giorni = ['dom','lun','mar','mer','gio','ven','sab'];
+  return `${giorni[dt.getDay()]} ${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
+}
+
+function setStatus(type, text) {
+  const el = document.getElementById('data-status');
+  el.className = `status ${type || ''}`;
+  document.getElementById('data-status-text').textContent = text;
+}
+
+function normalizeRow(r) {
+  const lower = {};
+  Object.keys(r || {}).forEach(k => lower[String(k).trim().toLowerCase()] = r[k]);
+  const pick = (...names) => {
+    for (const name of names) {
+      const v = lower[name.toLowerCase()];
+      if (v !== undefined) return v;
+    }
+    return null;
+  };
+  return {
+    Data: pick('Data', 'data'),
+    Sezione: String(pick('Sezione', 'sezione') || '').trim(),
+    Accettatore: String(pick('Accettatore', 'accettatore') || '').trim(),
+    Passaggi: n(pick('Passaggi', 'passaggi')),
+    Gomme: n(pick('Gomme', 'gomme')),
+    Tappetini: n(pick('Tappetini', 'tappetini')),
+    EasyPay: n(pick('EasyPay', 'easypay')),
+    ODL: n(pick('ODL', 'odl')),
+    Timestamp: pick('Timestamp', 'timestamp') || ''
+  };
+}
+
+function extractRowsFromJson(json) {
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.rows)) return json.rows;
+  if (Array.isArray(json?.data)) return json.data;
+  if (Array.isArray(json?.passaggi)) return json.passaggi;
+  return [];
+}
+
+async function loadData() {
+  setStatus('', 'Caricamento da Google Sheets…');
+  try {
+    if (!CONFIG?.googleSheets?.scriptUrl) throw new Error('URL Google Sheets non configurato');
+    const url = CONFIG.googleSheets.scriptUrl + (CONFIG.googleSheets.scriptUrl.includes('?') ? '&' : '?') + 'action=get&_=' + Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const rows = extractRowsFromJson(json).map(normalizeRow).filter(r => r.Data && r.Sezione);
+    if (!rows.length) throw new Error('Lo script non ha restituito righe nel formato atteso');
+    allRows = rows;
+    dataSource = 'Google Sheets';
+    setStatus('ok', `${allRows.length} righe caricate da Google Sheets`);
+    render();
+  } catch (err) {
+    console.warn('Caricamento Google Sheets non disponibile:', err);
+    allRows = [];
+    dataSource = '';
+    setStatus('warn', 'Lettura automatica non disponibile — usa “Carica Excel” per visualizzare subito i dati');
+    render();
+  }
+}
+
+async function loadExcelFile(file) {
+  if (!file) return;
+  try {
+    setStatus('', `Lettura di ${file.name}…`);
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, { type:'array', cellDates:true });
+    const sheetName = wb.SheetNames.includes('Passaggi') ? 'Passaggi' : wb.SheetNames[0];
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval:null, raw:true });
+    const rows = raw.map(normalizeRow).filter(r => r.Data && r.Sezione);
+    if (!rows.length) throw new Error('Nessuna riga valida trovata nel foglio');
+    allRows = rows;
+    dataSource = file.name;
+    setStatus('ok', `${allRows.length} righe caricate da ${file.name}`);
+
+    // Se il file non contiene la data odierna, mostra tutto il periodo disponibile.
+    const today = dateKey(new Date());
+    if (!rows.some(r => dateKey(r.Data) === today) && window._flatpickr) {
+      const dates = rows.map(r => parseDateValue(r.Data)).filter(Boolean).sort((a,b)=>a-b);
+      if (dates.length) window._flatpickr.setDate([dates[0], dates[dates.length-1]], false);
+    }
+    render();
+  } catch (err) {
+    console.error(err);
+    setStatus('error', `Errore lettura Excel: ${err.message || err}`);
+  }
+}
+
+document.getElementById('excel-file').addEventListener('change', e => {
+  loadExcelFile(e.target.files?.[0]);
+  e.target.value = '';
+});
+
+function filteredRows() {
+  const fp = window._flatpickr;
+  const from = fp?.selectedDates?.[0] ? new Date(fp.selectedDates[0]) : null;
+  const to = fp?.selectedDates?.[1] ? new Date(fp.selectedDates[1]) : null;
+  if (from) from.setHours(0,0,0,0);
+  if (to) to.setHours(23,59,59,999);
+  return allRows.filter(r => {
+    const d = parseDateValue(r.Data);
+    if (!d) return false;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+}
+
+function clearDateRange(e) {
+  e.stopPropagation();
+  window._flatpickr?.clear();
+  render();
+}
+
+function sectionRows(rows, section) {
+  return rows.filter(r => String(r.Sezione).toLowerCase() === section.toLowerCase());
+}
+
+function sumMetric(rows, metric) {
+  return rows.reduce((s,r) => s + n(r[metric]), 0);
+}
+
+function getPeriodInfo(rows) {
+  const days = [...new Set(rows.map(r => dateKey(r.Data)).filter(Boolean))].sort();
+  const fp = window._flatpickr;
+  const selected = fp?.selectedDates || [];
+  const oneDay = selected.length === 2 && dateKey(selected[0]) === dateKey(selected[1]);
+  return { days, dayCount:days.length || 1, oneDay };
+}
+
+function aggregateOperators(rows, section, configured) {
+  const sec = sectionRows(rows, section).filter(r => r.Accettatore && r.Accettatore !== '-' && r.Accettatore.toLowerCase() !== 'odl totali');
+  const map = {};
+  configured.forEach(name => map[name] = { nome:name, passaggi:0, gomme:0, tappetini:0, easypay:0, giorni:new Set(), bonus:false });
+  sec.forEach(r => {
+    const name = r.Accettatore || '—';
+    if (!map[name]) map[name] = { nome:name, passaggi:0, gomme:0, tappetini:0, easypay:0, giorni:new Set(), bonus:!configured.includes(name) };
+    map[name].passaggi += n(r.Passaggi);
+    map[name].gomme += n(r.Gomme);
+    map[name].tappetini += n(r.Tappetini);
+    map[name].easypay += n(r.EasyPay);
+    const dk = dateKey(r.Data); if (dk) map[name].giorni.add(dk);
+  });
+  const extras = Object.values(map).filter(x => x.bonus).sort((a,b)=>a.nome.localeCompare(b.nome,'it'));
+  return [...configured.map(x=>map[x]), ...extras];
+}
+
+function renderKpis(rows) {
+  const toyota = sectionRows(rows,'Toyota');
+  const volvo = sectionRows(rows,'Volvo');
+  const carrozzeria = sectionRows(rows,'Carrozzeria');
+  const revisioni = sectionRows(rows,'Revisioni');
+  const totToyota = sumMetric(toyota,'Passaggi');
+  const totVolvo = sumMetric(volvo,'Passaggi');
+  const totCar = sumMetric(carrozzeria,'Passaggi');
+  const totRev = sumMetric(revisioni,'Passaggi');
+  const totale = totToyota + totVolvo + totCar;
+  const p = getPeriodInfo(rows);
+
+  document.getElementById('kpi-passaggi-label').textContent = p.oneDay ? 'Passaggi oggi' : 'Passaggi periodo';
+  document.getElementById('kpi-passaggi').textContent = Math.round(totale);
+  document.getElementById('kpi-passaggi-sub').textContent = p.oneDay ? 'Toyota + Volvo + Carrozzeria' : `media ${(totale/p.dayCount).toFixed(1)} / giorno · ${p.dayCount} gg`;
+  document.getElementById('kpi-toyota').textContent = Math.round(totToyota);
+  document.getElementById('kpi-volvo').textContent = Math.round(totVolvo);
+  document.getElementById('kpi-carrozzeria').textContent = Math.round(totCar);
+  document.getElementById('kpi-revisioni').textContent = Math.round(totRev);
+  document.getElementById('kpi-toyota-sub').textContent = totale > 0 ? `${(totToyota/totale*100).toFixed(1)}% dei passaggi` : 'passaggi';
+  document.getElementById('kpi-carrozzeria-sub').textContent = totale > 0 ? `${(totCar/totale*100).toFixed(1)}% dei passaggi` : 'passaggi';
+}
+
+function renderOperatorCards(rows) {
+  const toy = aggregateOperators(rows,'Toyota', CONFIG.accettatori_toyota || []);
+  const car = aggregateOperators(rows,'Carrozzeria', CONFIG.accettatori_carrozzeria || []);
+
+  const cardHtml = (s, type) => {
+    const media = s.giorni.size ? s.passaggi / s.giorni.size : 0;
+    const bonus = s.bonus ? ' bonus' : '';
+    const badge = s.bonus ? '<span class="badge">Bonus</span>' : '';
+    const extraStats = type === 'toyota'
+      ? `<div class="op-stat"><span class="op-stat-label">Gomme</span><span class="op-stat-val">${Math.round(s.gomme)}</span></div>
+         <div class="op-stat"><span class="op-stat-label">Tappetini</span><span class="op-stat-val">${Math.round(s.tappetini)}</span></div>
+         <div class="op-stat"><span class="op-stat-label">EasyPay</span><span class="op-stat-val">${Math.round(s.easypay)}</span></div>`
+      : `<div class="op-stat"><span class="op-stat-label">EasyPay</span><span class="op-stat-val">${Math.round(s.easypay)}</span></div>`;
+    return `<div class="op-card ${type}${bonus}">
+      <div class="op-name"><div class="op-avatar">${(s.nome||'?')[0].toUpperCase()}</div><span>${escapeHtml(s.nome)}</span>${badge}</div>
+      <div class="op-main"><span class="op-main-label">Passaggi</span><span class="op-main-value">${Math.round(s.passaggi)}</span></div>
+      <div class="op-stat"><span class="op-stat-label">Media/giorno</span><span class="op-stat-val">${media.toFixed(1)}</span></div>
+      ${extraStats}
+    </div>`;
+  };
+
+  document.getElementById('toyota-cards').innerHTML = toy.map(s=>cardHtml(s,'toyota')).join('');
+  document.getElementById('carrozzeria-cards').innerHTML = car.map(s=>cardHtml(s,'carrozzeria')).join('');
+
+  const toyRows = sectionRows(rows,'Toyota');
+  document.getElementById('tot-gomme').textContent = Math.round(sumMetric(toyRows,'Gomme'));
+  document.getElementById('tot-tappetini').textContent = Math.round(sumMetric(toyRows,'Tappetini'));
+  document.getElementById('tot-easypay-toyota').textContent = Math.round(sumMetric(toyRows,'EasyPay'));
+  document.getElementById('tot-odl').textContent = Math.round(sumMetric(sectionRows(rows,'Carrozzeria'),'ODL'));
+
+  renderToyotaTable(toy);
+}
+
+function renderToyotaTable(stats) {
+  const body = document.getElementById('toyota-table-body');
+  body.innerHTML = stats.map(s => {
+    const media = s.giorni.size ? s.passaggi / s.giorni.size : 0;
+    return `<tr><td>${escapeHtml(s.nome)}${s.bonus ? ' <span style="color:#f97316;font-size:.65rem">(bonus)</span>' : ''}</td><td>${Math.round(s.passaggi)}</td><td>${media.toFixed(1)}</td><td>${Math.round(s.gomme)}</td><td>${Math.round(s.tappetini)}</td><td>${Math.round(s.easypay)}</td></tr>`;
+  }).join('');
+  const totals = stats.reduce((a,s)=>({passaggi:a.passaggi+s.passaggi,gomme:a.gomme+s.gomme,tappetini:a.tappetini+s.tappetini,easypay:a.easypay+s.easypay}),{passaggi:0,gomme:0,tappetini:0,easypay:0});
+  const days = new Set(filteredRows().map(r=>dateKey(r.Data)).filter(Boolean)).size || 1;
+  document.getElementById('toyota-table-footer').innerHTML = `<td>TOTALE</td><td>${Math.round(totals.passaggi)}</td><td>${(totals.passaggi/days).toFixed(1)}</td><td>${Math.round(totals.gomme)}</td><td>${Math.round(totals.tappetini)}</td><td>${Math.round(totals.easypay)}</td>`;
+  document.getElementById('table-period-note').textContent = `${days} ${days===1?'giorno':'giorni'} nel periodo`;
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderCharts(rows) {
+  destroyChart('andamento');
+  destroyChart('reparti');
+
+  const byDay = {};
+  rows.forEach(r => {
+    const k = dateKey(r.Data); if (!k) return;
+    if (!byDay[k]) byDay[k] = {Toyota:0,Volvo:0,Carrozzeria:0};
+    if (['Toyota','Volvo','Carrozzeria'].includes(r.Sezione)) byDay[k][r.Sezione] += n(r.Passaggi);
+  });
+  const days = Object.keys(byDay).sort();
+  const colors = {Toyota:'#4a7fc1', Volvo:'#60a5fa', Carrozzeria:'#7c3aed'};
+
+  const ctx1 = document.getElementById('chart-andamento').getContext('2d');
+  charts.andamento = new Chart(ctx1, {
+    type:'bar',
+    data:{
+      labels:days.map(formatDateShort),
+      datasets:['Toyota','Volvo','Carrozzeria'].map(sec=>({label:sec,data:days.map(d=>byDay[d][sec]),backgroundColor:colors[sec],borderRadius:3}))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{x:{stacked:true,ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:'#6b7280',precision:0},grid:{color:'#e8ecf2'}}},
+      plugins:{legend:{position:'bottom',labels:{font:{family:'Nunito',size:11},boxWidth:12}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}}
+    }
+  });
+
+  const totals = ['Toyota','Volvo','Carrozzeria'].map(sec => sumMetric(sectionRows(rows,sec),'Passaggi'));
+  const grand = totals.reduce((a,b)=>a+b,0);
+  const ctx2 = document.getElementById('chart-reparti').getContext('2d');
+  charts.reparti = new Chart(ctx2, {
+    type:'doughnut',
+    data:{labels:['Toyota','Volvo','Carrozzeria'],datasets:[{data:totals,backgroundColor:[colors.Toyota,colors.Volvo,colors.Carrozzeria],borderColor:'#fff',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{font:{family:'Nunito',size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed} (${grand>0?(ctx.parsed/grand*100).toFixed(1):'0.0'}%)`}},datalabels:{display:true,color:'#fff',font:{weight:'bold',family:'JetBrains Mono',size:11},formatter:v=>v>0&&grand>0?`${(v/grand*100).toFixed(0)}%`:''}}}
+  });
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+}
+
+function render() {
+  const rows = filteredRows();
+  const empty = rows.length === 0;
+  document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
+  document.getElementById('dashboard-content').style.display = empty ? 'none' : 'block';
+  renderKpis(rows);
+  if (empty) return;
+  renderCharts(rows);
+  renderOperatorCards(rows);
+}
+
+function exportExcel() {
+  const rows = filteredRows();
+  if (!rows.length) { alert('Nessun dato da esportare'); return; }
+  const clean = rows.map(r=>({
+    Data: dateKey(r.Data).split('-').reverse().join('/'),
+    Sezione:r.Sezione, Accettatore:r.Accettatore, Passaggi:r.Passaggi,
+    Gomme:r.Gomme, Tappetini:r.Tappetini, EasyPay:r.EasyPay, ODL:r.ODL, Timestamp:r.Timestamp
+  }));
+  const ws = XLSX.utils.json_to_sheet(clean);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Passaggi');
+  const suffix = window._flatpickr?.input?.value?.replace(/\s/g,'').replace(/→/g,'-') || 'periodo';
+  XLSX.writeFile(wb, `dashboard-passaggi-${suffix}.xlsx`);
+}
+
+function init() {
+  document.getElementById('dash-sede').textContent = CONFIG?.sede || 'Via Biagi';
+  const today = new Date();
+  window._flatpickr = flatpickr('#date-from', {
+    mode:'range', locale:'it', dateFormat:'d/m/Y', conjunction:' → ', disableMobile:true,
+    defaultDate:[today,today],
+    onChange:selectedDates=>{ if (selectedDates.length===0 || selectedDates.length===2) render(); }
+  });
+  window._flatpickr.setDate([today,today], false);
+  loadData();
+}
+
+init();
+</script>
+</body>
+</html>
