@@ -27,7 +27,7 @@ const CONFIG = {
 
   // --- GOOGLE SHEETS ---
   googleSheets: {
-    scriptUrl: "https://script.google.com/macros/s/AKfycbwG5kHuRpxdVyoVTB99U_WdhJAmG0REylbDQ4p2d4U36jBF9dXrhilWPcO410EHuMBt/exec",
+    scriptUrl: "https://script.google.com/macros/s/AKfycbxaMj5JAwEQeC1keaelcFDNU6ux2458ROv0myPzZ3cdptzGkPuClu0Uc7J_t2bc17lR/exec",
   }
 
 };
