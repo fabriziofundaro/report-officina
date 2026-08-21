@@ -209,7 +209,7 @@
       <div class="kpi revisioni"><div class="kpi-label">Revisioni</div><div class="kpi-value" id="kpi-revisioni">—</div><div class="kpi-sub">indicatore separato</div></div>
     </div>
 
-    <div id="empty-state" class="state-box" style="display:none"><div class="icon">📭</div><div>Nessun dato nel periodo selezionato.</div></div>
+    <div id="empty-state" class="state-box" style="display:none"><div class="icon">📭</div><div id="empty-state-text">Nessun dato nel periodo selezionato.</div></div>
 
     <div id="dashboard-content">
       <div class="charts-grid">
@@ -274,6 +274,7 @@ Chart.defaults.plugins.datalabels = { display: false };
 
 let allRows = [];
 let dataSource = '';
+let dateFilterUserTouched = false;
 const charts = {};
 
 function n(v) {
@@ -349,6 +350,32 @@ function extractRowsFromJson(json) {
   return [];
 }
 
+function setAutomaticDateFilter(rows) {
+  const fp = window._flatpickr;
+  if (!fp || dateFilterUserTouched || !rows.length) return null;
+
+  const dates = rows
+    .map(r => parseDateValue(r.Data))
+    .filter(Boolean)
+    .sort((a,b) => a - b);
+  if (!dates.length) return null;
+
+  const todayKey = dateKey(new Date());
+  const today = dates.find(d => dateKey(d) === todayKey);
+  const target = today || dates[dates.length - 1];
+
+  fp.setDate([target, target], false);
+  return {
+    date: target,
+    isToday: dateKey(target) === todayKey
+  };
+}
+
+function formatDateIT(d) {
+  if (!d) return '';
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
 async function loadData() {
   setStatus('', 'Caricamento da Google Sheets…');
   try {
@@ -364,7 +391,11 @@ async function loadData() {
     if (!rows.length) throw new Error('Lo script non ha restituito righe nel formato atteso');
     allRows = rows;
     dataSource = 'Google Sheets';
-    setStatus('ok', `${allRows.length} righe caricate da Google Sheets`);
+    const autoPeriod = setAutomaticDateFilter(rows);
+    const autoNote = autoPeriod && !autoPeriod.isToday
+      ? ` · ultimo giorno disponibile: ${formatDateIT(autoPeriod.date)}`
+      : '';
+    setStatus('ok', `${allRows.length} righe caricate da Google Sheets${autoNote}`);
     render();
   } catch (err) {
     console.warn('Caricamento Google Sheets non disponibile:', err);
@@ -387,14 +418,11 @@ async function loadExcelFile(file) {
     if (!rows.length) throw new Error('Nessuna riga valida trovata nel foglio');
     allRows = rows;
     dataSource = file.name;
-    setStatus('ok', `${allRows.length} righe caricate da ${file.name}`);
-
-    // Se il file non contiene la data odierna, mostra tutto il periodo disponibile.
-    const today = dateKey(new Date());
-    if (!rows.some(r => dateKey(r.Data) === today) && window._flatpickr) {
-      const dates = rows.map(r => parseDateValue(r.Data)).filter(Boolean).sort((a,b)=>a-b);
-      if (dates.length) window._flatpickr.setDate([dates[0], dates[dates.length-1]], false);
-    }
+    const autoPeriod = setAutomaticDateFilter(rows);
+    const autoNote = autoPeriod && !autoPeriod.isToday
+      ? ` · ultimo giorno disponibile: ${formatDateIT(autoPeriod.date)}`
+      : '';
+    setStatus('ok', `${allRows.length} righe caricate da ${file.name}${autoNote}`);
     render();
   } catch (err) {
     console.error(err);
@@ -424,6 +452,7 @@ function filteredRows() {
 
 function clearDateRange(e) {
   e.stopPropagation();
+  dateFilterUserTouched = true;
   window._flatpickr?.clear();
   render();
 }
@@ -579,6 +608,19 @@ function render() {
   const empty = rows.length === 0;
   document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
   document.getElementById('dashboard-content').style.display = empty ? 'none' : 'block';
+
+  if (empty) {
+    const availableDates = allRows.map(r => parseDateValue(r.Data)).filter(Boolean).sort((a,b)=>a-b);
+    const emptyText = document.getElementById('empty-state-text');
+    if (emptyText && availableDates.length) {
+      const first = availableDates[0];
+      const last = availableDates[availableDates.length - 1];
+      emptyText.textContent = dateKey(first) === dateKey(last)
+        ? `Nessun dato nel periodo selezionato. Dati disponibili il ${formatDateIT(last)}.`
+        : `Nessun dato nel periodo selezionato. Dati disponibili dal ${formatDateIT(first)} al ${formatDateIT(last)}.`;
+    }
+  }
+
   renderKpis(rows);
   if (empty) return;
   renderCharts(rows);
@@ -606,7 +648,10 @@ function init() {
   window._flatpickr = flatpickr('#date-from', {
     mode:'range', locale:'it', dateFormat:'d/m/Y', conjunction:' → ', disableMobile:true,
     defaultDate:[today,today],
-    onChange:selectedDates=>{ if (selectedDates.length===0 || selectedDates.length===2) render(); }
+    onChange:selectedDates=>{
+      dateFilterUserTouched = true;
+      if (selectedDates.length===0 || selectedDates.length===2) render();
+    }
   });
   window._flatpickr.setDate([today,today], false);
   loadData();
