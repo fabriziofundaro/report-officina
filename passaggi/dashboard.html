@@ -66,6 +66,8 @@
   }
   .btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
   .btn.green{background:var(--green-dim);border-color:rgba(26,122,74,.45);color:var(--green)}
+  .btn.daily{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
+  .btn.daily:hover{background:#162d4b;border-color:#162d4b;color:#fff}
 
   .tabs-bar{background:#fff;border-bottom:1px solid var(--border);padding:0 1.5rem}
   .tabs{max-width:1280px;margin:0 auto;display:flex;gap:.25rem}
@@ -229,6 +231,7 @@
   </div>
   <div class="header-right">
     <button class="btn" onclick="loadData()">Aggiorna</button>
+    <button class="btn daily" onclick="shareDailyReport()">Report giornaliero</button>
     <button class="btn green" onclick="exportExcel()">Esporta Excel</button>
   </div>
 </header>
@@ -1029,6 +1032,204 @@ function render(){
       else openToyotaDetail(currentDetailOperator);
     } else renderAnalytics(rows);
   }
+}
+
+
+function dailyReportSelection(){
+  const fp=window._flatpickr;
+  const selected=fp?.selectedDates||[];
+  if(!selected.length) return {error:'Seleziona un giorno nel filtro Periodo.'};
+  const first=new Date(selected[0]);
+  const second=selected[1]?new Date(selected[1]):first;
+  if(dateKey(first)!==dateKey(second)) return {error:'Per il report giornaliero seleziona un solo giorno.'};
+  const key=dateKey(first);
+  const rows=allRows.filter(r=>dateKey(r.Data)===key);
+  if(!rows.length) return {error:'Nessun dato disponibile per il giorno selezionato.'};
+  return {date:first,key,rows};
+}
+
+function aggregateMetricByOperator(rows,metric,section=null){
+  const map=new Map();
+  rows.forEach(r=>{
+    if(section && String(r.Sezione).toLowerCase()!==String(section).toLowerCase()) return;
+    const name=String(r.Accettatore||'').trim();
+    if(!name || name==='-' || name.toLowerCase()==='odl totali') return;
+    const value=n(r[metric]);
+    if(value<=0) return;
+    map.set(name,(map.get(name)||0)+value);
+  });
+  return [...map.entries()].map(([nome,valore])=>({nome,valore}));
+}
+
+function orderedDailyOperators(items,configured=[]){
+  const order=new Map((configured||[]).map((name,i)=>[name,i]));
+  return [...items].sort((a,b)=>{
+    const ai=order.has(a.nome)?order.get(a.nome):9999;
+    const bi=order.has(b.nome)?order.get(b.nome):9999;
+    if(ai!==bi) return ai-bi;
+    return a.nome.localeCompare(b.nome,'it');
+  });
+}
+
+function dailyReportData(rows,date){
+  const toyotaRows=sectionRows(rows,'Toyota');
+  const volvoRows=sectionRows(rows,'Volvo');
+  const revisioniRows=sectionRows(rows,'Revisioni');
+  const carRows=sectionRows(rows,'Carrozzeria');
+
+  const toyotaOps=orderedDailyOperators(
+    aggregateMetricByOperator(toyotaRows,'Passaggi'),
+    CONFIG?.accettatori_toyota||[]
+  );
+  const carOps=orderedDailyOperators(
+    aggregateMetricByOperator(carRows,'Passaggi'),
+    CONFIG?.accettatori_carrozzeria||[]
+  );
+
+  return {
+    date,
+    toyota:{total:sumMetric(toyotaRows,'Passaggi'),operators:toyotaOps},
+    volvo:sumMetric(volvoRows,'Passaggi'),
+    revisioni:sumMetric(revisioniRows,'Passaggi'),
+    carrozzeria:{total:sumMetric(carRows,'Passaggi'),odl:sumMetric(carRows,'ODL'),operators:carOps},
+    easypay:{total:sumMetric(rows,'EasyPay'),operators:orderedDailyOperators(aggregateMetricByOperator(rows,'EasyPay'),CONFIG?.accettatori_toyota||[])},
+    pneumatici:{total:sumMetric(toyotaRows,'Gomme'),operators:orderedDailyOperators(aggregateMetricByOperator(toyotaRows,'Gomme'),CONFIG?.accettatori_toyota||[])},
+    tappetini:{total:sumMetric(toyotaRows,'Tappetini'),operators:orderedDailyOperators(aggregateMetricByOperator(toyotaRows,'Tappetini'),CONFIG?.accettatori_toyota||[])}
+  };
+}
+
+function wrapCanvasText(ctx,text,maxWidth){
+  const words=String(text||'').split(/\s+/).filter(Boolean);
+  const lines=[]; let line='';
+  words.forEach(word=>{
+    const test=line?`${line} ${word}`:word;
+    if(line && ctx.measureText(test).width>maxWidth){ lines.push(line); line=word; }
+    else line=test;
+  });
+  if(line) lines.push(line);
+  return lines.length?lines:['—'];
+}
+
+function drawRoundedRect(ctx,x,y,w,h,r,fill,stroke){
+  const radius=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+radius,y);
+  ctx.arcTo(x+w,y,x+w,y+h,radius);
+  ctx.arcTo(x+w,y+h,x,y+h,radius);
+  ctx.arcTo(x,y+h,x,y,radius);
+  ctx.arcTo(x,y,x+w,y,radius);
+  ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
+}
+
+function createDailyReportCanvas(data){
+  const W=1080, H=1350;
+  const canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const ink='#111827', muted='#6b7280', border='#d8dee8', surface='#ffffff', bg='#f3f5f8';
+  const toyota='#c93636', volvo='#2563eb', car='#d49a00', rev='#6b7280', accent='#1e3a5f';
+  const margin=56, contentW=W-margin*2;
+
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  drawRoundedRect(ctx,28,28,W-56,H-56,22,surface,border);
+
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle=ink; ctx.font='800 42px Nunito, Arial, sans-serif';
+  ctx.fillText(`PASSAGGI DEL ${formatDateIT(data.date)}`,margin,98);
+  ctx.fillStyle=accent; ctx.fillRect(margin,122,contentW,5);
+
+  const drawSection=(y,title,total,color,operators=[],rightNote='')=>{
+    const h=operators.length?205:142;
+    drawRoundedRect(ctx,margin,y,contentW,h,16,'#ffffff',border);
+    ctx.fillStyle=color; ctx.fillRect(margin,y,7,h);
+    ctx.fillStyle=muted; ctx.font='800 18px Nunito, Arial, sans-serif';
+    ctx.fillText(title.toUpperCase(),margin+28,y+40);
+    ctx.fillStyle=color; ctx.font='900 45px JetBrains Mono, monospace';
+    ctx.fillText(String(Math.round(total)),margin+28,y+94);
+    if(rightNote){
+      ctx.textAlign='right'; ctx.fillStyle=muted; ctx.font='700 20px Nunito, Arial, sans-serif';
+      ctx.fillText(rightNote,margin+contentW-28,y+76); ctx.textAlign='left';
+    }
+    if(operators.length){
+      ctx.font='700 20px Nunito, Arial, sans-serif'; ctx.fillStyle=ink;
+      const text=operators.map(o=>`${o.nome} ${Math.round(o.valore)}`).join('   ·   ');
+      const lines=wrapCanvasText(ctx,text,contentW-56);
+      lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,margin+28,y+137+i*30));
+    }
+    return y+h;
+  };
+
+  let y=158;
+  y=drawSection(y,'Toyota',data.toyota.total,toyota,data.toyota.operators)+18;
+
+  // Volvo + Revisioni, affiancati.
+  const gap=18, half=(contentW-gap)/2, hSmall=135;
+  drawRoundedRect(ctx,margin,y,half,hSmall,16,'#ffffff',border);
+  ctx.fillStyle=volvo;ctx.fillRect(margin,y,7,hSmall);
+  ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText('VOLVO',margin+28,y+40);
+  ctx.fillStyle=volvo;ctx.font='900 45px JetBrains Mono, monospace';ctx.fillText(String(Math.round(data.volvo)),margin+28,y+94);
+
+  const x2=margin+half+gap;
+  drawRoundedRect(ctx,x2,y,half,hSmall,16,'#ffffff',border);
+  ctx.fillStyle=rev;ctx.fillRect(x2,y,7,hSmall);
+  ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText('REVISIONI',x2+28,y+40);
+  ctx.fillStyle=rev;ctx.font='900 45px JetBrains Mono, monospace';ctx.fillText(String(Math.round(data.revisioni)),x2+28,y+94);
+  y+=hSmall+18;
+
+  y=drawSection(y,'Carrozzeria',data.carrozzeria.total,car,data.carrozzeria.operators,`di cui ${Math.round(data.carrozzeria.odl)} ODL`)+18;
+
+  const compactSection=(y,title,obj,color)=>{
+    const h=150;
+    drawRoundedRect(ctx,margin,y,contentW,h,16,'#ffffff',border);
+    ctx.fillStyle=color;ctx.fillRect(margin,y,7,h);
+    ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText(title.toUpperCase(),margin+28,y+38);
+    ctx.fillStyle=ink;ctx.font='900 37px JetBrains Mono, monospace';ctx.fillText(String(Math.round(obj.total)),margin+28,y+88);
+    ctx.font='700 19px Nunito, Arial, sans-serif';ctx.fillStyle=ink;
+    const detail=obj.operators.length?obj.operators.map(o=>`${o.nome} ${Math.round(o.valore)}`).join('   ·   '):'—';
+    const lines=wrapCanvasText(ctx,detail,contentW-180);
+    lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,margin+150,y+72+i*27));
+    return y+h;
+  };
+
+  y=compactSection(y,'EasyPay',data.easypay,toyota)+14;
+  y=compactSection(y,'Pneumatici',data.pneumatici,toyota)+14;
+  y=compactSection(y,'Tappetini',data.tappetini,toyota)+14;
+
+  ctx.textAlign='center'; ctx.fillStyle=accent; ctx.font='800 27px Nunito, Arial, sans-serif';
+  ctx.fillText('Buona serata',W/2,H-64); ctx.textAlign='left';
+  return canvas;
+}
+
+function downloadCanvasPng(canvas,filename){
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png',1);
+  a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+async function shareDailyReport(){
+  const selection=dailyReportSelection();
+  if(selection.error){ alert(selection.error); return; }
+  const report=dailyReportData(selection.rows,selection.date);
+  const canvas=createDailyReportCanvas(report);
+  const filename=`passaggi-${dateKey(selection.date)}.png`;
+
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png',1));
+  if(blob && typeof File!=='undefined' && navigator.share){
+    try{
+      const file=new File([blob],filename,{type:'image/png'});
+      if(!navigator.canShare || navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:`Passaggi del ${formatDateIT(selection.date)}`});
+        return;
+      }
+    }catch(err){
+      if(err?.name==='AbortError') return;
+      console.warn('Condivisione diretta non disponibile:',err);
+    }
+  }
+  downloadCanvasPng(canvas,filename);
 }
 
 function exportExcel(){
