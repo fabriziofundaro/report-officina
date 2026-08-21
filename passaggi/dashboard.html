@@ -180,6 +180,8 @@
   .ratio-card.car{border-top:3px solid var(--car)}
 
   .analytics-table{margin-top:1rem}
+  .ratio-note{font-size:.62rem;color:var(--ink-muted);margin-top:.25rem}
+  .ratio-card.secondary{background:var(--surface2)}
   .metric-highlight{font-weight:700;color:var(--toyota-dark)}
 
   .detail-view{display:none}.detail-view.active{display:block}
@@ -355,14 +357,14 @@
 
       <section class="dept-section toyota analytics-section">
         <div class="dept-head">
-          <div><div class="dept-title toyota">Toyota — Analisi accettatori</div><div class="dept-sub">Volumi, trend e indicatori normalizzati per 100 passaggi</div></div>
+          <div><div class="dept-title toyota">Toyota — Analisi accettatori</div><div class="dept-sub">Volumi, trend e risultati del periodo selezionato</div></div>
         </div>
         <div class="dept-body">
           <div class="ratio-grid">
-            <div class="ratio-card toyota"><div class="ratio-label">Gomme / 100 passaggi</div><div class="ratio-value" id="toy-ratio-gomme">0,0</div></div>
-            <div class="ratio-card toyota"><div class="ratio-label">Tappetini / 100 passaggi</div><div class="ratio-value" id="toy-ratio-tappetini">0,0</div></div>
-            <div class="ratio-card toyota"><div class="ratio-label">EasyPay / 100 passaggi</div><div class="ratio-value" id="toy-ratio-easypay">0,0</div></div>
-            <div class="ratio-card toyota"><div class="ratio-label">Accessori / 100 passaggi</div><div class="ratio-value" id="toy-ratio-accessori">0,0</div></div>
+            <div class="ratio-card toyota"><div class="ratio-label">Gomme vendute</div><div class="ratio-value" id="toy-total-gomme">0</div><div class="ratio-note">pezzi nel periodo</div></div>
+            <div class="ratio-card toyota"><div class="ratio-label">Tappetini venduti</div><div class="ratio-value" id="toy-total-tappetini">0</div><div class="ratio-note">pezzi nel periodo</div></div>
+            <div class="ratio-card toyota"><div class="ratio-label">EasyPay</div><div class="ratio-value" id="toy-total-easypay">0</div><div class="ratio-note">totale periodo</div></div>
+            <div class="ratio-card toyota secondary"><div class="ratio-label">Accessori totali</div><div class="ratio-value" id="toy-total-accessori">0</div><div class="ratio-note">Gomme + Tappetini</div></div>
           </div>
 
           <div class="charts-grid">
@@ -385,7 +387,8 @@
               <div class="chart-wrap tall"><canvas id="chart-toyota-trend"></canvas></div>
             </div>
             <div class="chart-card">
-              <div class="chart-title">Gomme, tappetini e EasyPay ogni 100 passaggi</div>
+              <div class="chart-title">Gomme, tappetini ed EasyPay per accettatore</div>
+              <div class="chart-sub">Valori assoluti del periodo. Gli indicatori per 100 passaggi restano nel confronto performance sottostante.</div>
               <div class="chart-wrap tall"><canvas id="chart-toyota-ratios"></canvas></div>
             </div>
             <div class="chart-card">
@@ -405,7 +408,7 @@
           </div>
 
           <div class="table-section toyota analytics-table">
-            <div class="table-header"><span class="table-title">Confronto performance Toyota</span><span class="table-note">Indicatori per 100 passaggi</span></div>
+            <div class="table-header"><span class="table-title">Confronto performance Toyota</span><span class="table-note">Indicatori normalizzati per confrontare accettatori con volumi diversi</span></div>
             <div class="table-wrap"><table>
               <thead><tr><th>Accettatore</th><th>Passaggi</th><th>% Toyota</th><th>Gomme /100</th><th>Tappetini /100</th><th>EasyPay /100</th><th>Accessori /100</th></tr></thead>
               <tbody id="analytics-toyota-table"></tbody>
@@ -837,10 +840,10 @@ function renderAnalytics(rows){
   document.getElementById('an-kpi-toyota').textContent=fmt0(toyTotal); document.getElementById('an-kpi-volvo').textContent=fmt0(volTotal);
   document.getElementById('an-kpi-car').textContent=fmt0(carTotal); document.getElementById('an-kpi-rev').textContent=fmt0(revTotal);
 
-  document.getElementById('toy-ratio-gomme').textContent=fmt1(ratio100(gomme,toyTotal));
-  document.getElementById('toy-ratio-tappetini').textContent=fmt1(ratio100(tapp,toyTotal));
-  document.getElementById('toy-ratio-easypay').textContent=fmt1(ratio100(easyToy,toyTotal));
-  document.getElementById('toy-ratio-accessori').textContent=fmt1(ratio100(gomme+tapp,toyTotal));
+  document.getElementById('toy-total-gomme').textContent=fmt0(gomme);
+  document.getElementById('toy-total-tappetini').textContent=fmt0(tapp);
+  document.getElementById('toy-total-easypay').textContent=fmt0(easyToy);
+  document.getElementById('toy-total-accessori').textContent=fmt0(gomme+tapp);
 
   const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
   const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
@@ -878,19 +881,19 @@ function renderToyotaCharts(rows,toy,toyTotal){
   charts['toyota-trend']=new Chart(ctx2,{type:'line',data:{labels:days.map(formatDateShort),datasets:activeToy.map((s,i)=>({label:s.nome,data:days.map(d=>byOp[s.nome]?.[d]||0),_baseColor:TOYOTA_PALETTE[i%TOYOTA_PALETTE.length],borderColor:hexToRgba(TOYOTA_PALETTE[i%TOYOTA_PALETTE.length],.68),backgroundColor:hexToRgba(TOYOTA_PALETTE[i%TOYOTA_PALETTE.length],.05),tension:.25,borderWidth:1.9,pointRadius:1.7,pointHoverRadius:4,hidden:toyotaOperatorFilter!=='all'&&s.nome!==toyotaOperatorFilter}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},plugins:{legend:{display:toyotaOperatorFilter==='all',position:'bottom',labels:{boxWidth:10,font:{size:10}}},averageLine:{lines:[{axis:'y',value:trendAvg,label:'Media periodo',color:avgColor}]},tooltip:{mode:'nearest',intersect:false},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
   applyToyotaTrendFocus('');
 
-  const gommeRatios=activeToy.map(s=>ratio100(s.gomme,s.passaggi));
-  const tappRatios=activeToy.map(s=>ratio100(s.tappetini,s.passaggi));
-  const easyRatios=activeToy.map(s=>ratio100(s.easypay,s.passaggi));
+  const gommeValues=activeToy.map(s=>s.gomme);
+  const tappValues=activeToy.map(s=>s.tappetini);
+  const easyValues=activeToy.map(s=>s.easypay);
   const ctx3=document.getElementById('chart-toyota-ratios').getContext('2d');
   charts['toyota-ratios']=new Chart(ctx3,{type:'bar',data:{labels:activeToy.map(s=>s.nome),datasets:[
-    {label:'Gomme /100',data:gommeRatios,backgroundColor:PRODUCT_COLORS.gomme,borderRadius:3},
-    {label:'Tappetini /100',data:tappRatios,backgroundColor:PRODUCT_COLORS.tappetini,borderRadius:3},
-    {label:'EasyPay /100',data:easyRatios,backgroundColor:PRODUCT_COLORS.easypay,borderRadius:3}
+    {label:'Gomme',data:gommeValues,backgroundColor:PRODUCT_COLORS.gomme,borderRadius:3},
+    {label:'Tappetini',data:tappValues,backgroundColor:PRODUCT_COLORS.tappetini,borderRadius:3},
+    {label:'EasyPay',data:easyValues,backgroundColor:PRODUCT_COLORS.easypay,borderRadius:3}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},averageLine:{lines:[
-    {axis:'y',value:mean(gommeRatios),label:'Media Gomme',color:hexToRgba(PRODUCT_COLORS.gomme,.55),labelOffset:-10},
-    {axis:'y',value:mean(tappRatios),label:'Media Tappetini',color:hexToRgba(PRODUCT_COLORS.tappetini,.55),labelOffset:0},
-    {axis:'y',value:mean(easyRatios),label:'Media EasyPay',color:hexToRgba(PRODUCT_COLORS.easypay,.55),labelOffset:10}
-  ]},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt1(ctx.parsed.y)}`}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+    {axis:'y',value:mean(gommeValues),label:'Media Gomme',color:hexToRgba(PRODUCT_COLORS.gomme,.55),labelOffset:-10},
+    {axis:'y',value:mean(tappValues),label:'Media Tappetini',color:hexToRgba(PRODUCT_COLORS.tappetini,.55),labelOffset:0},
+    {axis:'y',value:mean(easyValues),label:'Media EasyPay',color:hexToRgba(PRODUCT_COLORS.easypay,.55),labelOffset:10}
+  ]},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt0(ctx.parsed.y)}`}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
 
   const byDay={}; toyRows.forEach(r=>{const d=dateKey(r.Data);if(!d)return;if(!byDay[d])byDay[d]={gomme:0,tappetini:0,easypay:0};byDay[d].gomme+=n(r.Gomme);byDay[d].tappetini+=n(r.Tappetini);byDay[d].easypay+=n(r.EasyPay);});
   const d4=Object.keys(byDay).sort(); const metric=toyotaProductMetric; const values=d4.map(d=>byDay[d][metric]); const color=PRODUCT_COLORS[metric];
