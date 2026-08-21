@@ -187,6 +187,12 @@
   .detail-back:hover{border-color:var(--toyota);color:var(--toyota)}
   .detail-name{font-size:1.2rem;font-weight:900;color:var(--toyota-dark);margin-bottom:.8rem}
   .detail-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem;margin-bottom:1rem}
+  .detail-kpis.car-detail-kpis{grid-template-columns:repeat(4,1fr)}
+  .detail-name.car-detail-name{color:#7a5a00}
+  .detail-back.car-detail-back:hover{border-color:var(--car);color:#7a5a00}
+  .operator-link{appearance:none;border:0;background:none;padding:0;font:inherit;font-weight:800;color:inherit;cursor:pointer;text-align:left}
+  .operator-link:hover{text-decoration:underline;text-underline-offset:2px}
+  .operator-link.car:hover{color:#7a5a00}
 
   .state-box{text-align:center;padding:2.5rem 1rem;color:var(--ink-muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
   .state-title{font-weight:800;color:var(--ink);margin-bottom:.3rem}
@@ -203,7 +209,7 @@
     .kpi-row,.analytics-kpi-row{grid-template-columns:repeat(2,1fr);gap:.65rem}
     .kpi:first-child{grid-column:1/-1}.kpi-value{font-size:1.55rem}
     .date-range-input{width:155px}
-    .ratio-grid,.detail-kpis,.summary-box{grid-template-columns:1fr 1fr}
+    .ratio-grid,.detail-kpis,.detail-kpis.car-detail-kpis,.summary-box{grid-template-columns:1fr 1fr}
     .chart-wrap,.chart-wrap.tall{height:280px}
     .chart-card-head{align-items:stretch}.chart-control{width:100%;justify-content:flex-start}.chart-select{max-width:220px}
   }
@@ -260,9 +266,9 @@
         <div class="kpi-sub" id="report-kpi-passaggi-sub">Toyota + Volvo + Carrozzeria</div>
       </div>
       <div class="kpi toyota"><div class="kpi-label">Toyota</div><div class="kpi-value" id="report-kpi-toyota">—</div><div class="kpi-sub" id="report-kpi-toyota-sub">passaggi</div></div>
-      <div class="kpi volvo"><div class="kpi-label">Volvo</div><div class="kpi-value" id="report-kpi-volvo">—</div><div class="kpi-sub">passaggi</div></div>
+      <div class="kpi volvo"><div class="kpi-label">Volvo</div><div class="kpi-value" id="report-kpi-volvo">—</div><div class="kpi-sub" id="report-kpi-volvo-sub">passaggi</div></div>
       <div class="kpi car"><div class="kpi-label">Carrozzeria</div><div class="kpi-value" id="report-kpi-car">—</div><div class="kpi-sub" id="report-kpi-car-sub">passaggi</div></div>
-      <div class="kpi rev"><div class="kpi-label">Revisioni</div><div class="kpi-value" id="report-kpi-rev">—</div><div class="kpi-sub">indicatore separato</div></div>
+      <div class="kpi rev"><div class="kpi-label">Revisioni</div><div class="kpi-value" id="report-kpi-rev">—</div></div>
     </div>
 
     <section class="dept-section toyota">
@@ -504,6 +510,23 @@
         </div>
       </div>
     </div>
+
+    <!-- DETTAGLIO ACCETTATORE CARROZZERIA -->
+    <div id="analytics-car-detail" class="detail-view">
+      <button class="detail-back car-detail-back" onclick="backToAnalyticsOverview()">Torna al confronto</button>
+      <div class="detail-name car-detail-name" id="car-detail-name">Accettatore Carrozzeria</div>
+      <div class="detail-kpis car-detail-kpis">
+        <div class="kpi car"><div class="kpi-label">Passaggi</div><div class="kpi-value" id="car-detail-passaggi">0</div></div>
+        <div class="kpi"><div class="kpi-label">Media / giorno</div><div class="kpi-value" id="car-detail-media">0,0</div></div>
+        <div class="kpi car"><div class="kpi-label">Quota reparto</div><div class="kpi-value" id="car-detail-quota">0,0%</div></div>
+        <div class="kpi car"><div class="kpi-label">EasyPay</div><div class="kpi-value" id="car-detail-easypay">0</div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Trend passaggi</div>
+        <div class="chart-sub">Andamento giornaliero dei passaggi dell'accettatore nel periodo selezionato.</div>
+        <div class="chart-wrap tall"><canvas id="chart-car-detail-passaggi"></canvas></div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -548,6 +571,7 @@ let allRows = [];
 let dateFilterUserTouched = false;
 let currentTab = 'report';
 let currentDetailOperator = '';
+let currentDetailDepartment = '';
 let toyotaOperatorFilter = 'all';
 let toyotaProductMetric = 'gomme';
 let detailProductMetric = 'gomme';
@@ -584,7 +608,7 @@ function setToyotaProductMetric(metric){
 function setDetailProductMetric(metric){
   if(!PRODUCT_LABELS[metric]) return;
   detailProductMetric=metric; syncProductButtons();
-  if(currentDetailOperator) renderToyotaDetailCharts(filteredRows(),currentDetailOperator);
+  if(currentDetailOperator && currentDetailDepartment==='toyota') renderToyotaDetailCharts(filteredRows(),currentDetailOperator);
 }
 function syncProductButtons(){
   Object.keys(PRODUCT_LABELS).forEach(metric=>{
@@ -772,6 +796,7 @@ function renderReport(rows){
   document.getElementById('report-kpi-toyota').textContent=fmt0(toyTotal); document.getElementById('report-kpi-volvo').textContent=fmt0(volTotal);
   document.getElementById('report-kpi-car').textContent=fmt0(carTotal); document.getElementById('report-kpi-rev').textContent=fmt0(revTotal);
   document.getElementById('report-kpi-toyota-sub').textContent=grand>0?`${fmt1(toyTotal/grand*100)}% dei passaggi`:'passaggi';
+  document.getElementById('report-kpi-volvo-sub').textContent=grand>0?`${fmt1(volTotal/grand*100)}% dei passaggi`:'passaggi';
   document.getElementById('report-kpi-car-sub').textContent=grand>0?`${fmt1(carTotal/grand*100)}% dei passaggi`:'passaggi';
 
   const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
@@ -791,7 +816,7 @@ function renderReport(rows){
   const carOdl=sumMetric(carRows,'ODL'), carEasy=sumMetric(carRows,'EasyPay');
   document.getElementById('report-tot-odl').textContent=fmt0(carOdl); document.getElementById('report-tot-easypay-car').textContent=fmt0(carEasy);
   document.getElementById('report-car-note').textContent=`${p.dayCount} ${p.dayCount===1?'giorno':'giorni'} nel periodo`;
-  document.getElementById('report-car-body').innerHTML=car.map(s=>`<tr><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${fmt1(s.passaggi/p.dayCount)}</td><td>${carTotal>0?fmt1(s.passaggi/carTotal*100)+'%':'0,0%'}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
+  document.getElementById('report-car-body').innerHTML=car.map(s=>`<tr><td><button type="button" class="operator-link car" onclick="openCarDetailFromReport(decodeURIComponent('${encodeURIComponent(s.nome)}'))">${escapeHtml(s.nome)}</button></td><td>${fmt0(s.passaggi)}</td><td>${fmt1(s.passaggi/p.dayCount)}</td><td>${carTotal>0?fmt1(s.passaggi/carTotal*100)+'%':'0,0%'}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
   const ct=car.reduce((a,s)=>({p:a.p+s.passaggi,e:a.e+s.easypay}),{p:0,e:0});
   document.getElementById('report-car-footer').innerHTML=`<td>TOTALE</td><td>${fmt0(ct.p)}</td><td>${fmt1(ct.p/p.dayCount)}</td><td>100,0%</td><td>${fmt0(ct.e)}</td>`;
 
@@ -824,7 +849,7 @@ function renderAnalytics(rows){
   document.getElementById('an-volvo-total').textContent=fmt0(volTotal); document.getElementById('an-volvo-media').textContent=fmt1(volTotal/p.dayCount);
   document.getElementById('an-car-total').textContent=fmt0(carTotal); document.getElementById('an-car-odl').textContent=fmt0(odl);
   document.getElementById('an-car-incidenza').textContent=carTotal>0?fmt1(odl/carTotal*100)+'%':'0,0%'; document.getElementById('an-car-easypay').textContent=fmt0(easyCar);
-  document.getElementById('analytics-car-table').innerHTML=car.map(s=>`<tr><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${carTotal>0?fmt1(s.passaggi/carTotal*100)+'%':'0,0%'}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
+  document.getElementById('analytics-car-table').innerHTML=car.map(s=>`<tr onclick="openCarDetail(decodeURIComponent('${encodeURIComponent(s.nome)}'))" style="cursor:pointer"><td><button type="button" class="operator-link car" onclick="event.stopPropagation();openCarDetail(decodeURIComponent('${encodeURIComponent(s.nome)}'))">${escapeHtml(s.nome)}</button></td><td>${fmt0(s.passaggi)}</td><td>${carTotal>0?fmt1(s.passaggi/carTotal*100)+'%':'0,0%'}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
   document.getElementById('an-rev-total').textContent=fmt0(revTotal); document.getElementById('an-rev-media').textContent=fmt1(revTotal/p.dayCount);
 
   renderToyotaCharts(rows,toy,toyTotal);
@@ -896,7 +921,7 @@ function renderCarCharts(rows,car){
   ]},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
 
   const active=car.filter(s=>s.passaggi>0||s.easypay>0); const avg=mean(active.map(s=>s.passaggi)); const ctx2=document.getElementById('chart-car-operatori').getContext('2d');
-  charts['car-operatori']=new Chart(ctx2,{type:'bar',data:{labels:active.map(s=>s.nome),datasets:[{label:'Passaggi',data:active.map(s=>s.passaggi),backgroundColor:'#d49a00',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},averageLine:{lines:[{axis:'x',value:avg,label:'Media',color:'rgba(154,112,0,.55)'}]},datalabels:{display:true,anchor:'end',align:'end',color:'#0d1117',font:{family:'JetBrains Mono',size:10,weight:'600'},formatter:v=>fmt0(v),clip:false}},layout:{padding:{right:32}},scales:{x:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}},y:{ticks:{color:'#0d1117',font:{weight:'700'}},grid:{display:false}}}}});
+  charts['car-operatori']=new Chart(ctx2,{type:'bar',data:{labels:active.map(s=>s.nome),datasets:[{label:'Passaggi',data:active.map(s=>s.passaggi),backgroundColor:'#d49a00',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',onClick:(evt,elements)=>{if(elements.length){const name=active[elements[0].index]?.nome;if(name)openCarDetail(name);}},onHover:(evt,elements)=>{const target=evt?.native?.target;if(target)target.style.cursor=elements.length?'pointer':'default';},plugins:{legend:{display:false},averageLine:{lines:[{axis:'x',value:avg,label:'Media',color:'rgba(154,112,0,.55)'}]},datalabels:{display:true,anchor:'end',align:'end',color:'#0d1117',font:{family:'JetBrains Mono',size:10,weight:'600'},formatter:v=>fmt0(v),clip:false}},layout:{padding:{right:32}},scales:{x:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}},y:{ticks:{color:'#0d1117',font:{weight:'700'}},grid:{display:false}}}}});
 }
 
 function renderRevisioniChart(rows){
@@ -906,7 +931,10 @@ function renderRevisioniChart(rows){
 }
 
 function openToyotaDetail(name){
-  currentDetailOperator=name; document.getElementById('analytics-overview').style.display='none'; document.getElementById('analytics-detail').classList.add('active');
+  currentDetailOperator=name; currentDetailDepartment='toyota';
+  document.getElementById('analytics-overview').style.display='none';
+  document.getElementById('analytics-car-detail')?.classList.remove('active');
+  document.getElementById('analytics-detail').classList.add('active');
   const rows=filteredRows(); const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]); const s=toy.find(x=>x.nome===name); if(!s) return;
   document.getElementById('detail-name').textContent=name; document.getElementById('detail-passaggi').textContent=fmt0(s.passaggi);
   const days=getPeriodInfo(rows).dayCount; document.getElementById('detail-media').textContent=fmt1(s.passaggi/days); document.getElementById('detail-gomme').textContent=fmt0(s.gomme);
@@ -926,9 +954,58 @@ function renderToyotaDetailCharts(rows,name){
   const c2=document.getElementById('chart-detail-prodotti').getContext('2d'); charts['detail-prodotti']=new Chart(c2,{type:'line',data:{labels:days.map(formatDateShort),datasets:[{label:PRODUCT_LABELS[metric],data:values,borderColor:color,backgroundColor:hexToRgba(color,.08),fill:true,tension:.25,borderWidth:2.6,pointRadius:2.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},averageLine:{lines:[{axis:'y',value:mean(values),label:'Media periodo',color:hexToRgba(color,.55)}]},datalabels:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7280'}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
 }
 
+function openCarDetailFromReport(name){
+  switchTab('analytics');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>openCarDetail(name)));
+}
+
+function openCarDetail(name){
+  currentDetailOperator=name; currentDetailDepartment='car';
+  document.getElementById('analytics-overview').style.display='none';
+  document.getElementById('analytics-detail')?.classList.remove('active');
+  document.getElementById('analytics-car-detail').classList.add('active');
+
+  const rows=filteredRows();
+  const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
+  const s=car.find(x=>x.nome===name); if(!s) return;
+  const carTotal=sumMetric(sectionRows(rows,'Carrozzeria'),'Passaggi');
+  const days=getPeriodInfo(rows).dayCount;
+  document.getElementById('car-detail-name').textContent=name;
+  document.getElementById('car-detail-passaggi').textContent=fmt0(s.passaggi);
+  document.getElementById('car-detail-media').textContent=fmt1(s.passaggi/days);
+  document.getElementById('car-detail-quota').textContent=carTotal>0?`${fmt1(s.passaggi/carTotal*100)}%`:'0,0%';
+  document.getElementById('car-detail-easypay').textContent=fmt0(s.easypay);
+  renderCarDetailChart(rows,name);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderCarDetailChart(rows,name){
+  destroyChart('car-detail-passaggi');
+  const days=periodDays(rows);
+  const by={};
+  sectionRows(rows,'Carrozzeria').filter(r=>r.Accettatore===name).forEach(r=>{
+    const d=dateKey(r.Data); if(d) by[d]=(by[d]||0)+n(r.Passaggi);
+  });
+  const values=days.map(d=>by[d]||0);
+  const ctx=document.getElementById('chart-car-detail-passaggi').getContext('2d');
+  charts['car-detail-passaggi']=new Chart(ctx,{
+    type:'line',
+    data:{labels:days.map(formatDateShort),datasets:[{
+      label:'Passaggi',data:values,borderColor:'#d49a00',backgroundColor:'rgba(212,154,0,.10)',
+      fill:true,tension:.25,borderWidth:2.7,pointRadius:3,pointHoverRadius:5
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},plugins:{
+      legend:{display:false},averageLine:{lines:[{axis:'y',value:mean(values),label:'Media periodo',color:'rgba(154,112,0,.58)'}]},datalabels:{display:false}
+    },scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}
+  });
+}
+
 function backToAnalyticsOverview(scroll=true){
-  currentDetailOperator=''; document.getElementById('analytics-detail').classList.remove('active'); document.getElementById('analytics-overview').style.display='block';
-  destroyChart('detail-passaggi'); destroyChart('detail-prodotti');
+  currentDetailOperator=''; currentDetailDepartment='';
+  document.getElementById('analytics-detail').classList.remove('active');
+  document.getElementById('analytics-car-detail')?.classList.remove('active');
+  document.getElementById('analytics-overview').style.display='block';
+  destroyChart('detail-passaggi'); destroyChart('detail-prodotti'); destroyChart('car-detail-passaggi');
   if(scroll) window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -944,7 +1021,10 @@ function render(){
   }
   renderReport(rows);
   if(currentTab==='analytics'){
-    if(currentDetailOperator) openToyotaDetail(currentDetailOperator); else renderAnalytics(rows);
+    if(currentDetailOperator){
+      if(currentDetailDepartment==='car') openCarDetail(currentDetailOperator);
+      else openToyotaDetail(currentDetailOperator);
+    } else renderAnalytics(rows);
   }
 }
 
