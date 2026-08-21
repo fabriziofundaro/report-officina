@@ -177,15 +177,13 @@
     </div>
     <div class="header-right">
       <button class="btn" onclick="loadData()">↻ Aggiorna</button>
-      <label class="btn" for="excel-file">📂 Carica Excel<input type="file" id="excel-file" accept=".xlsx,.xls"></label>
       <button class="btn green" onclick="exportExcel()">⬇ Esporta Excel</button>
     </div>
   </header>
 
   <main class="main">
-    <div class="status-row">
-      <div class="status" id="data-status"><span class="status-dot"></span><span id="data-status-text">Caricamento dati…</span></div>
-      <div class="hint">Revisioni escluse dal totale passaggi</div>
+    <div class="status-row" id="status-row" style="display:none">
+      <div class="status" id="data-status"><span class="status-dot"></span><span id="data-status-text"></span></div>
     </div>
 
     <div class="filters">
@@ -324,9 +322,14 @@ function formatDateShort(key) {
 }
 
 function setStatus(type, text) {
+  const row = document.getElementById('status-row');
   const el = document.getElementById('data-status');
+  if (!row || !el) return;
+
+  const visible = type === 'warn' || type === 'error';
+  row.style.display = visible ? 'flex' : 'none';
   el.className = `status ${type || ''}`;
-  document.getElementById('data-status-text').textContent = text;
+  document.getElementById('data-status-text').textContent = visible ? text : '';
 }
 
 function normalizeRow(r) {
@@ -401,49 +404,18 @@ async function loadData() {
     if (!rows.length) throw new Error('Lo script non ha restituito righe nel formato atteso');
     allRows = rows;
     dataSource = 'Google Sheets';
-    const autoPeriod = setAutomaticDateFilter(rows);
-    const autoNote = autoPeriod && !autoPeriod.isToday
-      ? ` · ultimo giorno disponibile: ${formatDateIT(autoPeriod.date)}`
-      : '';
-    setStatus('ok', `${allRows.length} righe caricate da Google Sheets${autoNote}`);
+    setAutomaticDateFilter(rows);
+    setStatus('ok', '');
     render();
   } catch (err) {
     console.warn('Caricamento Google Sheets non disponibile:', err);
     allRows = [];
     dataSource = '';
-    setStatus('warn', 'Lettura automatica non disponibile — usa “Carica Excel” per visualizzare subito i dati');
+    setStatus('warn', 'Impossibile leggere i dati da Google Sheets — premi Aggiorna per riprovare');
     render();
   }
 }
 
-async function loadExcelFile(file) {
-  if (!file) return;
-  try {
-    setStatus('', `Lettura di ${file.name}…`);
-    const buffer = await file.arrayBuffer();
-    const wb = XLSX.read(buffer, { type:'array', cellDates:true });
-    const sheetName = wb.SheetNames.includes('Passaggi') ? 'Passaggi' : wb.SheetNames[0];
-    const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval:null, raw:true });
-    const rows = raw.map(normalizeRow).filter(r => r.Data && r.Sezione);
-    if (!rows.length) throw new Error('Nessuna riga valida trovata nel foglio');
-    allRows = rows;
-    dataSource = file.name;
-    const autoPeriod = setAutomaticDateFilter(rows);
-    const autoNote = autoPeriod && !autoPeriod.isToday
-      ? ` · ultimo giorno disponibile: ${formatDateIT(autoPeriod.date)}`
-      : '';
-    setStatus('ok', `${allRows.length} righe caricate da ${file.name}${autoNote}`);
-    render();
-  } catch (err) {
-    console.error(err);
-    setStatus('error', `Errore lettura Excel: ${err.message || err}`);
-  }
-}
-
-document.getElementById('excel-file').addEventListener('change', e => {
-  loadExcelFile(e.target.files?.[0]);
-  e.target.value = '';
-});
 
 function filteredRows() {
   const fp = window._flatpickr;
