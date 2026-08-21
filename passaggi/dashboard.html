@@ -13,630 +13,808 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root {
-    --bg: #f2f4f7;
-    --surface: #ffffff;
-    --surface2: #f8f9fb;
-    --border: #dde1e9;
-    --border-strong: #b8bfcc;
-    --ink: #0d1117;
-    --ink-muted: #6b7280;
-    --accent: #4a7fc1;
-    --accent-dim: rgba(74,127,193,.10);
-    --accent-dark: #1e3a5f;
-    --green: #1a7a4a;
-    --green-dim: rgba(26,122,74,.10);
-    --orange: #f97316;
-    --orange-dim: rgba(249,115,22,.09);
-    --purple: #7c3aed;
-    --purple-dim: rgba(124,58,237,.08);
-    --teal: #0f766e;
-    --teal-dim: rgba(15,118,110,.08);
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Nunito', sans-serif;
-    --radius: 8px;
+    --bg:#f2f4f7;
+    --surface:#ffffff;
+    --surface2:#f8f9fb;
+    --border:#dde1e9;
+    --border-strong:#b8bfcc;
+    --ink:#0d1117;
+    --ink-muted:#6b7280;
+    --accent:#4a7fc1;
+    --accent-dim:rgba(74,127,193,.10);
+    --accent-dark:#1e3a5f;
+    --green:#1a7a4a;
+    --green-dim:rgba(26,122,74,.10);
+
+    --toyota:#c93636;
+    --toyota-dark:#9f2626;
+    --toyota-dim:rgba(201,54,54,.08);
+    --volvo:#2563eb;
+    --volvo-dark:#1d4ed8;
+    --volvo-dim:rgba(37,99,235,.08);
+    --car:#d49a00;
+    --car-dark:#9a7000;
+    --car-dim:rgba(212,154,0,.10);
+    --rev:#6b7280;
+    --rev-dark:#4b5563;
+    --rev-dim:rgba(107,114,128,.09);
+
+    --mono:'JetBrains Mono',monospace;
+    --sans:'Nunito',sans-serif;
+    --radius:8px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--sans); min-height: 100vh; font-size: 15px; }
 
-  .header {
-    background: #fff; border-bottom: 3px solid var(--accent);
-    padding: .85rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: .75rem;
-    box-shadow: 0 2px 12px rgba(74,127,193,.10);
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;font-size:15px}
+
+  .header{
+    background:#fff;border-bottom:3px solid var(--accent);
+    padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:.75rem;
+    box-shadow:0 2px 12px rgba(74,127,193,.10)
   }
-  .header-left { display:flex; align-items:center; }
-  .header-logo { font-weight:800; font-size:1.4rem; color:var(--accent); letter-spacing:-.03em; line-height:1; }
-  .header-divider { width:1px; height:22px; background:var(--border); margin:0 .75rem; }
-  .header-left .sede { font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted); }
-  .header-left .title { font-size:.88rem; font-weight:700; }
-  .header-right { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
-  .btn {
-    border:1px solid var(--border); border-radius:var(--radius); padding:.45rem .9rem;
-    font-family:var(--sans); font-size:.72rem; text-transform:uppercase; cursor:pointer; font-weight:700;
-    transition:all .2s; background:var(--surface); color:var(--ink-muted); display:flex; align-items:center; gap:.35rem;
+  .header-left{display:flex;align-items:center}
+  .header-logo{font-weight:800;font-size:1.4rem;color:var(--accent);letter-spacing:-.03em;line-height:1}
+  .header-divider{width:1px;height:22px;background:var(--border);margin:0 .75rem}
+  .header-left .sede{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+  .header-left .title{font-size:.88rem;font-weight:700}
+  .header-right{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .btn{
+    border:1px solid var(--border);border-radius:var(--radius);padding:.45rem .9rem;
+    font-family:var(--sans);font-size:.72rem;text-transform:uppercase;cursor:pointer;font-weight:700;
+    transition:all .2s;background:var(--surface);color:var(--ink-muted);display:flex;align-items:center;gap:.35rem
   }
-  .btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
-  .btn.green { background:var(--green-dim); border-color:rgba(26,122,74,.45); color:var(--green); }
-  .btn input { display:none; }
+  .btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+  .btn.green{background:var(--green-dim);border-color:rgba(26,122,74,.45);color:var(--green)}
 
-  .main { padding:1.5rem; max-width:1280px; margin:0 auto; min-height:100vh; }
-
-  .status-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:1rem; flex-wrap:wrap; }
-  .status { font-size:.68rem; color:var(--ink-muted); display:flex; align-items:center; gap:.4rem; }
-  .status-dot { width:8px; height:8px; border-radius:50%; background:var(--border-strong); }
-  .status.ok .status-dot { background:var(--green); }
-  .status.warn .status-dot { background:var(--orange); }
-  .status.error .status-dot { background:#cc1c2e; }
-  .hint { font-size:.68rem; color:var(--ink-muted); }
-
-  .filters { display:flex; gap:.75rem; margin-bottom:1.2rem; flex-wrap:wrap; align-items:center; }
-  .filters-label { font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-muted); }
-  .date-range-wrap {
-    display:flex; align-items:center; gap:.5rem; background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius); padding:.35rem .9rem; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.06);
+  .tabs-bar{background:#fff;border-bottom:1px solid var(--border);padding:0 1.5rem}
+  .tabs{max-width:1280px;margin:0 auto;display:flex;gap:.25rem}
+  .tab-btn{
+    appearance:none;border:none;background:none;cursor:pointer;padding:.85rem 1rem .75rem;
+    font-family:var(--sans);font-size:.73rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--ink-muted);border-bottom:3px solid transparent;transition:all .2s
   }
-  .date-range-wrap:hover { border-color:var(--accent); }
-  .date-range-input { border:none; background:transparent; font-family:var(--mono); font-size:.75rem; color:var(--ink); cursor:pointer; width:190px; outline:none; }
-  .date-range-clear { background:none; border:none; color:var(--ink-muted); cursor:pointer; font-size:.8rem; }
-  .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background:var(--accent)!important; border-color:var(--accent)!important; }
-  .flatpickr-day.inRange { background:var(--accent-dim)!important; border-color:transparent!important; box-shadow:none!important; }
+  .tab-btn:hover{color:var(--accent)}
+  .tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
 
-  .kpi-row { display:grid; grid-template-columns:repeat(5, minmax(150px,1fr)); gap:1rem; margin-bottom:1.5rem; }
-  .kpi { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.05rem 1.2rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-  .kpi-label { font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:.4rem; }
-  .kpi-value { font-size:2rem; font-weight:900; line-height:1; }
-  .kpi-sub { font-size:.68rem; color:var(--ink-muted); margin-top:.35rem; }
-  .kpi.primary { border-color:rgba(74,127,193,.35); background:var(--accent-dim); }
-  .kpi.primary .kpi-value { color:var(--accent); }
-  .kpi.toyota { border-color:rgba(74,127,193,.26); }
-  .kpi.toyota .kpi-value { color:#3567a8; }
-  .kpi.volvo .kpi-value { color:#2563eb; }
-  .kpi.carrozzeria .kpi-value { color:var(--purple); }
-  .kpi.revisioni .kpi-value { color:var(--teal); }
+  .main{padding:1.25rem 1.5rem 2rem;max-width:1280px;margin:0 auto;min-height:100vh}
+  .status-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+  .status{font-size:.68rem;color:var(--ink-muted);display:flex;align-items:center;gap:.4rem}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong)}
+  .status.warn .status-dot{background:#f97316}.status.error .status-dot{background:#cc1c2e}
 
-  .section { margin-bottom:1.5rem; }
-  .section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:.7rem; flex-wrap:wrap; }
-  .section-title { font-size:1.05rem; font-weight:900; color:var(--ink); }
-  .section-sub { font-size:.7rem; color:var(--ink-muted); }
-
-  .charts-grid { display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1.5rem; }
-  .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem; box-shadow:0 1px 4px rgba(0,0,0,.06); min-width:0; }
-  .chart-title { font-size:.76rem; text-transform:uppercase; font-weight:800; margin-bottom:.9rem; display:flex; justify-content:space-between; gap:.75rem; align-items:center; }
-  .chart-formula { font-size:.65rem; color:var(--ink-muted); text-transform:none; font-family:var(--mono); font-weight:400; }
-  .chart-wrap { position:relative; width:100%; height:270px; }
-  .chart-wrap.small { height:270px; }
-
-  .cards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.85rem; }
-  .op-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.1rem; box-shadow:0 1px 4px rgba(0,0,0,.05); }
-  .op-card.bonus { border:2px dashed var(--orange); background:var(--orange-dim); }
-  .op-name { display:flex; align-items:center; gap:.55rem; font-weight:800; margin-bottom:.75rem; }
-  .op-avatar { width:30px; height:30px; border-radius:50%; border:2px solid var(--accent); color:var(--accent); background:var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:900; flex-shrink:0; }
-  .op-card.carrozzeria .op-avatar { border-color:var(--purple); color:var(--purple); background:var(--purple-dim); }
-  .badge { margin-left:auto; font-size:.57rem; border-radius:99px; padding:.15rem .45rem; background:var(--orange); color:#fff; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
-  .op-main { display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:.55rem; margin-bottom:.35rem; }
-  .op-main-label { color:var(--ink-muted); font-size:.72rem; }
-  .op-main-value { font-size:1.65rem; font-weight:900; color:var(--accent); }
-  .op-card.carrozzeria .op-main-value { color:var(--purple); }
-  .op-stat { display:flex; justify-content:space-between; gap:.75rem; padding:.28rem 0; font-size:.78rem; border-bottom:1px solid rgba(221,225,233,.75); }
-  .op-stat:last-child { border-bottom:none; }
-  .op-stat-label { color:var(--ink-muted); }
-  .op-stat-val { font-family:var(--mono); font-weight:600; }
-
-  .mini-kpis { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:.75rem; }
-  .mini-kpi { background:var(--surface); border:1px solid var(--border); border-radius:99px; padding:.35rem .7rem; display:flex; gap:.45rem; align-items:baseline; }
-  .mini-kpi span { font-size:.62rem; text-transform:uppercase; color:var(--ink-muted); font-weight:800; letter-spacing:.05em; }
-  .mini-kpi strong { font-family:var(--mono); font-size:.82rem; }
-
-  .table-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-  .table-header { padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:1rem; align-items:center; }
-  .table-title { font-size:.85rem; font-weight:800; }
-  .table-note { font-size:.66rem; color:var(--ink-muted); }
-  .table-wrap { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; min-width:720px; }
-  thead tr { background:var(--accent-dark); }
-  th { color:#fff; text-transform:uppercase; letter-spacing:.07em; font-family:var(--mono); font-size:.58rem; padding:.6rem .7rem; text-align:right; white-space:nowrap; }
-  th:first-child { text-align:left; }
-  td { padding:.6rem .7rem; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:.76rem; text-align:right; }
-  td:first-child { text-align:left; font-family:var(--sans); font-weight:800; }
-  tbody tr:hover { background:var(--accent-dim); }
-  tfoot td { border-top:2px solid var(--accent); background:var(--surface2); font-weight:800; }
-
-  .odl-card { display:inline-flex; align-items:center; gap:.6rem; background:var(--purple-dim); border:1px solid rgba(124,58,237,.24); border-radius:var(--radius); padding:.5rem .8rem; }
-  .odl-card span { color:var(--ink-muted); font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; font-weight:800; }
-  .odl-card strong { color:var(--purple); font-size:1rem; font-family:var(--mono); }
-
-  .state-box { text-align:center; padding:2.5rem 1rem; color:var(--ink-muted); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
-  .state-box .icon { font-size:2rem; margin-bottom:.5rem; }
-
-  @media (max-width: 1000px) {
-    .kpi-row { grid-template-columns:repeat(3,1fr); }
-    .charts-grid { grid-template-columns:1fr; }
-    .chart-wrap, .chart-wrap.small { height:300px; }
+  .filters{display:flex;gap:.75rem;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center}
+  .filters-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted)}
+  .date-range-wrap{
+    display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:.35rem .9rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)
   }
-  @media (max-width: 650px) {
-    .header { padding:.8rem 1rem; }
-    .main { padding:1rem; }
-    .kpi-row { grid-template-columns:repeat(2,1fr); gap:.7rem; }
-    .kpi:first-child { grid-column:1/-1; }
-    .kpi-value { font-size:1.65rem; }
-    .cards-grid { grid-template-columns:1fr; }
-    .chart-wrap, .chart-wrap.small { height:260px; }
-    .date-range-input { width:160px; }
+  .date-range-wrap:hover{border-color:var(--accent)}
+  .date-range-symbol{font-family:var(--mono);font-size:.7rem;color:var(--accent);font-weight:600}
+  .date-range-input{border:none;background:transparent;font-family:var(--mono);font-size:.75rem;color:var(--ink);cursor:pointer;width:190px;outline:none}
+  .date-range-clear{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:.8rem}
+  .flatpickr-day.selected,.flatpickr-day.startRange,.flatpickr-day.endRange{background:var(--accent)!important;border-color:var(--accent)!important}
+  .flatpickr-day.inRange{background:var(--accent-dim)!important;border-color:transparent!important;box-shadow:none!important}
+
+  .tab-view{display:none}.tab-view.active{display:block}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:.85rem;margin-bottom:1.35rem}
+  .analytics-kpi-row{grid-template-columns:repeat(6,minmax(135px,1fr))}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .kpi-label{font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:.38rem;font-weight:800}
+  .kpi-value{font-size:1.85rem;font-weight:900;line-height:1}
+  .kpi-sub{font-size:.65rem;color:var(--ink-muted);margin-top:.35rem}
+  .kpi.primary{border-color:rgba(74,127,193,.35);background:var(--accent-dim)}
+  .kpi.primary .kpi-value{color:var(--accent-dark)}
+  .kpi.toyota{border-top:3px solid var(--toyota)}.kpi.toyota .kpi-value{color:var(--toyota)}
+  .kpi.volvo{border-top:3px solid var(--volvo)}.kpi.volvo .kpi-value{color:var(--volvo)}
+  .kpi.car{border-top:3px solid var(--car)}.kpi.car .kpi-value{color:var(--car-dark)}
+  .kpi.rev{border-top:3px solid var(--rev)}.kpi.rev .kpi-value{color:var(--rev-dark)}
+
+  .dept-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:1.2rem;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .dept-section.toyota{border-top:4px solid var(--toyota)}
+  .dept-section.volvo{border-top:4px solid var(--volvo)}
+  .dept-section.car{border-top:4px solid var(--car)}
+  .dept-section.rev{border-top:4px solid var(--rev)}
+  .dept-head{padding:.9rem 1rem .75rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+  .dept-title{font-size:1rem;font-weight:900;letter-spacing:.01em}
+  .dept-title.toyota{color:var(--toyota-dark)}.dept-title.volvo{color:var(--volvo-dark)}.dept-title.car{color:var(--car-dark)}.dept-title.rev{color:var(--rev-dark)}
+  .dept-sub{font-size:.68rem;color:var(--ink-muted);margin-top:.15rem}
+  .dept-body{padding:1rem}
+
+  .mini-kpis{display:flex;gap:.5rem;flex-wrap:wrap}
+  .mini-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:.34rem .68rem;display:flex;gap:.42rem;align-items:baseline}
+  .mini-kpi span{font-size:.58rem;text-transform:uppercase;color:var(--ink-muted);font-weight:800;letter-spacing:.05em}
+  .mini-kpi strong{font-family:var(--mono);font-size:.8rem}
+
+  .table-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .table-header{padding:.75rem .9rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;align-items:center}
+  .table-title{font-size:.82rem;font-weight:800}.table-note{font-size:.64rem;color:var(--ink-muted)}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:720px}
+  thead tr{background:var(--accent-dark)}
+  th{color:#fff;text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);font-size:.56rem;padding:.58rem .66rem;text-align:right;white-space:nowrap}
+  th:first-child{text-align:left}
+  td{padding:.58rem .66rem;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.73rem;text-align:right}
+  td:first-child{text-align:left;font-family:var(--sans);font-weight:800}
+  tbody tr:hover{background:var(--surface2)}
+  tfoot td{border-top:2px solid var(--accent);background:var(--surface2);font-weight:800}
+  .table-section.toyota thead tr{background:var(--toyota-dark)}
+  .table-section.toyota tfoot td{border-top-color:var(--toyota)}
+  .table-section.car thead tr{background:#7a5a00}
+  .table-section.car tfoot td{border-top-color:var(--car)}
+
+  .report-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:1rem}
+  .summary-box{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:.7rem}
+  .summary-tile{border:1px solid var(--border);border-radius:var(--radius);padding:.85rem .9rem;background:var(--surface2)}
+  .summary-tile .label{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);font-weight:800}
+  .summary-tile .value{font-family:var(--mono);font-size:1.25rem;font-weight:700;margin-top:.2rem}
+
+  .analytics-section{margin-bottom:1.2rem}
+  .analytics-section .dept-body{padding:1rem}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .charts-grid.wide-left{grid-template-columns:1.35fr .65fr}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;min-width:0}
+  .chart-title{font-size:.76rem;text-transform:uppercase;font-weight:800;margin-bottom:.15rem;display:flex;justify-content:space-between;gap:.75rem;align-items:center}
+  .chart-sub{font-size:.64rem;color:var(--ink-muted);margin-bottom:.75rem}
+  .chart-wrap{position:relative;width:100%;height:290px}
+  .chart-wrap.tall{height:330px}.chart-wrap.compact{height:240px}
+
+  .ratio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1rem}
+  .ratio-card{border:1px solid var(--border);background:var(--surface2);border-radius:var(--radius);padding:.75rem .8rem}
+  .ratio-label{font-size:.56rem;color:var(--ink-muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+  .ratio-value{font-family:var(--mono);font-size:1.15rem;font-weight:700;margin-top:.18rem}
+  .ratio-card.toyota{border-top:3px solid var(--toyota)}
+  .ratio-card.car{border-top:3px solid var(--car)}
+
+  .analytics-table{margin-top:1rem}
+  .metric-highlight{font-weight:700;color:var(--toyota-dark)}
+
+  .detail-view{display:none}.detail-view.active{display:block}
+  .detail-back{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:.45rem .75rem;font-family:var(--sans);font-size:.7rem;font-weight:800;color:var(--ink-muted);cursor:pointer;margin-bottom:.8rem}
+  .detail-back:hover{border-color:var(--toyota);color:var(--toyota)}
+  .detail-name{font-size:1.2rem;font-weight:900;color:var(--toyota-dark);margin-bottom:.8rem}
+  .detail-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem;margin-bottom:1rem}
+
+  .state-box{text-align:center;padding:2.5rem 1rem;color:var(--ink-muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+  .state-title{font-weight:800;color:var(--ink);margin-bottom:.3rem}
+
+  @media(max-width:1100px){
+    .kpi-row{grid-template-columns:repeat(3,1fr)}
+    .analytics-kpi-row{grid-template-columns:repeat(3,1fr)}
+    .report-grid,.charts-grid,.charts-grid.wide-left{grid-template-columns:1fr}
+    .ratio-grid{grid-template-columns:repeat(2,1fr)}
+    .detail-kpis{grid-template-columns:repeat(3,1fr)}
+  }
+  @media(max-width:680px){
+    .header{padding:.8rem 1rem}.tabs-bar{padding:0 1rem}.main{padding:1rem}
+    .kpi-row,.analytics-kpi-row{grid-template-columns:repeat(2,1fr);gap:.65rem}
+    .kpi:first-child{grid-column:1/-1}.kpi-value{font-size:1.55rem}
+    .date-range-input{width:155px}
+    .ratio-grid,.detail-kpis,.summary-box{grid-template-columns:1fr 1fr}
+    .chart-wrap,.chart-wrap.tall{height:280px}
   }
 </style>
 </head>
 <body>
-  <header class="header">
-    <div class="header-left">
-      <span class="header-logo">riolo</span>
-      <div class="header-divider"></div>
-      <div>
-        <div class="sede" id="dash-sede">—</div>
-        <div class="title">Dashboard passaggi officina</div>
-      </div>
+<header class="header">
+  <div class="header-left">
+    <span class="header-logo">riolo</span>
+    <div class="header-divider"></div>
+    <div>
+      <div class="sede" id="dash-sede">—</div>
+      <div class="title">Dashboard passaggi officina</div>
     </div>
-    <div class="header-right">
-      <button class="btn" onclick="loadData()">↻ Aggiorna</button>
-      <button class="btn green" onclick="exportExcel()">⬇ Esporta Excel</button>
-    </div>
-  </header>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="loadData()">Aggiorna</button>
+    <button class="btn green" onclick="exportExcel()">Esporta Excel</button>
+  </div>
+</header>
 
-  <main class="main">
-    <div class="status-row" id="status-row" style="display:none">
-      <div class="status" id="data-status"><span class="status-dot"></span><span id="data-status-text"></span></div>
-    </div>
+<div class="tabs-bar">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-btn-report" onclick="switchTab('report')">Report</button>
+    <button class="tab-btn" id="tab-btn-analytics" onclick="switchTab('analytics')">Analytics</button>
+  </div>
+</div>
 
-    <div class="filters">
-      <span class="filters-label">Periodo:</span>
-      <div class="date-range-wrap" onclick="document.getElementById('date-from').focus()">
-        <span>📅</span>
-        <input type="text" id="date-from" class="date-range-input" placeholder="Seleziona periodo" readonly>
-        <button class="date-range-clear" onclick="clearDateRange(event)" title="Rimuovi filtro date">✕</button>
-      </div>
-    </div>
+<main class="main">
+  <div class="status-row" id="status-row" style="display:none">
+    <div class="status" id="data-status"><span class="status-dot"></span><span id="data-status-text"></span></div>
+  </div>
 
+  <div class="filters">
+    <span class="filters-label">Periodo:</span>
+    <div class="date-range-wrap" onclick="document.getElementById('date-from').focus()">
+      <span class="date-range-symbol">DATE</span>
+      <input type="text" id="date-from" class="date-range-input" placeholder="Seleziona periodo" readonly>
+      <button class="date-range-clear" onclick="clearDateRange(event)" title="Rimuovi filtro date">×</button>
+    </div>
+  </div>
+
+  <div id="empty-state" class="state-box" style="display:none">
+    <div class="state-title">Nessun dato nel periodo selezionato</div>
+    <div id="empty-state-text"></div>
+  </div>
+
+  <!-- REPORT -->
+  <section id="tab-report" class="tab-view active">
     <div class="kpi-row">
       <div class="kpi primary">
-        <div class="kpi-label" id="kpi-passaggi-label">Passaggi oggi</div>
-        <div class="kpi-value" id="kpi-passaggi">—</div>
-        <div class="kpi-sub" id="kpi-passaggi-sub">Toyota + Volvo + Carrozzeria</div>
+        <div class="kpi-label" id="report-kpi-passaggi-label">Passaggi periodo</div>
+        <div class="kpi-value" id="report-kpi-passaggi">—</div>
+        <div class="kpi-sub" id="report-kpi-passaggi-sub">Toyota + Volvo + Carrozzeria</div>
       </div>
-      <div class="kpi toyota"><div class="kpi-label">Toyota</div><div class="kpi-value" id="kpi-toyota">—</div><div class="kpi-sub" id="kpi-toyota-sub">passaggi</div></div>
-      <div class="kpi volvo"><div class="kpi-label">Volvo</div><div class="kpi-value" id="kpi-volvo">—</div><div class="kpi-sub">passaggi</div></div>
-      <div class="kpi carrozzeria"><div class="kpi-label">Carrozzeria</div><div class="kpi-value" id="kpi-carrozzeria">—</div><div class="kpi-sub" id="kpi-carrozzeria-sub">passaggi</div></div>
-      <div class="kpi revisioni"><div class="kpi-label">Revisioni</div><div class="kpi-value" id="kpi-revisioni">—</div><div class="kpi-sub">indicatore separato</div></div>
+      <div class="kpi toyota"><div class="kpi-label">Toyota</div><div class="kpi-value" id="report-kpi-toyota">—</div><div class="kpi-sub" id="report-kpi-toyota-sub">passaggi</div></div>
+      <div class="kpi volvo"><div class="kpi-label">Volvo</div><div class="kpi-value" id="report-kpi-volvo">—</div><div class="kpi-sub">passaggi</div></div>
+      <div class="kpi car"><div class="kpi-label">Carrozzeria</div><div class="kpi-value" id="report-kpi-car">—</div><div class="kpi-sub" id="report-kpi-car-sub">passaggi</div></div>
+      <div class="kpi rev"><div class="kpi-label">Revisioni</div><div class="kpi-value" id="report-kpi-rev">—</div><div class="kpi-sub">indicatore separato</div></div>
     </div>
 
-    <div id="empty-state" class="state-box" style="display:none"><div class="icon">📭</div><div id="empty-state-text">Nessun dato nel periodo selezionato.</div></div>
-
-    <div id="dashboard-content">
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-title">Passaggi giornalieri per reparto <span class="chart-formula">Toyota + Volvo + Carrozzeria</span></div>
-          <div class="chart-wrap"><canvas id="chart-andamento"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">Distribuzione passaggi <span class="chart-formula">% sul totale periodo</span></div>
-          <div class="chart-wrap small"><canvas id="chart-reparti"></canvas></div>
+    <section class="dept-section toyota">
+      <div class="dept-head">
+        <div><div class="dept-title toyota">Toyota</div><div class="dept-sub">Dettaglio per accettatore e prodotti venduti</div></div>
+        <div class="mini-kpis">
+          <div class="mini-kpi"><span>Gomme</span><strong id="report-tot-gomme">0</strong></div>
+          <div class="mini-kpi"><span>Tappetini</span><strong id="report-tot-tappetini">0</strong></div>
+          <div class="mini-kpi"><span>EasyPay</span><strong id="report-tot-easypay-toyota">0</strong></div>
         </div>
       </div>
-
-      <section class="section">
-        <div class="section-head">
-          <div>
-            <div class="section-title">Toyota — dettaglio accettatori</div>
-            <div class="section-sub">Passaggi e attività di upselling registrate nel periodo</div>
-          </div>
-          <div class="mini-kpis">
-            <div class="mini-kpi"><span>Gomme</span><strong id="tot-gomme">0</strong></div>
-            <div class="mini-kpi"><span>Tappetini</span><strong id="tot-tappetini">0</strong></div>
-            <div class="mini-kpi"><span>EasyPay</span><strong id="tot-easypay-toyota">0</strong></div>
-          </div>
+      <div class="dept-body">
+        <div class="table-section toyota">
+          <div class="table-header"><span class="table-title">Accettatori Toyota</span><span class="table-note" id="report-toyota-note"></span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Accettatore</th><th>Passaggi</th><th>Media/giorno</th><th>Gomme</th><th>Tappetini</th><th>EasyPay</th></tr></thead>
+            <tbody id="report-toyota-body"></tbody><tfoot><tr id="report-toyota-footer"></tr></tfoot>
+          </table></div>
         </div>
-        <div class="cards-grid" id="toyota-cards"></div>
+      </div>
+    </section>
+
+    <div class="report-grid">
+      <section class="dept-section volvo">
+        <div class="dept-head"><div><div class="dept-title volvo">Volvo</div><div class="dept-sub">Volume complessivo del reparto</div></div></div>
+        <div class="dept-body"><div class="summary-box">
+          <div class="summary-tile"><div class="label">Passaggi</div><div class="value" id="report-volvo-passaggi">0</div></div>
+          <div class="summary-tile"><div class="label">Media / giorno</div><div class="value" id="report-volvo-media">0,0</div></div>
+        </div></div>
       </section>
 
-      <section class="section">
-        <div class="section-head">
-          <div>
-            <div class="section-title">Carrozzeria — dettaglio accettatori</div>
-            <div class="section-sub">Passaggi ed EasyPay per operatore</div>
-          </div>
-          <div class="odl-card"><span>ODL totali</span><strong id="tot-odl">0</strong></div>
-        </div>
-        <div class="cards-grid" id="carrozzeria-cards"></div>
+      <section class="dept-section rev">
+        <div class="dept-head"><div><div class="dept-title rev">Revisioni</div><div class="dept-sub">Indicatore distinto dai passaggi officina</div></div></div>
+        <div class="dept-body"><div class="summary-box">
+          <div class="summary-tile"><div class="label">Revisioni</div><div class="value" id="report-rev-tot">0</div></div>
+          <div class="summary-tile"><div class="label">Media / giorno</div><div class="value" id="report-rev-media">0,0</div></div>
+        </div></div>
       </section>
+    </div>
 
-      <section class="section">
+    <section class="dept-section car">
+      <div class="dept-head">
+        <div><div class="dept-title car">Carrozzeria</div><div class="dept-sub">Passaggi per accettatore, ODL ed EasyPay come dato secondario</div></div>
+        <div class="mini-kpis">
+          <div class="mini-kpi"><span>ODL</span><strong id="report-tot-odl">0</strong></div>
+          <div class="mini-kpi"><span>EasyPay</span><strong id="report-tot-easypay-car">0</strong></div>
+        </div>
+      </div>
+      <div class="dept-body">
+        <div class="table-section car">
+          <div class="table-header"><span class="table-title">Accettatori Carrozzeria</span><span class="table-note" id="report-car-note"></span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Accettatore</th><th>Passaggi</th><th>Media/giorno</th><th>% reparto</th><th>EasyPay</th></tr></thead>
+            <tbody id="report-car-body"></tbody><tfoot><tr id="report-car-footer"></tr></tfoot>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dept-section">
+      <div class="dept-head"><div><div class="dept-title">Riepilogo giornaliero</div><div class="dept-sub">Sintesi operativa del periodo selezionato</div></div></div>
+      <div class="dept-body">
         <div class="table-section">
-          <div class="table-header">
-            <span class="table-title">Riepilogo Toyota — Passaggi e Upselling</span>
-            <span class="table-note" id="table-period-note"></span>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Data</th><th>Toyota</th><th>Volvo</th><th>Carrozzeria</th><th>Revisioni</th><th>Gomme</th><th>Tappetini</th><th>EasyPay</th><th>ODL</th></tr></thead>
+            <tbody id="report-daily-body"></tbody><tfoot><tr id="report-daily-footer"></tr></tfoot>
+          </table></div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ANALYTICS -->
+  <section id="tab-analytics" class="tab-view">
+    <div id="analytics-overview">
+      <div class="kpi-row analytics-kpi-row">
+        <div class="kpi primary"><div class="kpi-label">Passaggi totali</div><div class="kpi-value" id="an-kpi-passaggi">—</div><div class="kpi-sub">Toyota + Volvo + Carrozzeria</div></div>
+        <div class="kpi"><div class="kpi-label">Media / giorno</div><div class="kpi-value" id="an-kpi-media">—</div><div class="kpi-sub">passaggi officina</div></div>
+        <div class="kpi toyota"><div class="kpi-label">Gomme vendute</div><div class="kpi-value" id="an-kpi-gomme">—</div><div class="kpi-sub">Toyota</div></div>
+        <div class="kpi toyota"><div class="kpi-label">Tappetini venduti</div><div class="kpi-value" id="an-kpi-tappetini">—</div><div class="kpi-sub">Toyota</div></div>
+        <div class="kpi toyota"><div class="kpi-label">EasyPay</div><div class="kpi-value" id="an-kpi-easypay">—</div><div class="kpi-sub">Toyota + Carrozzeria</div></div>
+        <div class="kpi car"><div class="kpi-label">ODL Carrozzeria</div><div class="kpi-value" id="an-kpi-odl">—</div><div class="kpi-sub">totale periodo</div></div>
+      </div>
+
+      <section class="dept-section toyota analytics-section">
+        <div class="dept-head">
+          <div><div class="dept-title toyota">Toyota — Analisi accettatori</div><div class="dept-sub">Volumi, trend e indicatori normalizzati per 100 passaggi</div></div>
+        </div>
+        <div class="dept-body">
+          <div class="ratio-grid">
+            <div class="ratio-card toyota"><div class="ratio-label">Gomme / 100 passaggi</div><div class="ratio-value" id="toy-ratio-gomme">0,0</div></div>
+            <div class="ratio-card toyota"><div class="ratio-label">Tappetini / 100 passaggi</div><div class="ratio-value" id="toy-ratio-tappetini">0,0</div></div>
+            <div class="ratio-card toyota"><div class="ratio-label">EasyPay / 100 passaggi</div><div class="ratio-value" id="toy-ratio-easypay">0,0</div></div>
+            <div class="ratio-card toyota"><div class="ratio-label">Accessori / 100 passaggi</div><div class="ratio-value" id="toy-ratio-accessori">0,0</div></div>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Accettatore</th><th>Passaggi</th><th>Media/giorno</th><th>Gomme</th><th>Tappetini</th><th>EasyPay</th></tr></thead>
-              <tbody id="toyota-table-body"></tbody>
-              <tfoot><tr id="toyota-table-footer"></tr></tfoot>
-            </table>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-title">Passaggi per accettatore</div>
+              <div class="chart-sub">Valore assoluto e quota sul totale Toyota. Clicca una barra per il dettaglio.</div>
+              <div class="chart-wrap tall"><canvas id="chart-toyota-operatori"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Trend passaggi per accettatore</div>
+              <div class="chart-sub">Andamento giornaliero; la legenda consente di isolare le singole serie.</div>
+              <div class="chart-wrap tall"><canvas id="chart-toyota-trend"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Prodotti ogni 100 passaggi</div>
+              <div class="chart-sub">Gomme, tappetini ed EasyPay restano indicatori distinti.</div>
+              <div class="chart-wrap tall"><canvas id="chart-toyota-ratios"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Trend prodotti Toyota</div>
+              <div class="chart-sub">Pezzi venduti ed EasyPay per giorno.</div>
+              <div class="chart-wrap tall"><canvas id="chart-toyota-prodotti"></canvas></div>
+            </div>
+          </div>
+
+          <div class="table-section toyota analytics-table">
+            <div class="table-header"><span class="table-title">Confronto performance Toyota</span><span class="table-note">Indicatori per 100 passaggi</span></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Accettatore</th><th>Passaggi</th><th>% Toyota</th><th>Gomme /100</th><th>Tappetini /100</th><th>EasyPay /100</th><th>Accessori /100</th></tr></thead>
+              <tbody id="analytics-toyota-table"></tbody>
+            </table></div>
           </div>
         </div>
       </section>
+
+      <section class="dept-section volvo analytics-section">
+        <div class="dept-head">
+          <div><div class="dept-title volvo">Volvo</div><div class="dept-sub">Un solo indicatore disponibile: passaggi giornalieri</div></div>
+          <div class="mini-kpis">
+            <div class="mini-kpi"><span>Passaggi</span><strong id="an-volvo-total">0</strong></div>
+            <div class="mini-kpi"><span>Media/giorno</span><strong id="an-volvo-media">0,0</strong></div>
+          </div>
+        </div>
+        <div class="dept-body"><div class="chart-card">
+          <div class="chart-title">Trend passaggi Volvo</div>
+          <div class="chart-sub">La linea tratteggiata rappresenta la media del periodo.</div>
+          <div class="chart-wrap"><canvas id="chart-volvo"></canvas></div>
+        </div></div>
+      </section>
+
+      <section class="dept-section car analytics-section">
+        <div class="dept-head">
+          <div><div class="dept-title car">Carrozzeria</div><div class="dept-sub">Relazione fra passaggi, ODL e distribuzione per accettatore</div></div>
+          <div class="mini-kpis">
+            <div class="mini-kpi"><span>Passaggi</span><strong id="an-car-total">0</strong></div>
+            <div class="mini-kpi"><span>ODL</span><strong id="an-car-odl">0</strong></div>
+            <div class="mini-kpi"><span>Incidenza ODL</span><strong id="an-car-incidenza">0,0%</strong></div>
+            <div class="mini-kpi"><span>EasyPay</span><strong id="an-car-easypay">0</strong></div>
+          </div>
+        </div>
+        <div class="dept-body">
+          <div class="charts-grid wide-left">
+            <div class="chart-card">
+              <div class="chart-title">Passaggi Carrozzeria e ODL</div>
+              <div class="chart-sub">Passaggi totali in evidenza; ODL con la stessa tonalità in versione più leggera.</div>
+              <div class="chart-wrap"><canvas id="chart-car-trend"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Passaggi per accettatore</div>
+              <div class="chart-sub">EasyPay resta disponibile nella tabella, senza un grafico dedicato.</div>
+              <div class="chart-wrap"><canvas id="chart-car-operatori"></canvas></div>
+            </div>
+          </div>
+          <div class="table-section car analytics-table">
+            <div class="table-header"><span class="table-title">Accettatori Carrozzeria</span><span class="table-note">EasyPay come informazione secondaria</span></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Accettatore</th><th>Passaggi</th><th>% reparto</th><th>EasyPay</th></tr></thead>
+              <tbody id="analytics-car-table"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dept-section rev analytics-section">
+        <div class="dept-head">
+          <div><div class="dept-title rev">Revisioni</div><div class="dept-sub">Indicatore separato dai passaggi officina</div></div>
+          <div class="mini-kpis">
+            <div class="mini-kpi"><span>Revisioni</span><strong id="an-rev-total">0</strong></div>
+            <div class="mini-kpi"><span>Media/giorno</span><strong id="an-rev-media">0,0</strong></div>
+          </div>
+        </div>
+        <div class="dept-body"><div class="chart-card">
+          <div class="chart-title">Trend revisioni</div>
+          <div class="chart-sub">Andamento giornaliero nel periodo selezionato.</div>
+          <div class="chart-wrap compact"><canvas id="chart-revisioni"></canvas></div>
+        </div></div>
+      </section>
     </div>
-  </main>
+
+    <!-- DETTAGLIO ACCETTATORE TOYOTA -->
+    <div id="analytics-detail" class="detail-view">
+      <button class="detail-back" onclick="backToAnalyticsOverview()">Torna al confronto</button>
+      <div class="detail-name" id="detail-name">Accettatore</div>
+      <div class="detail-kpis">
+        <div class="kpi toyota"><div class="kpi-label">Passaggi</div><div class="kpi-value" id="detail-passaggi">0</div></div>
+        <div class="kpi"><div class="kpi-label">Media / giorno</div><div class="kpi-value" id="detail-media">0,0</div></div>
+        <div class="kpi toyota"><div class="kpi-label">Gomme</div><div class="kpi-value" id="detail-gomme">0</div></div>
+        <div class="kpi toyota"><div class="kpi-label">Tappetini</div><div class="kpi-value" id="detail-tappetini">0</div></div>
+        <div class="kpi toyota"><div class="kpi-label">EasyPay</div><div class="kpi-value" id="detail-easypay">0</div></div>
+      </div>
+      <div class="ratio-grid">
+        <div class="ratio-card toyota"><div class="ratio-label">Gomme / 100 passaggi</div><div class="ratio-value" id="detail-ratio-gomme">0,0</div></div>
+        <div class="ratio-card toyota"><div class="ratio-label">Tappetini / 100 passaggi</div><div class="ratio-value" id="detail-ratio-tappetini">0,0</div></div>
+        <div class="ratio-card toyota"><div class="ratio-label">EasyPay / 100 passaggi</div><div class="ratio-value" id="detail-ratio-easypay">0,0</div></div>
+        <div class="ratio-card toyota"><div class="ratio-label">Accessori / 100 passaggi</div><div class="ratio-value" id="detail-ratio-accessori">0,0</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-title">Trend passaggi</div><div class="chart-sub">Andamento giornaliero dell'accettatore.</div><div class="chart-wrap"><canvas id="chart-detail-passaggi"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Trend prodotti</div><div class="chart-sub">Gomme, tappetini ed EasyPay giornalieri.</div><div class="chart-wrap"><canvas id="chart-detail-prodotti"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+</main>
 
 <script src="config.js"></script>
 <script>
 Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels = { display: false };
+Chart.defaults.plugins.datalabels = { display:false };
+Chart.defaults.font.family = 'Nunito';
 
 let allRows = [];
-let dataSource = '';
 let dateFilterUserTouched = false;
+let currentTab = 'report';
+let currentDetailOperator = '';
 const charts = {};
 
-function n(v) {
-  if (v === null || v === undefined || v === '') return 0;
-  const x = Number(String(v).replace(',', '.'));
-  return Number.isFinite(x) ? x : 0;
+const TOYOTA_PALETTE = ['#a61f1f','#c93636','#de5d5d','#8f2d56','#b6465f','#e07a5f','#7f1d1d','#d97777'];
+const PRODUCT_COLORS = { gomme:'#b42318', tappetini:'#e76f51', easypay:'#7f1d1d' };
+
+function n(v){
+  if(v===null||v===undefined||v==='') return 0;
+  const x=Number(String(v).replace(',','.'));
+  return Number.isFinite(x)?x:0;
 }
 
-function parseDateValue(raw) {
-  if (!raw) return null;
-  if (raw instanceof Date && !isNaN(raw)) return new Date(raw.getFullYear(), raw.getMonth(), raw.getDate());
-  if (typeof raw === 'number') {
-    const d = XLSX.SSF.parse_date_code(raw);
-    if (d) return new Date(d.y, d.m - 1, d.d);
-  }
-  const s = String(raw).trim();
-  if (!s) return null;
-  // Data ISO semplice (es. 2026-08-20): trattala come data pura, senza conversioni di fuso.
-  const isoDateOnly = /^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})$/.exec(s);
-  if (isoDateOnly) return new Date(Number(isoDateOnly[1]), Number(isoDateOnly[2]) - 1, Number(isoDateOnly[3]));
+function fmt1(v){ return Number(v||0).toLocaleString('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1}); }
+function fmt0(v){ return Math.round(Number(v||0)).toLocaleString('it-IT'); }
+function ratio100(value,base){ return base>0 ? value/base*100 : 0; }
 
-  // Timestamp ISO restituito da Google Apps Script (es. 2026-08-19T22:00:00.000Z):
-  // va prima convertito nel fuso locale del browser, altrimenti una data del foglio
-  // come 20/08/2026 può apparire erroneamente come 19/08/2026.
-  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T/.test(s)) {
-    const dt = new Date(s);
-    if (!isNaN(dt)) return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+function parseDateValue(raw){
+  if(!raw) return null;
+  if(raw instanceof Date && !isNaN(raw)) return new Date(raw.getFullYear(),raw.getMonth(),raw.getDate());
+  if(typeof raw==='number'){
+    const d=XLSX.SSF.parse_date_code(raw);
+    if(d) return new Date(d.y,d.m-1,d.d);
   }
-
-  const ita = /^([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})/.exec(s);
-  if (ita) return new Date(Number(ita[3]), Number(ita[2]) - 1, Number(ita[1]));
-  const d = new Date(s);
-  return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const s=String(raw).trim();
+  if(!s) return null;
+  const isoDateOnly=/^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})$/.exec(s);
+  if(isoDateOnly) return new Date(Number(isoDateOnly[1]),Number(isoDateOnly[2])-1,Number(isoDateOnly[3]));
+  if(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T/.test(s)){
+    const dt=new Date(s);
+    if(!isNaN(dt)) return new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());
+  }
+  const ita=/^([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})/.exec(s);
+  if(ita) return new Date(Number(ita[3]),Number(ita[2])-1,Number(ita[1]));
+  const d=new Date(s);
+  return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
 }
 
-function dateKey(raw) {
-  const d = parseDateValue(raw);
-  if (!d) return '';
+function dateKey(raw){
+  const d=parseDateValue(raw); if(!d) return '';
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
-function formatDateShort(key) {
-  const [y,m,d] = key.split('-').map(Number);
-  const dt = new Date(y,m-1,d);
-  const giorni = ['dom','lun','mar','mer','gio','ven','sab'];
+function formatDateShort(key){
+  const [y,m,d]=key.split('-').map(Number); const dt=new Date(y,m-1,d);
+  const giorni=['dom','lun','mar','mer','gio','ven','sab'];
   return `${giorni[dt.getDay()]} ${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
 }
-
-function setStatus(type, text) {
-  const row = document.getElementById('status-row');
-  const el = document.getElementById('data-status');
-  if (!row || !el) return;
-
-  const visible = type === 'warn' || type === 'error';
-  row.style.display = visible ? 'flex' : 'none';
-  el.className = `status ${type || ''}`;
-  document.getElementById('data-status-text').textContent = visible ? text : '';
-}
-
-function normalizeRow(r) {
-  const lower = {};
-  Object.keys(r || {}).forEach(k => lower[String(k).trim().toLowerCase()] = r[k]);
-  const pick = (...names) => {
-    for (const name of names) {
-      const v = lower[name.toLowerCase()];
-      if (v !== undefined) return v;
-    }
-    return null;
-  };
-  return {
-    Data: pick('Data', 'data'),
-    Sezione: String(pick('Sezione', 'sezione') || '').trim(),
-    Accettatore: String(pick('Accettatore', 'accettatore') || '').trim(),
-    Passaggi: n(pick('Passaggi', 'passaggi')),
-    Gomme: n(pick('Gomme', 'gomme')),
-    Tappetini: n(pick('Tappetini', 'tappetini')),
-    EasyPay: n(pick('EasyPay', 'easypay')),
-    ODL: n(pick('ODL', 'odl')),
-    Timestamp: pick('Timestamp', 'timestamp') || ''
-  };
-}
-
-function extractRowsFromJson(json) {
-  if (Array.isArray(json)) return json;
-  if (Array.isArray(json?.rows)) return json.rows;
-  if (Array.isArray(json?.data)) return json.data;
-  if (Array.isArray(json?.passaggi)) return json.passaggi;
-  return [];
-}
-
-function setAutomaticDateFilter(rows) {
-  const fp = window._flatpickr;
-  if (!fp || dateFilterUserTouched || !rows.length) return null;
-
-  const dates = rows
-    .map(r => parseDateValue(r.Data))
-    .filter(Boolean)
-    .sort((a,b) => a - b);
-  if (!dates.length) return null;
-
-  const todayKey = dateKey(new Date());
-  const today = dates.find(d => dateKey(d) === todayKey);
-  const target = today || dates[dates.length - 1];
-
-  fp.setDate([target, target], false);
-  return {
-    date: target,
-    isToday: dateKey(target) === todayKey
-  };
-}
-
-function formatDateIT(d) {
-  if (!d) return '';
+function formatDateIT(d){
+  if(!d) return '';
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 }
 
-async function loadData() {
-  setStatus('', 'Caricamento da Google Sheets…');
-  try {
-    if (!CONFIG?.googleSheets?.scriptUrl) throw new Error('URL Google Sheets non configurato');
-    const url = CONFIG.googleSheets.scriptUrl + (CONFIG.googleSheets.scriptUrl.includes('?') ? '&' : '?') + 'action=get&_=' + Date.now();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const rows = extractRowsFromJson(json).map(normalizeRow).filter(r => r.Data && r.Sezione);
-    if (!rows.length) throw new Error('Lo script non ha restituito righe nel formato atteso');
-    allRows = rows;
-    dataSource = 'Google Sheets';
-    setAutomaticDateFilter(rows);
-    setStatus('ok', '');
-    render();
-  } catch (err) {
-    console.warn('Caricamento Google Sheets non disponibile:', err);
-    allRows = [];
-    dataSource = '';
-    setStatus('warn', 'Impossibile leggere i dati da Google Sheets — premi Aggiorna per riprovare');
-    render();
-  }
+function setStatus(type,text){
+  const row=document.getElementById('status-row'); const el=document.getElementById('data-status');
+  if(!row||!el) return;
+  const visible=type==='warn'||type==='error';
+  row.style.display=visible?'flex':'none'; el.className=`status ${type||''}`;
+  document.getElementById('data-status-text').textContent=visible?text:'';
 }
 
-
-function filteredRows() {
-  const fp = window._flatpickr;
-  const from = fp?.selectedDates?.[0] ? new Date(fp.selectedDates[0]) : null;
-  const to = fp?.selectedDates?.[1] ? new Date(fp.selectedDates[1]) : null;
-  if (from) from.setHours(0,0,0,0);
-  if (to) to.setHours(23,59,59,999);
-  return allRows.filter(r => {
-    const d = parseDateValue(r.Data);
-    if (!d) return false;
-    if (from && d < from) return false;
-    if (to && d > to) return false;
-    return true;
-  });
-}
-
-function clearDateRange(e) {
-  e.stopPropagation();
-  dateFilterUserTouched = true;
-  window._flatpickr?.clear();
-  render();
-}
-
-function sectionRows(rows, section) {
-  return rows.filter(r => String(r.Sezione).toLowerCase() === section.toLowerCase());
-}
-
-function sumMetric(rows, metric) {
-  return rows.reduce((s,r) => s + n(r[metric]), 0);
-}
-
-function getPeriodInfo(rows) {
-  const days = [...new Set(rows.map(r => dateKey(r.Data)).filter(Boolean))].sort();
-  const fp = window._flatpickr;
-  const selected = fp?.selectedDates || [];
-  const oneDay = selected.length === 2 && dateKey(selected[0]) === dateKey(selected[1]);
-  return { days, dayCount:days.length || 1, oneDay };
-}
-
-function aggregateOperators(rows, section, configured) {
-  const sec = sectionRows(rows, section).filter(r => r.Accettatore && r.Accettatore !== '-' && r.Accettatore.toLowerCase() !== 'odl totali');
-  const map = {};
-  configured.forEach(name => map[name] = { nome:name, passaggi:0, gomme:0, tappetini:0, easypay:0, giorni:new Set(), bonus:false });
-  sec.forEach(r => {
-    const name = r.Accettatore || '—';
-    if (!map[name]) map[name] = { nome:name, passaggi:0, gomme:0, tappetini:0, easypay:0, giorni:new Set(), bonus:!configured.includes(name) };
-    map[name].passaggi += n(r.Passaggi);
-    map[name].gomme += n(r.Gomme);
-    map[name].tappetini += n(r.Tappetini);
-    map[name].easypay += n(r.EasyPay);
-    const dk = dateKey(r.Data); if (dk) map[name].giorni.add(dk);
-  });
-  const extras = Object.values(map).filter(x => x.bonus).sort((a,b)=>a.nome.localeCompare(b.nome,'it'));
-  return [...configured.map(x=>map[x]), ...extras];
-}
-
-function renderKpis(rows) {
-  const toyota = sectionRows(rows,'Toyota');
-  const volvo = sectionRows(rows,'Volvo');
-  const carrozzeria = sectionRows(rows,'Carrozzeria');
-  const revisioni = sectionRows(rows,'Revisioni');
-  const totToyota = sumMetric(toyota,'Passaggi');
-  const totVolvo = sumMetric(volvo,'Passaggi');
-  const totCar = sumMetric(carrozzeria,'Passaggi');
-  const totRev = sumMetric(revisioni,'Passaggi');
-  const totale = totToyota + totVolvo + totCar;
-  const p = getPeriodInfo(rows);
-
-  document.getElementById('kpi-passaggi-label').textContent = p.oneDay ? 'Passaggi oggi' : 'Passaggi periodo';
-  document.getElementById('kpi-passaggi').textContent = Math.round(totale);
-  document.getElementById('kpi-passaggi-sub').textContent = p.oneDay ? 'Toyota + Volvo + Carrozzeria' : `media ${(totale/p.dayCount).toFixed(1)} / giorno · ${p.dayCount} gg`;
-  document.getElementById('kpi-toyota').textContent = Math.round(totToyota);
-  document.getElementById('kpi-volvo').textContent = Math.round(totVolvo);
-  document.getElementById('kpi-carrozzeria').textContent = Math.round(totCar);
-  document.getElementById('kpi-revisioni').textContent = Math.round(totRev);
-  document.getElementById('kpi-toyota-sub').textContent = totale > 0 ? `${(totToyota/totale*100).toFixed(1)}% dei passaggi` : 'passaggi';
-  document.getElementById('kpi-carrozzeria-sub').textContent = totale > 0 ? `${(totCar/totale*100).toFixed(1)}% dei passaggi` : 'passaggi';
-}
-
-function renderOperatorCards(rows) {
-  const toy = aggregateOperators(rows,'Toyota', CONFIG.accettatori_toyota || []);
-  const car = aggregateOperators(rows,'Carrozzeria', CONFIG.accettatori_carrozzeria || []);
-
-  const cardHtml = (s, type) => {
-    const media = s.giorni.size ? s.passaggi / s.giorni.size : 0;
-    const bonus = s.bonus ? ' bonus' : '';
-    const badge = s.bonus ? '<span class="badge">Bonus</span>' : '';
-    const extraStats = type === 'toyota'
-      ? `<div class="op-stat"><span class="op-stat-label">Gomme</span><span class="op-stat-val">${Math.round(s.gomme)}</span></div>
-         <div class="op-stat"><span class="op-stat-label">Tappetini</span><span class="op-stat-val">${Math.round(s.tappetini)}</span></div>
-         <div class="op-stat"><span class="op-stat-label">EasyPay</span><span class="op-stat-val">${Math.round(s.easypay)}</span></div>`
-      : `<div class="op-stat"><span class="op-stat-label">EasyPay</span><span class="op-stat-val">${Math.round(s.easypay)}</span></div>`;
-    return `<div class="op-card ${type}${bonus}">
-      <div class="op-name"><div class="op-avatar">${(s.nome||'?')[0].toUpperCase()}</div><span>${escapeHtml(s.nome)}</span>${badge}</div>
-      <div class="op-main"><span class="op-main-label">Passaggi</span><span class="op-main-value">${Math.round(s.passaggi)}</span></div>
-      <div class="op-stat"><span class="op-stat-label">Media/giorno</span><span class="op-stat-val">${media.toFixed(1)}</span></div>
-      ${extraStats}
-    </div>`;
+function normalizeRow(r){
+  const lower={}; Object.keys(r||{}).forEach(k=>lower[String(k).trim().toLowerCase()]=r[k]);
+  const pick=(...names)=>{ for(const name of names){ const v=lower[name.toLowerCase()]; if(v!==undefined) return v; } return null; };
+  return {
+    Data:pick('Data','data'), Sezione:String(pick('Sezione','sezione')||'').trim(), Accettatore:String(pick('Accettatore','accettatore')||'').trim(),
+    Passaggi:n(pick('Passaggi','passaggi')), Gomme:n(pick('Gomme','gomme')), Tappetini:n(pick('Tappetini','tappetini')),
+    EasyPay:n(pick('EasyPay','easypay')), ODL:n(pick('ODL','odl')), Timestamp:pick('Timestamp','timestamp')||''
   };
-
-  document.getElementById('toyota-cards').innerHTML = toy.map(s=>cardHtml(s,'toyota')).join('');
-  document.getElementById('carrozzeria-cards').innerHTML = car.map(s=>cardHtml(s,'carrozzeria')).join('');
-
-  const toyRows = sectionRows(rows,'Toyota');
-  document.getElementById('tot-gomme').textContent = Math.round(sumMetric(toyRows,'Gomme'));
-  document.getElementById('tot-tappetini').textContent = Math.round(sumMetric(toyRows,'Tappetini'));
-  document.getElementById('tot-easypay-toyota').textContent = Math.round(sumMetric(toyRows,'EasyPay'));
-  document.getElementById('tot-odl').textContent = Math.round(sumMetric(sectionRows(rows,'Carrozzeria'),'ODL'));
-
-  renderToyotaTable(toy);
+}
+function extractRowsFromJson(json){
+  if(Array.isArray(json)) return json; if(Array.isArray(json?.rows)) return json.rows; if(Array.isArray(json?.data)) return json.data; if(Array.isArray(json?.passaggi)) return json.passaggi; return [];
 }
 
-function renderToyotaTable(stats) {
-  const body = document.getElementById('toyota-table-body');
-  body.innerHTML = stats.map(s => {
-    const media = s.giorni.size ? s.passaggi / s.giorni.size : 0;
-    return `<tr><td>${escapeHtml(s.nome)}${s.bonus ? ' <span style="color:#f97316;font-size:.65rem">(bonus)</span>' : ''}</td><td>${Math.round(s.passaggi)}</td><td>${media.toFixed(1)}</td><td>${Math.round(s.gomme)}</td><td>${Math.round(s.tappetini)}</td><td>${Math.round(s.easypay)}</td></tr>`;
-  }).join('');
-  const totals = stats.reduce((a,s)=>({passaggi:a.passaggi+s.passaggi,gomme:a.gomme+s.gomme,tappetini:a.tappetini+s.tappetini,easypay:a.easypay+s.easypay}),{passaggi:0,gomme:0,tappetini:0,easypay:0});
-  const days = new Set(filteredRows().map(r=>dateKey(r.Data)).filter(Boolean)).size || 1;
-  document.getElementById('toyota-table-footer').innerHTML = `<td>TOTALE</td><td>${Math.round(totals.passaggi)}</td><td>${(totals.passaggi/days).toFixed(1)}</td><td>${Math.round(totals.gomme)}</td><td>${Math.round(totals.tappetini)}</td><td>${Math.round(totals.easypay)}</td>`;
-  document.getElementById('table-period-note').textContent = `${days} ${days===1?'giorno':'giorni'} nel periodo`;
+function setAutomaticDateFilter(rows){
+  const fp=window._flatpickr; if(!fp||dateFilterUserTouched||!rows.length) return null;
+  const dates=rows.map(r=>parseDateValue(r.Data)).filter(Boolean).sort((a,b)=>a-b); if(!dates.length) return null;
+  const todayKey=dateKey(new Date()); const today=dates.find(d=>dateKey(d)===todayKey); const target=today||dates[dates.length-1];
+  fp.setDate([target,target],false); return target;
 }
 
-function destroyChart(id) {
-  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-}
-
-function renderCharts(rows) {
-  destroyChart('andamento');
-  destroyChart('reparti');
-
-  const byDay = {};
-  rows.forEach(r => {
-    const k = dateKey(r.Data); if (!k) return;
-    if (!byDay[k]) byDay[k] = {Toyota:0,Volvo:0,Carrozzeria:0};
-    if (['Toyota','Volvo','Carrozzeria'].includes(r.Sezione)) byDay[k][r.Sezione] += n(r.Passaggi);
-  });
-  const days = Object.keys(byDay).sort();
-  const colors = {Toyota:'#4a7fc1', Volvo:'#60a5fa', Carrozzeria:'#7c3aed'};
-
-  const ctx1 = document.getElementById('chart-andamento').getContext('2d');
-  charts.andamento = new Chart(ctx1, {
-    type:'bar',
-    data:{
-      labels:days.map(formatDateShort),
-      datasets:['Toyota','Volvo','Carrozzeria'].map(sec=>({label:sec,data:days.map(d=>byDay[d][sec]),backgroundColor:colors[sec],borderRadius:3}))
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      scales:{x:{stacked:true,ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:'#6b7280',precision:0},grid:{color:'#e8ecf2'}}},
-      plugins:{legend:{position:'bottom',labels:{font:{family:'Nunito',size:11},boxWidth:12}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}}
-    }
-  });
-
-  const totals = ['Toyota','Volvo','Carrozzeria'].map(sec => sumMetric(sectionRows(rows,sec),'Passaggi'));
-  const grand = totals.reduce((a,b)=>a+b,0);
-  const ctx2 = document.getElementById('chart-reparti').getContext('2d');
-  charts.reparti = new Chart(ctx2, {
-    type:'doughnut',
-    data:{labels:['Toyota','Volvo','Carrozzeria'],datasets:[{data:totals,backgroundColor:[colors.Toyota,colors.Volvo,colors.Carrozzeria],borderColor:'#fff',borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{font:{family:'Nunito',size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed} (${grand>0?(ctx.parsed/grand*100).toFixed(1):'0.0'}%)`}},datalabels:{display:true,color:'#fff',font:{weight:'bold',family:'JetBrains Mono',size:11},formatter:v=>v>0&&grand>0?`${(v/grand*100).toFixed(0)}%`:''}}}
-  });
-}
-
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-}
-
-function render() {
-  const rows = filteredRows();
-  const empty = rows.length === 0;
-  document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
-  document.getElementById('dashboard-content').style.display = empty ? 'none' : 'block';
-
-  if (empty) {
-    const availableDates = allRows.map(r => parseDateValue(r.Data)).filter(Boolean).sort((a,b)=>a-b);
-    const emptyText = document.getElementById('empty-state-text');
-    if (emptyText && availableDates.length) {
-      const first = availableDates[0];
-      const last = availableDates[availableDates.length - 1];
-      emptyText.textContent = dateKey(first) === dateKey(last)
-        ? `Nessun dato nel periodo selezionato. Dati disponibili il ${formatDateIT(last)}.`
-        : `Nessun dato nel periodo selezionato. Dati disponibili dal ${formatDateIT(first)} al ${formatDateIT(last)}.`;
-    }
+async function loadData(){
+  setStatus('','Caricamento da Google Sheets…');
+  try{
+    if(!CONFIG?.googleSheets?.scriptUrl) throw new Error('URL Google Sheets non configurato');
+    const url=CONFIG.googleSheets.scriptUrl+(CONFIG.googleSheets.scriptUrl.includes('?')?'&':'?')+'action=get&_='+Date.now();
+    const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),12000);
+    const res=await fetch(url,{signal:controller.signal}); clearTimeout(timer);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json=await res.json(); const rows=extractRowsFromJson(json).map(normalizeRow).filter(r=>r.Data&&r.Sezione);
+    if(!rows.length) throw new Error('Lo script non ha restituito righe nel formato atteso');
+    allRows=rows; setAutomaticDateFilter(rows); setStatus('ok',''); render();
+  }catch(err){
+    console.warn('Caricamento Google Sheets non disponibile:',err); allRows=[];
+    setStatus('warn','Impossibile leggere i dati da Google Sheets — premi Aggiorna per riprovare'); render();
   }
-
-  renderKpis(rows);
-  if (empty) return;
-  renderCharts(rows);
-  renderOperatorCards(rows);
 }
 
-function exportExcel() {
-  const rows = filteredRows();
-  if (!rows.length) { alert('Nessun dato da esportare'); return; }
-  const clean = rows.map(r=>({
-    Data: dateKey(r.Data).split('-').reverse().join('/'),
-    Sezione:r.Sezione, Accettatore:r.Accettatore, Passaggi:r.Passaggi,
-    Gomme:r.Gomme, Tappetini:r.Tappetini, EasyPay:r.EasyPay, ODL:r.ODL, Timestamp:r.Timestamp
-  }));
-  const ws = XLSX.utils.json_to_sheet(clean);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Passaggi');
-  const suffix = window._flatpickr?.input?.value?.replace(/\s/g,'').replace(/→/g,'-') || 'periodo';
-  XLSX.writeFile(wb, `dashboard-passaggi-${suffix}.xlsx`);
+function filteredRows(){
+  const fp=window._flatpickr; const from=fp?.selectedDates?.[0]?new Date(fp.selectedDates[0]):null; const to=fp?.selectedDates?.[1]?new Date(fp.selectedDates[1]):null;
+  if(from) from.setHours(0,0,0,0); if(to) to.setHours(23,59,59,999);
+  return allRows.filter(r=>{ const d=parseDateValue(r.Data); if(!d) return false; if(from&&d<from) return false; if(to&&d>to) return false; return true; });
+}
+function clearDateRange(e){ e.stopPropagation(); dateFilterUserTouched=true; window._flatpickr?.clear(); render(); }
+function sectionRows(rows,section){ return rows.filter(r=>String(r.Sezione).toLowerCase()===section.toLowerCase()); }
+function sumMetric(rows,metric){ return rows.reduce((s,r)=>s+n(r[metric]),0); }
+function periodDays(rows){ return [...new Set(rows.map(r=>dateKey(r.Data)).filter(Boolean))].sort(); }
+function getPeriodInfo(rows){
+  const days=periodDays(rows); const fp=window._flatpickr; const selected=fp?.selectedDates||[];
+  const oneDay=(selected.length>=1 && (!selected[1] || dateKey(selected[0])===dateKey(selected[1])));
+  return {days,dayCount:days.length||1,oneDay};
 }
 
-function init() {
-  document.getElementById('dash-sede').textContent = CONFIG?.sede || 'Via Biagi';
-  const today = new Date();
-  window._flatpickr = flatpickr('#date-from', {
-    mode:'range', locale:'it', dateFormat:'d/m/Y', conjunction:' → ', disableMobile:true,
-    defaultDate:[today,today],
-    onChange:selectedDates=>{
-      dateFilterUserTouched = true;
-      if (selectedDates.length===0 || selectedDates.length===2) render();
-    }
+function aggregateOperators(rows,section,configured){
+  const sec=sectionRows(rows,section).filter(r=>r.Accettatore&&r.Accettatore!=='-'&&r.Accettatore.toLowerCase()!=='odl totali');
+  const map={}; configured.forEach(name=>map[name]={nome:name,passaggi:0,gomme:0,tappetini:0,easypay:0,giorni:new Set(),bonus:false});
+  sec.forEach(r=>{
+    const name=r.Accettatore||'—';
+    if(!map[name]) map[name]={nome:name,passaggi:0,gomme:0,tappetini:0,easypay:0,giorni:new Set(),bonus:!configured.includes(name)};
+    map[name].passaggi+=n(r.Passaggi); map[name].gomme+=n(r.Gomme); map[name].tappetini+=n(r.Tappetini); map[name].easypay+=n(r.EasyPay);
+    const dk=dateKey(r.Data); if(dk) map[name].giorni.add(dk);
   });
-  window._flatpickr.setDate([today,today], false);
-  loadData();
+  const extras=Object.values(map).filter(x=>x.bonus).sort((a,b)=>a.nome.localeCompare(b.nome,'it'));
+  return [...configured.map(x=>map[x]),...extras];
+}
+
+function dailyAggregate(rows){
+  const map={};
+  rows.forEach(r=>{
+    const k=dateKey(r.Data); if(!k) return;
+    if(!map[k]) map[k]={Toyota:0,Volvo:0,Carrozzeria:0,Revisioni:0,Gomme:0,Tappetini:0,EasyPay:0,ODL:0};
+    if(map[k][r.Sezione]!==undefined) map[k][r.Sezione]+=n(r.Passaggi);
+    map[k].Gomme+=n(r.Gomme); map[k].Tappetini+=n(r.Tappetini); map[k].EasyPay+=n(r.EasyPay); map[k].ODL+=n(r.ODL);
+  });
+  return map;
+}
+
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+function destroyAllCharts(){ Object.keys(charts).forEach(destroyChart); }
+function escapeHtml(s){ return String(s??'').replace(/[&<>\"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch])); }
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.id===`tab-btn-${tab}`));
+  document.querySelectorAll('.tab-view').forEach(v=>v.classList.toggle('active',v.id===`tab-${tab}`));
+  const reportView=document.getElementById('tab-report');
+  const analyticsView=document.getElementById('tab-analytics');
+  if(reportView) reportView.style.display=tab==='report'?'block':'none';
+  if(analyticsView) analyticsView.style.display=tab==='analytics'?'block':'none';
+  if(tab==='analytics'){
+    backToAnalyticsOverview(false);
+    requestAnimationFrame(()=>renderAnalytics(filteredRows()));
+  }
+}
+
+function renderReport(rows){
+  const toyRows=sectionRows(rows,'Toyota'), volRows=sectionRows(rows,'Volvo'), carRows=sectionRows(rows,'Carrozzeria'), revRows=sectionRows(rows,'Revisioni');
+  const toyTotal=sumMetric(toyRows,'Passaggi'), volTotal=sumMetric(volRows,'Passaggi'), carTotal=sumMetric(carRows,'Passaggi'), revTotal=sumMetric(revRows,'Passaggi');
+  const grand=toyTotal+volTotal+carTotal; const p=getPeriodInfo(rows);
+
+  document.getElementById('report-kpi-passaggi-label').textContent=p.oneDay?'Passaggi oggi':'Passaggi periodo';
+  document.getElementById('report-kpi-passaggi').textContent=fmt0(grand);
+  document.getElementById('report-kpi-passaggi-sub').textContent=p.oneDay?'Toyota + Volvo + Carrozzeria':`media ${fmt1(grand/p.dayCount)} / giorno · ${p.dayCount} gg`;
+  document.getElementById('report-kpi-toyota').textContent=fmt0(toyTotal); document.getElementById('report-kpi-volvo').textContent=fmt0(volTotal);
+  document.getElementById('report-kpi-car').textContent=fmt0(carTotal); document.getElementById('report-kpi-rev').textContent=fmt0(revTotal);
+  document.getElementById('report-kpi-toyota-sub').textContent=grand>0?`${fmt1(toyTotal/grand*100)}% dei passaggi`:'passaggi';
+  document.getElementById('report-kpi-car-sub').textContent=grand>0?`${fmt1(carTotal/grand*100)}% dei passaggi`:'passaggi';
+
+  const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
+  const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
+  const toyDays=p.dayCount;
+  document.getElementById('report-tot-gomme').textContent=fmt0(sumMetric(toyRows,'Gomme'));
+  document.getElementById('report-tot-tappetini').textContent=fmt0(sumMetric(toyRows,'Tappetini'));
+  document.getElementById('report-tot-easypay-toyota').textContent=fmt0(sumMetric(toyRows,'EasyPay'));
+  document.getElementById('report-toyota-note').textContent=`${toyDays} ${toyDays===1?'giorno':'giorni'} nel periodo`;
+  document.getElementById('report-toyota-body').innerHTML=toy.map(s=>`<tr><td>${escapeHtml(s.nome)}${s.bonus?' <span style="color:#b45309;font-size:.62rem">(bonus)</span>':''}</td><td>${fmt0(s.passaggi)}</td><td>${fmt1(s.passaggi/toyDays)}</td><td>${fmt0(s.gomme)}</td><td>${fmt0(s.tappetini)}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
+  const tt=toy.reduce((a,s)=>({p:a.p+s.passaggi,g:a.g+s.gomme,t:a.t+s.tappetini,e:a.e+s.easypay}),{p:0,g:0,t:0,e:0});
+  document.getElementById('report-toyota-footer').innerHTML=`<td>TOTALE</td><td>${fmt0(tt.p)}</td><td>${fmt1(tt.p/toyDays)}</td><td>${fmt0(tt.g)}</td><td>${fmt0(tt.t)}</td><td>${fmt0(tt.e)}</td>`;
+
+  document.getElementById('report-volvo-passaggi').textContent=fmt0(volTotal); document.getElementById('report-volvo-media').textContent=fmt1(volTotal/p.dayCount);
+  document.getElementById('report-rev-tot').textContent=fmt0(revTotal); document.getElementById('report-rev-media').textContent=fmt1(revTotal/p.dayCount);
+
+  const carOdl=sumMetric(carRows,'ODL'), carEasy=sumMetric(carRows,'EasyPay');
+  document.getElementById('report-tot-odl').textContent=fmt0(carOdl); document.getElementById('report-tot-easypay-car').textContent=fmt0(carEasy);
+  document.getElementById('report-car-note').textContent=`${p.dayCount} ${p.dayCount===1?'giorno':'giorni'} nel periodo`;
+  document.getElementById('report-car-body').innerHTML=car.map(s=>`<tr><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${fmt1(s.passaggi/p.dayCount)}</td><td>${carTotal>0?fmt1(s.passaggi/carTotal*100)+'%':'0,0%'}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
+  const ct=car.reduce((a,s)=>({p:a.p+s.passaggi,e:a.e+s.easypay}),{p:0,e:0});
+  document.getElementById('report-car-footer').innerHTML=`<td>TOTALE</td><td>${fmt0(ct.p)}</td><td>${fmt1(ct.p/p.dayCount)}</td><td>100,0%</td><td>${fmt0(ct.e)}</td>`;
+
+  const byDay=dailyAggregate(rows); const days=Object.keys(byDay).sort();
+  document.getElementById('report-daily-body').innerHTML=days.map(d=>{const x=byDay[d];return `<tr><td>${formatDateShort(d)}</td><td>${fmt0(x.Toyota)}</td><td>${fmt0(x.Volvo)}</td><td>${fmt0(x.Carrozzeria)}</td><td>${fmt0(x.Revisioni)}</td><td>${fmt0(x.Gomme)}</td><td>${fmt0(x.Tappetini)}</td><td>${fmt0(x.EasyPay)}</td><td>${fmt0(x.ODL)}</td></tr>`}).join('');
+  const dt=days.reduce((a,d)=>{const x=byDay[d];Object.keys(a).forEach(k=>a[k]+=x[k]);return a;},{Toyota:0,Volvo:0,Carrozzeria:0,Revisioni:0,Gomme:0,Tappetini:0,EasyPay:0,ODL:0});
+  document.getElementById('report-daily-footer').innerHTML=`<td>TOTALE</td><td>${fmt0(dt.Toyota)}</td><td>${fmt0(dt.Volvo)}</td><td>${fmt0(dt.Carrozzeria)}</td><td>${fmt0(dt.Revisioni)}</td><td>${fmt0(dt.Gomme)}</td><td>${fmt0(dt.Tappetini)}</td><td>${fmt0(dt.EasyPay)}</td><td>${fmt0(dt.ODL)}</td>`;
+}
+
+function renderAnalytics(rows){
+  if(!rows.length) return;
+  const toyRows=sectionRows(rows,'Toyota'), volRows=sectionRows(rows,'Volvo'), carRows=sectionRows(rows,'Carrozzeria'), revRows=sectionRows(rows,'Revisioni');
+  const toyTotal=sumMetric(toyRows,'Passaggi'), volTotal=sumMetric(volRows,'Passaggi'), carTotal=sumMetric(carRows,'Passaggi'), revTotal=sumMetric(revRows,'Passaggi');
+  const grand=toyTotal+volTotal+carTotal; const p=getPeriodInfo(rows);
+  const gomme=sumMetric(toyRows,'Gomme'), tapp=sumMetric(toyRows,'Tappetini'), easyToy=sumMetric(toyRows,'EasyPay'), easyCar=sumMetric(carRows,'EasyPay'), odl=sumMetric(carRows,'ODL');
+
+  document.getElementById('an-kpi-passaggi').textContent=fmt0(grand); document.getElementById('an-kpi-media').textContent=fmt1(grand/p.dayCount);
+  document.getElementById('an-kpi-gomme').textContent=fmt0(gomme); document.getElementById('an-kpi-tappetini').textContent=fmt0(tapp);
+  document.getElementById('an-kpi-easypay').textContent=fmt0(easyToy+easyCar); document.getElementById('an-kpi-odl').textContent=fmt0(odl);
+
+  document.getElementById('toy-ratio-gomme').textContent=fmt1(ratio100(gomme,toyTotal));
+  document.getElementById('toy-ratio-tappetini').textContent=fmt1(ratio100(tapp,toyTotal));
+  document.getElementById('toy-ratio-easypay').textContent=fmt1(ratio100(easyToy,toyTotal));
+  document.getElementById('toy-ratio-accessori').textContent=fmt1(ratio100(gomme+tapp,toyTotal));
+
+  const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
+  const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
+  document.getElementById('analytics-toyota-table').innerHTML=toy.map(s=>`<tr onclick="openToyotaDetail(decodeURIComponent('${encodeURIComponent(s.nome)}'))" style="cursor:pointer"><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${toyTotal>0?fmt1(s.passaggi/toyTotal*100)+'%':'0,0%'}</td><td>${fmt1(ratio100(s.gomme,s.passaggi))}</td><td>${fmt1(ratio100(s.tappetini,s.passaggi))}</td><td>${fmt1(ratio100(s.easypay,s.passaggi))}</td><td class="metric-highlight">${fmt1(ratio100(s.gomme+s.tappetini,s.passaggi))}</td></tr>`).join('');
+
+  document.getElementById('an-volvo-total').textContent=fmt0(volTotal); document.getElementById('an-volvo-media').textContent=fmt1(volTotal/p.dayCount);
+  document.getElementById('an-car-total').textContent=fmt0(carTotal); document.getElementById('an-car-odl').textContent=fmt0(odl);
+  document.getElementById('an-car-incidenza').textContent=carTotal>0?fmt1(odl/carTotal*100)+'%':'0,0%'; document.getElementById('an-car-easypay').textContent=fmt0(easyCar);
+  document.getElementById('analytics-car-table').innerHTML=car.map(s=>`<tr><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${carTotal>0?fmt1(s.passaggi/carTotal*100)+'%':'0,0%'}</td><td>${fmt0(s.easypay)}</td></tr>`).join('');
+  document.getElementById('an-rev-total').textContent=fmt0(revTotal); document.getElementById('an-rev-media').textContent=fmt1(revTotal/p.dayCount);
+
+  renderToyotaCharts(rows,toy,toyTotal);
+  renderVolvoChart(rows,volTotal,p.dayCount);
+  renderCarCharts(rows,car);
+  renderRevisioniChart(rows);
+}
+
+function renderToyotaCharts(rows,toy,toyTotal){
+  ['toyota-operatori','toyota-trend','toyota-ratios','toyota-prodotti'].forEach(destroyChart);
+  const activeToy=toy.filter(s=>s.passaggi>0||s.gomme>0||s.tappetini>0||s.easypay>0);
+
+  const ctx1=document.getElementById('chart-toyota-operatori').getContext('2d');
+  charts['toyota-operatori']=new Chart(ctx1,{type:'bar',data:{labels:activeToy.map(s=>s.nome),datasets:[{label:'Passaggi',data:activeToy.map(s=>s.passaggi),backgroundColor:activeToy.map((_,i)=>TOYOTA_PALETTE[i%TOYOTA_PALETTE.length]),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',onClick:(evt,elements)=>{if(elements.length){const name=activeToy[elements[0].index]?.nome;if(name) openToyotaDetail(name);}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt0(ctx.parsed.x)} passaggi · ${toyTotal>0?fmt1(ctx.parsed.x/toyTotal*100):'0,0'}% Toyota`}},datalabels:{display:true,anchor:'end',align:'end',color:'#0d1117',font:{family:'JetBrains Mono',weight:'600',size:10},formatter:v=>fmt0(v),clip:false}},layout:{padding:{right:38}},scales:{x:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}},y:{ticks:{color:'#0d1117',font:{weight:'700'}},grid:{display:false}}}}});
+
+  const toyRows=sectionRows(rows,'Toyota').filter(r=>r.Accettatore&&r.Accettatore!=='-'&&r.Accettatore.toLowerCase()!=='odl totali');
+  const days=periodDays(toyRows); const byOp={}; activeToy.forEach(s=>byOp[s.nome]={});
+  toyRows.forEach(r=>{const d=dateKey(r.Data);if(!d||!byOp[r.Accettatore])return;byOp[r.Accettatore][d]=(byOp[r.Accettatore][d]||0)+n(r.Passaggi);});
+  const ctx2=document.getElementById('chart-toyota-trend').getContext('2d');
+  charts['toyota-trend']=new Chart(ctx2,{type:'line',data:{labels:days.map(formatDateShort),datasets:activeToy.map((s,i)=>({label:s.nome,data:days.map(d=>byOp[s.nome]?.[d]||0),borderColor:TOYOTA_PALETTE[i%TOYOTA_PALETTE.length],backgroundColor:TOYOTA_PALETTE[i%TOYOTA_PALETTE.length],tension:.25,borderWidth:2,pointRadius:2,pointHoverRadius:4}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+
+  const ctx3=document.getElementById('chart-toyota-ratios').getContext('2d');
+  charts['toyota-ratios']=new Chart(ctx3,{type:'bar',data:{labels:activeToy.map(s=>s.nome),datasets:[
+    {label:'Gomme /100',data:activeToy.map(s=>ratio100(s.gomme,s.passaggi)),backgroundColor:PRODUCT_COLORS.gomme,borderRadius:3},
+    {label:'Tappetini /100',data:activeToy.map(s=>ratio100(s.tappetini,s.passaggi)),backgroundColor:PRODUCT_COLORS.tappetini,borderRadius:3},
+    {label:'EasyPay /100',data:activeToy.map(s=>ratio100(s.easypay,s.passaggi)),backgroundColor:PRODUCT_COLORS.easypay,borderRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt1(ctx.parsed.y)}`}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+
+  const byDay={}; toyRows.forEach(r=>{const d=dateKey(r.Data);if(!d)return;if(!byDay[d])byDay[d]={g:0,t:0,e:0};byDay[d].g+=n(r.Gomme);byDay[d].t+=n(r.Tappetini);byDay[d].e+=n(r.EasyPay);});
+  const d4=Object.keys(byDay).sort(); const ctx4=document.getElementById('chart-toyota-prodotti').getContext('2d');
+  charts['toyota-prodotti']=new Chart(ctx4,{type:'line',data:{labels:d4.map(formatDateShort),datasets:[
+    {label:'Gomme',data:d4.map(d=>byDay[d].g),borderColor:PRODUCT_COLORS.gomme,backgroundColor:PRODUCT_COLORS.gomme,tension:.25,borderWidth:2.5,pointRadius:2},
+    {label:'Tappetini',data:d4.map(d=>byDay[d].t),borderColor:PRODUCT_COLORS.tappetini,backgroundColor:PRODUCT_COLORS.tappetini,tension:.25,borderWidth:2,pointRadius:2},
+    {label:'EasyPay',data:d4.map(d=>byDay[d].e),borderColor:PRODUCT_COLORS.easypay,backgroundColor:PRODUCT_COLORS.easypay,tension:.25,borderWidth:2,pointRadius:2}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+}
+
+function renderVolvoChart(rows,volTotal,dayCount){
+  destroyChart('volvo'); const vol=sectionRows(rows,'Volvo'); const by={}; vol.forEach(r=>{const d=dateKey(r.Data);if(d)by[d]=(by[d]||0)+n(r.Passaggi)}); const days=Object.keys(by).sort(); const avg=dayCount?volTotal/dayCount:0;
+  const ctx=document.getElementById('chart-volvo').getContext('2d');
+  charts.volvo=new Chart(ctx,{type:'line',data:{labels:days.map(formatDateShort),datasets:[
+    {label:'Passaggi Volvo',data:days.map(d=>by[d]),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.25,borderWidth:2.5,pointRadius:3},
+    {label:'Media periodo',data:days.map(()=>avg),borderColor:'rgba(37,99,235,.45)',borderDash:[6,5],borderWidth:1.5,pointRadius:0,fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+}
+
+function renderCarCharts(rows,car){
+  destroyChart('car-trend'); destroyChart('car-operatori');
+  const carRows=sectionRows(rows,'Carrozzeria'); const by={}; carRows.forEach(r=>{const d=dateKey(r.Data);if(!d)return;if(!by[d])by[d]={p:0,o:0};by[d].p+=n(r.Passaggi);by[d].o+=n(r.ODL)}); const days=Object.keys(by).sort();
+  const ctx1=document.getElementById('chart-car-trend').getContext('2d');
+  charts['car-trend']=new Chart(ctx1,{type:'line',data:{labels:days.map(formatDateShort),datasets:[
+    {label:'Passaggi Carrozzeria',data:days.map(d=>by[d].p),borderColor:'#d49a00',backgroundColor:'rgba(212,154,0,.10)',borderWidth:3,pointRadius:3,tension:.25,fill:false},
+    {label:'ODL',data:days.map(d=>by[d].o),borderColor:'rgba(212,154,0,.42)',backgroundColor:'rgba(212,154,0,.05)',borderWidth:2,pointRadius:2,tension:.25,fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+
+  const active=car.filter(s=>s.passaggi>0||s.easypay>0); const ctx2=document.getElementById('chart-car-operatori').getContext('2d');
+  charts['car-operatori']=new Chart(ctx2,{type:'bar',data:{labels:active.map(s=>s.nome),datasets:[{label:'Passaggi',data:active.map(s=>s.passaggi),backgroundColor:'#d49a00',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},datalabels:{display:true,anchor:'end',align:'end',color:'#0d1117',font:{family:'JetBrains Mono',size:10,weight:'600'},formatter:v=>fmt0(v),clip:false}},layout:{padding:{right:32}},scales:{x:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}},y:{ticks:{color:'#0d1117',font:{weight:'700'}},grid:{display:false}}}}});
+}
+
+function renderRevisioniChart(rows){
+  destroyChart('revisioni'); const rev=sectionRows(rows,'Revisioni'); const by={}; rev.forEach(r=>{const d=dateKey(r.Data);if(d)by[d]=(by[d]||0)+n(r.Passaggi)}); const days=Object.keys(by).sort();
+  const ctx=document.getElementById('chart-revisioni').getContext('2d');
+  charts.revisioni=new Chart(ctx,{type:'line',data:{labels:days.map(formatDateShort),datasets:[{label:'Revisioni',data:days.map(d=>by[d]),borderColor:'#6b7280',backgroundColor:'rgba(107,114,128,.08)',fill:true,tension:.25,borderWidth:2.2,pointRadius:2.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{x:{ticks:{color:'#6b7280'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+}
+
+function openToyotaDetail(name){
+  currentDetailOperator=name; document.getElementById('analytics-overview').style.display='none'; document.getElementById('analytics-detail').classList.add('active');
+  const rows=filteredRows(); const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]); const s=toy.find(x=>x.nome===name); if(!s) return;
+  document.getElementById('detail-name').textContent=name; document.getElementById('detail-passaggi').textContent=fmt0(s.passaggi);
+  const days=getPeriodInfo(rows).dayCount; document.getElementById('detail-media').textContent=fmt1(s.passaggi/days); document.getElementById('detail-gomme').textContent=fmt0(s.gomme);
+  document.getElementById('detail-tappetini').textContent=fmt0(s.tappetini); document.getElementById('detail-easypay').textContent=fmt0(s.easypay);
+  document.getElementById('detail-ratio-gomme').textContent=fmt1(ratio100(s.gomme,s.passaggi)); document.getElementById('detail-ratio-tappetini').textContent=fmt1(ratio100(s.tappetini,s.passaggi));
+  document.getElementById('detail-ratio-easypay').textContent=fmt1(ratio100(s.easypay,s.passaggi)); document.getElementById('detail-ratio-accessori').textContent=fmt1(ratio100(s.gomme+s.tappetini,s.passaggi));
+  renderToyotaDetailCharts(rows,name);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderToyotaDetailCharts(rows,name){
+  destroyChart('detail-passaggi'); destroyChart('detail-prodotti');
+  const opRows=sectionRows(rows,'Toyota').filter(r=>r.Accettatore===name); const by={}; opRows.forEach(r=>{const d=dateKey(r.Data);if(!d)return;if(!by[d])by[d]={p:0,g:0,t:0,e:0};by[d].p+=n(r.Passaggi);by[d].g+=n(r.Gomme);by[d].t+=n(r.Tappetini);by[d].e+=n(r.EasyPay)}); const days=Object.keys(by).sort();
+  const c1=document.getElementById('chart-detail-passaggi').getContext('2d'); charts['detail-passaggi']=new Chart(c1,{type:'line',data:{labels:days.map(formatDateShort),datasets:[{label:'Passaggi',data:days.map(d=>by[d].p),borderColor:'#c93636',backgroundColor:'rgba(201,54,54,.08)',fill:true,tension:.25,borderWidth:2.5,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7280'}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+  const c2=document.getElementById('chart-detail-prodotti').getContext('2d'); charts['detail-prodotti']=new Chart(c2,{type:'line',data:{labels:days.map(formatDateShort),datasets:[
+    {label:'Gomme',data:days.map(d=>by[d].g),borderColor:PRODUCT_COLORS.gomme,backgroundColor:PRODUCT_COLORS.gomme,tension:.25,borderWidth:2.3,pointRadius:2},
+    {label:'Tappetini',data:days.map(d=>by[d].t),borderColor:PRODUCT_COLORS.tappetini,backgroundColor:PRODUCT_COLORS.tappetini,tension:.25,borderWidth:2,pointRadius:2},
+    {label:'EasyPay',data:days.map(d=>by[d].e),borderColor:PRODUCT_COLORS.easypay,backgroundColor:PRODUCT_COLORS.easypay,tension:.25,borderWidth:2,pointRadius:2}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10}}},datalabels:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7280'}},y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#edf0f4'}}}}});
+}
+
+function backToAnalyticsOverview(scroll=true){
+  currentDetailOperator=''; document.getElementById('analytics-detail').classList.remove('active'); document.getElementById('analytics-overview').style.display='block';
+  destroyChart('detail-passaggi'); destroyChart('detail-prodotti');
+  if(scroll) window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function render(){
+  const rows=filteredRows(); const empty=rows.length===0;
+  document.getElementById('empty-state').style.display=empty?'block':'none';
+  document.getElementById('tab-report').style.display=empty?'none':(currentTab==='report'?'block':'none');
+  document.getElementById('tab-analytics').style.display=empty?'none':(currentTab==='analytics'?'block':'none');
+  if(empty){
+    destroyAllCharts(); const available=allRows.map(r=>parseDateValue(r.Data)).filter(Boolean).sort((a,b)=>a-b); const el=document.getElementById('empty-state-text');
+    if(el&&available.length){const first=available[0],last=available[available.length-1];el.textContent=dateKey(first)===dateKey(last)?`Dati disponibili il ${formatDateIT(last)}.`:`Dati disponibili dal ${formatDateIT(first)} al ${formatDateIT(last)}.`;}
+    return;
+  }
+  renderReport(rows);
+  if(currentTab==='analytics'){
+    if(currentDetailOperator) openToyotaDetail(currentDetailOperator); else renderAnalytics(rows);
+  }
+}
+
+function exportExcel(){
+  const rows=filteredRows(); if(!rows.length){alert('Nessun dato da esportare');return;}
+  const clean=rows.map(r=>({Data:dateKey(r.Data).split('-').reverse().join('/'),Sezione:r.Sezione,Accettatore:r.Accettatore,Passaggi:r.Passaggi,Gomme:r.Gomme,Tappetini:r.Tappetini,EasyPay:r.EasyPay,ODL:r.ODL,Timestamp:r.Timestamp}));
+  const ws=XLSX.utils.json_to_sheet(clean); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Passaggi');
+  const suffix=window._flatpickr?.input?.value?.replace(/\s/g,'').replace(/→/g,'-')||'periodo'; XLSX.writeFile(wb,`dashboard-passaggi-${suffix}.xlsx`);
+}
+
+function init(){
+  document.getElementById('dash-sede').textContent=CONFIG?.sede||'Via Biagi'; const today=new Date();
+  window._flatpickr=flatpickr('#date-from',{mode:'range',locale:'it',dateFormat:'d/m/Y',conjunction:' → ',disableMobile:true,defaultDate:[today,today],onChange:selectedDates=>{dateFilterUserTouched=true;if(selectedDates.length===0||selectedDates.length===2)render();}});
+  window._flatpickr.setDate([today,today],false); loadData();
 }
 
 init();
