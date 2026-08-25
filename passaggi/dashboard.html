@@ -175,6 +175,7 @@
   .segment-btn.active{background:#fff;color:var(--toyota-dark);box-shadow:0 1px 3px rgba(0,0,0,.10)}
 
   .ratio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1rem}
+  .ratio-grid.toyota-totals{grid-template-columns:repeat(3,1fr)}
   .ratio-card{border:1px solid var(--border);background:var(--surface2);border-radius:var(--radius);padding:.75rem .8rem}
   .ratio-label{font-size:.56rem;color:var(--ink-muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
   .ratio-value{font-family:var(--mono);font-size:1.15rem;font-weight:700;margin-top:.18rem}
@@ -205,7 +206,7 @@
     .kpi-row{grid-template-columns:repeat(3,1fr)}
     .analytics-kpi-row{grid-template-columns:repeat(3,1fr)}
     .report-grid,.charts-grid,.charts-grid.wide-left{grid-template-columns:1fr}
-    .ratio-grid{grid-template-columns:repeat(2,1fr)}
+    .ratio-grid,.ratio-grid.toyota-totals{grid-template-columns:repeat(2,1fr)}
     .detail-kpis{grid-template-columns:repeat(3,1fr)}
   }
   @media(max-width:680px){
@@ -213,7 +214,7 @@
     .kpi-row,.analytics-kpi-row{grid-template-columns:repeat(2,1fr);gap:.65rem}
     .kpi:first-child{grid-column:1/-1}.kpi-value{font-size:1.55rem}
     .date-range-input{width:155px}
-    .ratio-grid,.detail-kpis,.detail-kpis.car-detail-kpis,.summary-box{grid-template-columns:1fr 1fr}
+    .ratio-grid,.ratio-grid.toyota-totals,.detail-kpis,.detail-kpis.car-detail-kpis,.summary-box{grid-template-columns:1fr 1fr}
     .chart-wrap,.chart-wrap.tall{height:280px}
     .chart-card-head{align-items:stretch}.chart-control{width:100%;justify-content:flex-start}.chart-select{max-width:220px}
   }
@@ -278,7 +279,7 @@
 
     <section class="dept-section toyota">
       <div class="dept-head">
-        <div><div class="dept-title toyota">Toyota</div><div class="dept-sub">Dettaglio per accettatore e prodotti venduti</div></div>
+        <div><div class="dept-title toyota">Toyota</div><div class="dept-sub">Dettaglio per accettatore</div></div>
         <div class="mini-kpis">
           <div class="mini-kpi"><span>Gomme</span><strong id="report-tot-gomme">0</strong></div>
           <div class="mini-kpi"><span>Tappetini</span><strong id="report-tot-tappetini">0</strong></div>
@@ -298,7 +299,7 @@
 
     <div class="report-grid">
       <section class="dept-section volvo">
-        <div class="dept-head"><div><div class="dept-title volvo">Volvo</div><div class="dept-sub">Volume complessivo del reparto</div></div></div>
+        <div class="dept-head"><div><div class="dept-title volvo">Volvo</div><div class="dept-sub">Passaggi</div></div></div>
         <div class="dept-body"><div class="summary-box">
           <div class="summary-tile"><div class="label">Passaggi</div><div class="value" id="report-volvo-passaggi">0</div></div>
           <div class="summary-tile"><div class="label">Media / giorno</div><div class="value" id="report-volvo-media">0,0</div></div>
@@ -316,7 +317,7 @@
 
     <section class="dept-section car">
       <div class="dept-head">
-        <div><div class="dept-title car">Carrozzeria</div><div class="dept-sub">Passaggi per accettatore, ODL ed EasyPay come dato secondario</div></div>
+        <div><div class="dept-title car">Carrozzeria</div><div class="dept-sub">Passaggi per accettatore, ODL ed EasyPay</div></div>
         <div class="mini-kpis">
           <div class="mini-kpi"><span>ODL</span><strong id="report-tot-odl">0</strong></div>
           <div class="mini-kpi"><span>EasyPay</span><strong id="report-tot-easypay-car">0</strong></div>
@@ -363,11 +364,10 @@
           <div><div class="dept-title toyota">Toyota — Analisi accettatori</div><div class="dept-sub">Volumi, trend e risultati del periodo selezionato</div></div>
         </div>
         <div class="dept-body">
-          <div class="ratio-grid">
+          <div class="ratio-grid toyota-totals">
             <div class="ratio-card toyota"><div class="ratio-label">Gomme vendute</div><div class="ratio-value" id="toy-total-gomme">0</div><div class="ratio-note">pezzi nel periodo</div></div>
             <div class="ratio-card toyota"><div class="ratio-label">Tappetini venduti</div><div class="ratio-value" id="toy-total-tappetini">0</div><div class="ratio-note">pezzi nel periodo</div></div>
             <div class="ratio-card toyota"><div class="ratio-label">EasyPay</div><div class="ratio-value" id="toy-total-easypay">0</div><div class="ratio-note">totale periodo</div></div>
-            <div class="ratio-card toyota secondary"><div class="ratio-label">Accessori totali</div><div class="ratio-value" id="toy-total-accessori">0</div><div class="ratio-note">Gomme + Tappetini</div></div>
           </div>
 
           <div class="charts-grid">
@@ -584,6 +584,13 @@ let detailProductMetric = 'gomme';
 let toyotaHoverOperator = '';
 const charts = {};
 
+// Accettatori Toyota riconosciuti dalla dashboard.
+// Mantiene quelli presenti in config.js e aggiunge Francesco Pio Rasa come accettatore standard.
+function toyotaConfiguredOperators(){
+  const configured = Array.isArray(CONFIG?.accettatori_toyota) ? CONFIG.accettatori_toyota : [];
+  return [...new Set([...configured, 'Francesco Pio Rasa'])];
+}
+
 const TOYOTA_PALETTE = ['#a61f1f','#c93636','#de5d5d','#8f2d56','#b6465f','#e07a5f','#7f1d1d','#d97777'];
 const PRODUCT_COLORS = { gomme:'#b42318', tappetini:'#e76f51', easypay:'#7f1d1d' };
 const PRODUCT_LABELS = { gomme:'Gomme', tappetini:'Tappetini', easypay:'EasyPay' };
@@ -601,14 +608,14 @@ function hexToRgba(hex,alpha=1){
 function setToyotaOperatorFilter(value){
   toyotaOperatorFilter=value||'all'; toyotaHoverOperator='';
   const rows=filteredRows(); if(!rows.length) return;
-  const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
+  const toy=aggregateOperators(rows,'Toyota',toyotaConfiguredOperators());
   renderToyotaCharts(rows,toy,sumMetric(sectionRows(rows,'Toyota'),'Passaggi'));
 }
 function setToyotaProductMetric(metric){
   if(!PRODUCT_LABELS[metric]) return;
   toyotaProductMetric=metric; syncProductButtons();
   const rows=filteredRows(); if(!rows.length) return;
-  const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
+  const toy=aggregateOperators(rows,'Toyota',toyotaConfiguredOperators());
   renderToyotaCharts(rows,toy,sumMetric(sectionRows(rows,'Toyota'),'Passaggi'));
 }
 function setDetailProductMetric(metric){
@@ -805,7 +812,7 @@ function renderReport(rows){
   document.getElementById('report-kpi-volvo-sub').textContent=grand>0?`${fmt1(volTotal/grand*100)}% dei passaggi`:'passaggi';
   document.getElementById('report-kpi-car-sub').textContent=grand>0?`${fmt1(carTotal/grand*100)}% dei passaggi`:'passaggi';
 
-  const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
+  const toy=aggregateOperators(rows,'Toyota',toyotaConfiguredOperators());
   const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
   const toyDays=p.dayCount;
   document.getElementById('report-tot-gomme').textContent=fmt0(sumMetric(toyRows,'Gomme'));
@@ -846,9 +853,8 @@ function renderAnalytics(rows){
   document.getElementById('toy-total-gomme').textContent=fmt0(gomme);
   document.getElementById('toy-total-tappetini').textContent=fmt0(tapp);
   document.getElementById('toy-total-easypay').textContent=fmt0(easyToy);
-  document.getElementById('toy-total-accessori').textContent=fmt0(gomme+tapp);
 
-  const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]);
+  const toy=aggregateOperators(rows,'Toyota',toyotaConfiguredOperators());
   const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
   document.getElementById('analytics-toyota-table').innerHTML=toy.map(s=>`<tr onclick="openToyotaDetail(decodeURIComponent('${encodeURIComponent(s.nome)}'))" style="cursor:pointer"><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${toyTotal>0?fmt1(s.passaggi/toyTotal*100)+'%':'0,0%'}</td><td>${fmt1(ratio100(s.gomme,s.passaggi))}</td><td>${fmt1(ratio100(s.tappetini,s.passaggi))}</td><td>${fmt1(ratio100(s.easypay,s.passaggi))}</td><td class="metric-highlight">${fmt1(ratio100(s.gomme+s.tappetini,s.passaggi))}</td></tr>`).join('');
 
@@ -941,7 +947,7 @@ function openToyotaDetail(name){
   document.getElementById('analytics-overview').style.display='none';
   document.getElementById('analytics-car-detail')?.classList.remove('active');
   document.getElementById('analytics-detail').classList.add('active');
-  const rows=filteredRows(); const toy=aggregateOperators(rows,'Toyota',CONFIG.accettatori_toyota||[]); const s=toy.find(x=>x.nome===name); if(!s) return;
+  const rows=filteredRows(); const toy=aggregateOperators(rows,'Toyota',toyotaConfiguredOperators()); const s=toy.find(x=>x.nome===name); if(!s) return;
   document.getElementById('detail-name').textContent=name; document.getElementById('detail-passaggi').textContent=fmt0(s.passaggi);
   const days=getPeriodInfo(rows).dayCount; document.getElementById('detail-media').textContent=fmt1(s.passaggi/days); document.getElementById('detail-gomme').textContent=fmt0(s.gomme);
   document.getElementById('detail-tappetini').textContent=fmt0(s.tappetini); document.getElementById('detail-easypay').textContent=fmt0(s.easypay);
@@ -1079,7 +1085,7 @@ function dailyReportData(rows,date){
 
   const toyotaOps=orderedDailyOperators(
     aggregateMetricByOperator(toyotaRows,'Passaggi'),
-    CONFIG?.accettatori_toyota||[]
+    toyotaConfiguredOperators()
   );
   const carOps=orderedDailyOperators(
     aggregateMetricByOperator(carRows,'Passaggi'),
@@ -1092,9 +1098,9 @@ function dailyReportData(rows,date){
     volvo:sumMetric(volvoRows,'Passaggi'),
     revisioni:sumMetric(revisioniRows,'Passaggi'),
     carrozzeria:{total:sumMetric(carRows,'Passaggi'),odl:sumMetric(carRows,'ODL'),operators:carOps},
-    easypay:{total:sumMetric(rows,'EasyPay'),operators:orderedDailyOperators(aggregateMetricByOperator(rows,'EasyPay'),CONFIG?.accettatori_toyota||[])},
-    pneumatici:{total:sumMetric(toyotaRows,'Gomme'),operators:orderedDailyOperators(aggregateMetricByOperator(toyotaRows,'Gomme'),CONFIG?.accettatori_toyota||[])},
-    tappetini:{total:sumMetric(toyotaRows,'Tappetini'),operators:orderedDailyOperators(aggregateMetricByOperator(toyotaRows,'Tappetini'),CONFIG?.accettatori_toyota||[])}
+    easypay:{total:sumMetric(rows,'EasyPay'),operators:orderedDailyOperators(aggregateMetricByOperator(rows,'EasyPay'),toyotaConfiguredOperators())},
+    pneumatici:{total:sumMetric(toyotaRows,'Gomme'),operators:orderedDailyOperators(aggregateMetricByOperator(toyotaRows,'Gomme'),toyotaConfiguredOperators())},
+    tappetini:{total:sumMetric(toyotaRows,'Tappetini'),operators:orderedDailyOperators(aggregateMetricByOperator(toyotaRows,'Tappetini'),toyotaConfiguredOperators())}
   };
 }
 
@@ -1197,8 +1203,6 @@ function createDailyReportCanvas(data){
   y=compactSection(y,'Pneumatici',data.pneumatici,toyota)+14;
   y=compactSection(y,'Tappetini',data.tappetini,toyota)+14;
 
-  ctx.textAlign='center'; ctx.fillStyle=accent; ctx.font='800 27px Nunito, Arial, sans-serif';
-  ctx.fillText('Buona serata',W/2,H-64); ctx.textAlign='left';
   return canvas;
 }
 
