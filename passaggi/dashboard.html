@@ -1245,7 +1245,13 @@ function exportExcel(){
 }
 
 function init(){
-  document.getElementById('dash-sede').textContent=CONFIG?.sede||'Via Biagi'; const today=new Date();
+  const today=new Date();
+  if(typeof CONFIG==='undefined'){
+    document.getElementById('dash-sede').textContent='Via Biagi';
+    setStatus('error','config.js non caricato — verifica che config.js sia nella stessa cartella di dashboard.html');
+    return;
+  }
+  document.getElementById('dash-sede').textContent=CONFIG?.sede||'Via Biagi';
   window._flatpickr=flatpickr('#date-from',{mode:'range',locale:'it',dateFormat:'d/m/Y',conjunction:' → ',disableMobile:true,defaultDate:[today,today],onChange:selectedDates=>{dateFilterUserTouched=true;if(selectedDates.length===0||selectedDates.length===2)render();}});
   window._flatpickr.setDate([today,today],false); loadData();
 }
