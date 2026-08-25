@@ -1072,8 +1072,8 @@ let pinBuffer = '';
 document.getElementById('pin-sede').textContent = CONFIG.sede;
 document.getElementById('dash-sede').textContent = CONFIG.sede;
 
-// Controlla sessione salvata
-if (sessionStorage.getItem('auth') === 'ok') unlockDashboard();
+// Apertura diretta dashboard senza PIN
+unlockDashboard();
 
 function pinKey(k) {
   if (pinBuffer.length >= 4) return;
