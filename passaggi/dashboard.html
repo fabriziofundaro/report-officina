@@ -414,7 +414,7 @@
           <div class="table-section toyota analytics-table">
             <div class="table-header"><span class="table-title">Confronto performance Toyota</span><span class="table-note">Indicatori normalizzati per confrontare accettatori con volumi diversi</span></div>
             <div class="table-wrap"><table>
-              <thead><tr><th>Accettatore</th><th>Passaggi</th><th>% Toyota</th><th>Gomme /100</th><th>Tappetini /100</th><th>EasyPay /100</th><th>Accessori /100</th></tr></thead>
+              <thead><tr><th>Accettatore</th><th>Passaggi</th><th>% Toyota</th><th>Gomme /100</th><th>Tappetini /100</th><th>EasyPay /100</th></tr></thead>
               <tbody id="analytics-toyota-table"></tbody>
             </table></div>
           </div>
@@ -857,7 +857,7 @@ function renderAnalytics(rows){
 
   const toy=aggregateOperators(rows,'Toyota',toyotaConfiguredOperators());
   const car=aggregateOperators(rows,'Carrozzeria',CONFIG.accettatori_carrozzeria||[]);
-  document.getElementById('analytics-toyota-table').innerHTML=toy.map(s=>`<tr onclick="openToyotaDetail(decodeURIComponent('${encodeURIComponent(s.nome)}'))" style="cursor:pointer"><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${toyTotal>0?fmt1(s.passaggi/toyTotal*100)+'%':'0,0%'}</td><td>${fmt1(ratio100(s.gomme,s.passaggi))}</td><td>${fmt1(ratio100(s.tappetini,s.passaggi))}</td><td>${fmt1(ratio100(s.easypay,s.passaggi))}</td><td class="metric-highlight">${fmt1(ratio100(s.gomme+s.tappetini,s.passaggi))}</td></tr>`).join('');
+  document.getElementById('analytics-toyota-table').innerHTML=toy.map(s=>`<tr onclick="openToyotaDetail(decodeURIComponent('${encodeURIComponent(s.nome)}'))" style="cursor:pointer"><td>${escapeHtml(s.nome)}</td><td>${fmt0(s.passaggi)}</td><td>${toyTotal>0?fmt1(s.passaggi/toyTotal*100)+'%':'0,0%'}</td><td>${fmt1(ratio100(s.gomme,s.passaggi))}</td><td>${fmt1(ratio100(s.tappetini,s.passaggi))}</td><td>${fmt1(ratio100(s.easypay,s.passaggi))}</td></tr>`).join('');
 
   document.getElementById('an-volvo-total').textContent=fmt0(volTotal); document.getElementById('an-volvo-media').textContent=fmt1(volTotal/p.dayCount);
   document.getElementById('an-car-total').textContent=fmt0(carTotal); document.getElementById('an-car-odl').textContent=fmt0(odl);
