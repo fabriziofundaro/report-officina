@@ -166,6 +166,33 @@
     .department-choice { min-height: 86px; }
     .department-choice span:last-child { font-size: .73rem; }
   }
+
+  /* v2.1: reparti riconoscibili, testi leggibili e adattamento mobile. */
+  .department-intro { font-size: .94rem; line-height: 1.55; }
+  .department-picker { gap: .75rem; }
+  .department-choice { min-height: 112px; gap: .4rem; font-size: 1rem; border-radius: 11px; }
+  .department-choice span:last-child { font-size: 1.08rem; line-height: 1.25; }
+  .department-choice[data-reparto="Toyota"] { background: #fce9e9; border-color: #eab9b9; color: #8b2323; }
+  .department-choice[data-reparto="Volvo"] { background: #e9f2ff; border-color: #b8d2f5; color: #194f96; }
+  .department-choice[data-reparto="Carrozzeria"] { background: #fff5da; border-color: #e9d8a7; color: #805e12; }
+  .department-choice[data-reparto="Toyota"]:hover,
+  .department-choice[data-reparto="Toyota"].active { background: #fbdcdc; border-color: #ba3434; box-shadow: 0 0 0 1px #ba3434; }
+  .department-choice[data-reparto="Volvo"]:hover,
+  .department-choice[data-reparto="Volvo"].active { background: #dbeafe; border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
+  .department-choice[data-reparto="Carrozzeria"]:hover,
+  .department-choice[data-reparto="Carrozzeria"].active { background: #ffedb6; border-color: #ae841e; box-shadow: 0 0 0 1px #ae841e; }
+  .department-choice:focus-visible { outline: 3px solid #1e3a5f; outline-offset: 3px; }
+  .department-choice[aria-pressed="true"]::after { content: '✓ Selezionato'; font-size: .68rem; font-weight: 800; }
+  @media (max-width: 620px) {
+    .department-picker { gap: .4rem; padding: .8rem .65rem 1rem; }
+    .department-choice { min-height: 100px; padding: .8rem .15rem; }
+    .department-choice span:last-child { font-size: .94rem; }
+    .department-intro { font-size: .87rem; }
+  }
+  @media (max-width: 350px) {
+    .department-picker { grid-template-columns: 1fr; }
+    .department-choice { min-height: 60px; }
+  }
 </style>
 </head>
 <body>
@@ -357,6 +384,7 @@ function mostraReparto() {
 function selezionaReparto(reparto) {
   if (!['Toyota', 'Volvo', 'Carrozzeria'].includes(reparto)) return;
   selectedReparto = reparto;
+  azzeraReparto(reparto);
   existingReport = false;
   reportReady = false;
   mostraReparto();
@@ -482,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('data').addEventListener('change', () => {
     reportLoadToken++;
     reportReady = false;
-    if (selectedReparto) void caricaReportEsistente();
+    if (selectedReparto) { azzeraReparto(selectedReparto); void caricaReportEsistente(); }
     else setSubmitState();
   });
 
