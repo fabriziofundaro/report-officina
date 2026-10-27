@@ -112,6 +112,13 @@
   .success-sub { color: var(--ink-muted); font-family: var(--mono); font-size: .8rem; margin-bottom: .5rem; }
   .success-detail { color: var(--green); font-family: var(--mono); font-size: .78rem; margin-bottom: 2rem; line-height: 1.7; }
   .new-report-btn { background: var(--ink); color: white; border: none; border-radius: var(--radius); padding: .8rem 1.6rem; font-family: var(--mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+  .success-actions { display: flex; flex-direction: column; gap: .75rem; width: 100%; max-width: 320px; }
+  .success-actions button { width: 100%; min-height: 49px; }
+  .share-report-btn { background: #16884a; color: white; border: none; border-radius: var(--radius); padding: .8rem 1rem; font-family: var(--sans); font-size: .83rem; font-weight: 800; cursor: pointer; transition: background .2s, transform .1s; }
+  .share-report-btn:hover:not(:disabled) { background: #116c3a; }
+  .share-report-btn:active:not(:disabled) { transform: scale(.98); }
+  .share-report-btn:disabled { background: #89ae99; cursor: wait; }
+  .share-hint { margin-top: .9rem; max-width: 335px; color: var(--ink-muted); font-size: .75rem; line-height: 1.5; }
 
   .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(10px); background: #c0392b; color: white; padding: .65rem 1.4rem; border-radius: 99px; font-size: .82rem; font-weight: 500; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; z-index: 300; max-width: calc(100vw - 2rem); overflow: hidden; text-overflow: ellipsis; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -241,7 +248,11 @@
   <div class="success-title" id="success-title">Report inviato!</div>
   <div class="success-sub" id="success-sub"></div>
   <div class="success-detail" id="success-detail"></div>
-  <button class="new-report-btn" type="button" onclick="newReport()">+ Nuovo report</button>
+  <div class="success-actions">
+    <button class="share-report-btn" id="share-report-btn" type="button" onclick="shareSubmittedReport()" disabled>⏳ Preparo la foto...</button>
+    <button class="new-report-btn" type="button" onclick="newReport()">+ Nuovo report</button>
+  </div>
+  <div class="share-hint" id="share-hint" role="status" aria-live="polite">Preparazione del riepilogo fotografico...</div>
 </div>
 
 <div class="bottom-bar" id="bottom-bar">
@@ -414,6 +425,8 @@ async function submitForm() {
       `Toyota ${totals.toyotaPass} · Volvo ${totals.volvoPass} · Carrozzeria ${totals.carrozzeriaPass}<br>` +
       `Revisioni ${data.revisioni} · ODL carrozzeria ${data.carrozzeria_odl}`;
     document.getElementById('success-view').classList.add('show');
+    // La foto viene creata solo dopo che Google Sheets ha confermato il salvataggio.
+    void prepareSubmittedReportImage(data);
   } catch (error) {
     console.error('Errore invio report passaggi:', error);
     showToast('Errore di connessione — riprova');
@@ -423,6 +436,10 @@ async function submitForm() {
 }
 
 function newReport() {
+  submittedShareToken++;
+  submittedShare = null;
+  document.getElementById('share-report-btn').disabled = true;
+  document.getElementById('share-hint').textContent = '';
   document.getElementById('success-view').classList.remove('show');
   document.getElementById('form-view').style.display = 'block';
   document.getElementById('bottom-bar').style.display = 'flex';
@@ -446,6 +463,243 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+function formatDateIT(d){
+  if(!d) return '';
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+function wrapCanvasText(ctx,text,maxWidth){
+  const words=String(text||'').split(/\s+/).filter(Boolean);
+  const lines=[]; let line='';
+  words.forEach(word=>{
+    const test=line?`${line} ${word}`:word;
+    if(line && ctx.measureText(test).width>maxWidth){ lines.push(line); line=word; }
+    else line=test;
+  });
+  if(line) lines.push(line);
+  return lines.length?lines:['—'];
+}
+
+function drawRoundedRect(ctx,x,y,w,h,r,fill,stroke){
+  const radius=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+radius,y);
+  ctx.arcTo(x+w,y,x+w,y+h,radius);
+  ctx.arcTo(x+w,y+h,x,y+h,radius);
+  ctx.arcTo(x,y+h,x,y,radius);
+  ctx.arcTo(x,y,x+w,y,radius);
+  ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
+}
+
+function createDailyReportCanvas(data){
+  const W=1080, H=1350;
+  const canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const ink='#111827', muted='#6b7280', border='#d8dee8', surface='#ffffff', bg='#f3f5f8';
+  const toyota='#c93636', volvo='#2563eb', car='#d49a00', rev='#6b7280', accent='#1e3a5f';
+  const margin=56, contentW=W-margin*2;
+
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  drawRoundedRect(ctx,28,28,W-56,H-56,22,surface,border);
+
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle=ink; ctx.font='800 42px Nunito, Arial, sans-serif';
+  ctx.fillText(`PASSAGGI DEL ${formatDateIT(data.date)}`,margin,98);
+  ctx.fillStyle=accent; ctx.fillRect(margin,122,contentW,5);
+
+  const drawSection=(y,title,total,color,operators=[],rightNote='')=>{
+    const h=operators.length?205:142;
+    drawRoundedRect(ctx,margin,y,contentW,h,16,'#ffffff',border);
+    ctx.fillStyle=color; ctx.fillRect(margin,y,7,h);
+    ctx.fillStyle=muted; ctx.font='800 18px Nunito, Arial, sans-serif';
+    ctx.fillText(title.toUpperCase(),margin+28,y+40);
+    ctx.fillStyle=color; ctx.font='900 45px JetBrains Mono, monospace';
+    ctx.fillText(String(Math.round(total)),margin+28,y+94);
+    if(rightNote){
+      ctx.textAlign='right'; ctx.fillStyle=muted; ctx.font='700 20px Nunito, Arial, sans-serif';
+      ctx.fillText(rightNote,margin+contentW-28,y+76); ctx.textAlign='left';
+    }
+    if(operators.length){
+      ctx.font='700 20px Nunito, Arial, sans-serif'; ctx.fillStyle=ink;
+      const text=operators.map(o=>`${o.nome} ${Math.round(o.valore)}`).join('   ·   ');
+      const lines=wrapCanvasText(ctx,text,contentW-56);
+      lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,margin+28,y+137+i*30));
+    }
+    return y+h;
+  };
+
+  let y=158;
+  y=drawSection(y,'Toyota',data.toyota.total,toyota,data.toyota.operators)+18;
+
+  // Volvo + Revisioni, affiancati.
+  const gap=18, half=(contentW-gap)/2, hSmall=135;
+  drawRoundedRect(ctx,margin,y,half,hSmall,16,'#ffffff',border);
+  ctx.fillStyle=volvo;ctx.fillRect(margin,y,7,hSmall);
+  ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText('VOLVO',margin+28,y+40);
+  ctx.fillStyle=volvo;ctx.font='900 45px JetBrains Mono, monospace';ctx.fillText(String(Math.round(data.volvo)),margin+28,y+94);
+
+  const x2=margin+half+gap;
+  drawRoundedRect(ctx,x2,y,half,hSmall,16,'#ffffff',border);
+  ctx.fillStyle=rev;ctx.fillRect(x2,y,7,hSmall);
+  ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText('REVISIONI',x2+28,y+40);
+  ctx.fillStyle=rev;ctx.font='900 45px JetBrains Mono, monospace';ctx.fillText(String(Math.round(data.revisioni)),x2+28,y+94);
+  y+=hSmall+18;
+
+  y=drawSection(y,'Carrozzeria',data.carrozzeria.total,car,data.carrozzeria.operators,`di cui ${Math.round(data.carrozzeria.odl)} ODL`)+18;
+
+  const compactSection=(y,title,obj,color)=>{
+    const h=150;
+    drawRoundedRect(ctx,margin,y,contentW,h,16,'#ffffff',border);
+    ctx.fillStyle=color;ctx.fillRect(margin,y,7,h);
+    ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText(title.toUpperCase(),margin+28,y+38);
+    ctx.fillStyle=ink;ctx.font='900 37px JetBrains Mono, monospace';ctx.fillText(String(Math.round(obj.total)),margin+28,y+88);
+    ctx.font='700 19px Nunito, Arial, sans-serif';ctx.fillStyle=ink;
+    const detail=obj.operators.length?obj.operators.map(o=>`${o.nome} ${Math.round(o.valore)}`).join('   ·   '):'—';
+    const lines=wrapCanvasText(ctx,detail,contentW-180);
+    lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,margin+150,y+72+i*27));
+    return y+h;
+  };
+
+  y=compactSection(y,'EasyPay',data.easypay,toyota)+14;
+  y=compactSection(y,'Pneumatici',data.pneumatici,toyota)+14;
+  y=compactSection(y,'Tappetini',data.tappetini,toyota)+14;
+
+  return canvas;
+}
+
+
+// Riepilogo WhatsApp: stessi dati e stesso disegno della dashboard, senza rileggere il foglio.
+let submittedShare = null;
+let submittedShareToken = 0;
+
+function submissionDailyReportData(submission) {
+  const toyota = submission.toyota || {};
+  const carrozzeria = submission.carrozzeria || {};
+  const total = (operators, metric) => Object.values(operators)
+    .reduce((sum, values) => sum + (Number(values?.[metric]) || 0), 0);
+  const byOperator = (operators, metric) => Object.entries(operators)
+    .map(([nome, values]) => ({nome, valore: Number(values?.[metric]) || 0}))
+    .filter(item => item.nome.trim() && item.valore > 0);
+
+  // Nella sezione EasyPay sono sommati Toyota e Carrozzeria, come nella dashboard.
+  const orderedCombined = (items) => {
+    const byName = new Map();
+    items.forEach(({nome, valore}) => byName.set(nome, (byName.get(nome) || 0) + valore));
+    const configured = [...(CONFIG.accettatori_toyota || []), 'Francesco Pio Rasa'];
+    const order = new Map(configured.map((name, index) => [name, index]));
+    return [...byName.entries()]
+      .map(([nome, valore]) => ({nome, valore}))
+      .sort((a, b) => (order.get(a.nome) ?? 9999) - (order.get(b.nome) ?? 9999)
+        || a.nome.localeCompare(b.nome, 'it'));
+  };
+
+  // new Date('YYYY-MM-DD') userebbe UTC e potrebbe cambiare giorno: data locale.
+  const [year, month, day] = submission.data.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const tyreOps = byOperator(toyota, 'gomme');
+  const matsOps = byOperator(toyota, 'tappetini');
+  const easyOps = orderedCombined([
+    ...byOperator(toyota, 'easypay'),
+    ...byOperator(carrozzeria, 'easypay')
+  ]);
+
+  return {
+    date,
+    toyota: {total: total(toyota, 'passaggi'), operators: byOperator(toyota, 'passaggi')},
+    volvo: Number(submission.volvo) || 0,
+    revisioni: Number(submission.revisioni) || 0,
+    carrozzeria: {
+      total: total(carrozzeria, 'passaggi'),
+      odl: Number(submission.carrozzeria_odl) || 0,
+      operators: byOperator(carrozzeria, 'passaggi')
+    },
+    easypay: {total: total(toyota, 'easypay') + total(carrozzeria, 'easypay'), operators: easyOps},
+    pneumatici: {total: total(toyota, 'gomme'), operators: orderedCombined(tyreOps)},
+    tappetini: {total: total(toyota, 'tappetini'), operators: orderedCombined(matsOps)}
+  };
+}
+
+function canShareReportPng(blob, filename) {
+  if (!blob || typeof File === 'undefined' || typeof navigator.share !== 'function') return false;
+  if (typeof navigator.canShare !== 'function') return true;
+  try {
+    return navigator.canShare({files: [new File([blob], filename, {type: 'image/png'})]});
+  } catch (_) {
+    return false;
+  }
+}
+
+async function prepareSubmittedReportImage(submission) {
+  const token = ++submittedShareToken;
+  submittedShare = null;
+  const button = document.getElementById('share-report-btn');
+  const hint = document.getElementById('share-hint');
+  button.disabled = true;
+  button.textContent = '⏳ Preparo la foto...';
+  hint.textContent = 'Preparazione del riepilogo fotografico...';
+
+  try {
+    // Assicura la stessa tipografia della dashboard, quando i font sono disponibili.
+    if (document.fonts?.ready) await document.fonts.ready;
+    if (token !== submittedShareToken) return;
+    const report = submissionDailyReportData(submission);
+    const canvas = createDailyReportCanvas(report);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
+    if (token !== submittedShareToken) return;
+    if (!blob) throw new Error('Impossibile creare il PNG');
+    const filename = `passaggi-${submission.data}.png`;
+    submittedShare = {blob, filename, date: report.date};
+    const direct = canShareReportPng(blob, filename);
+    button.textContent = direct ? '📲 Condividi su WhatsApp' : '⬇ Scarica foto riepilogo';
+    hint.textContent = direct
+      ? 'Seleziona WhatsApp e la chat di lavoro nel menu di condivisione.'
+      : 'La condivisione diretta non è disponibile qui. Scarica la foto e allegala su WhatsApp.';
+    button.disabled = false;
+  } catch (error) {
+    console.error('Errore creazione foto report:', error);
+    button.textContent = 'Foto non disponibile';
+    hint.textContent = 'Non è stato possibile generare la foto. Il report è comunque stato salvato.';
+  }
+}
+
+function downloadSubmittedPng({blob, filename}) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function shareSubmittedReport() {
+  if (!submittedShare) return;
+  const button = document.getElementById('share-report-btn');
+  const share = submittedShare;
+  button.disabled = true;
+  try {
+    if (canShareReportPng(share.blob, share.filename)) {
+      const file = new File([share.blob], share.filename, {type: 'image/png'});
+      await navigator.share({files: [file], title: `Passaggi del ${formatDateIT(share.date)}`});
+    } else {
+      downloadSubmittedPng(share);
+    }
+  } catch (error) {
+    if (error?.name === 'AbortError') return; // Condivisione annullata dall'utente.
+    console.warn('Condivisione diretta non disponibile:', error);
+    downloadSubmittedPng(share);
+    showToast('Foto scaricata: puoi allegarla su WhatsApp');
+  } finally {
+    button.disabled = false;
+  }
+}
+
+
 </script>
 </body>
 </html>
