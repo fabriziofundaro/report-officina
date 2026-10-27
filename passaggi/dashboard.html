@@ -201,6 +201,11 @@
 
   .state-box{text-align:center;padding:2.5rem 1rem;color:var(--ink-muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
   .state-title{font-weight:800;color:var(--ink);margin-bottom:.3rem}
+  .dept-upload-status{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem;margin:-.25rem 0 1.05rem}
+  .dept-upload-label{font-family:var(--mono);font-size:.62rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.07em;margin-right:.25rem}
+  .dept-upload-chip{display:inline-flex;align-items:center;gap:.4rem;border-radius:99px;padding:.35rem .68rem;font-size:.7rem;font-weight:800;border:1px solid var(--border);background:#fff;color:var(--ink-muted)}
+  .dept-upload-chip.ok{background:#e6f4ed;border-color:#c3e3d0;color:#1a7a4a}
+  .dept-upload-chip.wait{background:#fffbeb;border-color:#f2dfac;color:#92400e}
 
   @media(max-width:1100px){
     .kpi-row{grid-template-columns:repeat(3,1fr)}
@@ -258,6 +263,8 @@
       <button class="date-range-clear" onclick="clearDateRange(event)" title="Rimuovi filtro date">×</button>
     </div>
   </div>
+
+  <div id="dept-upload-status" class="dept-upload-status" role="status" aria-live="polite" hidden></div>
 
   <div id="empty-state" class="state-box" style="display:none">
     <div class="state-title">Nessun dato nel periodo selezionato</div>
@@ -575,6 +582,7 @@ Chart.defaults.plugins.datalabels = { display:false };
 Chart.defaults.font.family = 'Nunito';
 
 let allRows = [];
+let sheetLoadOK = false;
 let dateFilterUserTouched = false;
 let currentTab = 'report';
 let currentDetailOperator = '';
@@ -735,9 +743,9 @@ async function loadData(){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const json=await res.json(); const rows=extractRowsFromJson(json).map(normalizeRow).filter(r=>r.Data&&r.Sezione);
     if(!rows.length) throw new Error('Lo script non ha restituito righe nel formato atteso');
-    allRows=rows; setAutomaticDateFilter(rows); setStatus('ok',''); render();
+    allRows=rows; sheetLoadOK=true; setAutomaticDateFilter(rows); setStatus('ok',''); render();
   }catch(err){
-    console.warn('Caricamento Google Sheets non disponibile:',err); allRows=[];
+    console.warn('Caricamento Google Sheets non disponibile:',err); allRows=[]; sheetLoadOK=false;
     setStatus('warn','Impossibile leggere i dati da Google Sheets — premi Aggiorna per riprovare'); render();
   }
 }
@@ -1022,8 +1030,25 @@ function backToAnalyticsOverview(scroll=true){
   if(scroll) window.scrollTo({top:0,behavior:'smooth'});
 }
 
+function renderDepartmentUploadStatus(){
+  const container=document.getElementById('dept-upload-status');
+  if(!container) return;
+  const selected=window._flatpickr?.selectedDates||[];
+  const sameDay=selected.length>0 && (!selected[1] || dateKey(selected[0])===dateKey(selected[1]));
+  if(!sheetLoadOK || !sameDay){container.hidden=true;container.textContent='';return;}
+  const day=dateKey(selected[0]);
+  const reported=new Set(allRows.filter(r=>dateKey(r.Data)===day).map(r=>String(r.Sezione).toLowerCase()));
+  container.hidden=false;
+  container.innerHTML='<span class="dept-upload-label">Invii per '+formatDateIT(selected[0])+':</span>'+
+    [['Toyota','toyota'],['Volvo','volvo'],['Carrozzeria','carrozzeria']].map(([label,key])=>{
+      const ok=reported.has(key);
+      return '<span class="dept-upload-chip '+(ok?'ok':'wait')+'">'+label+' · '+(ok?'✓ Ricevuto':'In attesa')+'</span>';
+    }).join('');
+}
+
 function render(){
   const rows=filteredRows(); const empty=rows.length===0;
+  renderDepartmentUploadStatus();
   document.getElementById('empty-state').style.display=empty?'block':'none';
   document.getElementById('tab-report').style.display=empty?'none':(currentTab==='report'?'block':'none');
   document.getElementById('tab-analytics').style.display=empty?'none':(currentTab==='analytics'?'block':'none');

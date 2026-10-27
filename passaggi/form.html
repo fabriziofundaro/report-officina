@@ -145,6 +145,27 @@
     .bottom-bar { padding: .8rem 1rem; }
     .submit-btn { padding: .75rem 1.05rem; font-size: .75rem; }
   }
+
+  /* v2: scelta reparto, verifica del report esistente e caricamento sicuro. */
+  [hidden] { display: none !important; }
+  .department-intro { padding: .9rem 1.2rem .25rem; color: var(--ink-muted); font-size: .8rem; line-height: 1.5; }
+  .department-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .55rem; padding: .8rem 1.2rem 1.1rem; }
+  .department-choice { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35rem; min-height: 94px; padding: .7rem .2rem; background: #f8fafc; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; font-family: var(--sans); color: var(--ink); transition: background .15s, border-color .15s; }
+  .department-choice span:first-child { font-size: 1.5rem; line-height: 1.2; }
+  .department-choice span:last-child { font-weight: 800; font-size: .8rem; }
+  .department-choice:hover { border-color: var(--accent); background: var(--accent-light); }
+  .department-choice.active { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 1px var(--accent); }
+  .report-state { padding: .78rem 1rem; margin: 0 1.2rem 1.1rem; background: #f3f6fb; color: var(--accent-dark); font-size: .79rem; line-height: 1.5; border-left: 4px solid var(--accent); border-radius: var(--radius); }
+  .report-state.existing { background: #fff8ed; color: #7c4b13; border-color: #d49a00; }
+  .report-state.error { background: #fff1f2; color: #9f1239; border-color: #e11d48; }
+  .retry-load-btn { margin: 0 1.2rem 1.1rem; padding: .55rem .9rem; background: #fff; color: var(--accent-dark); border: 1px solid var(--border-strong); border-radius: 7px; font-family: var(--sans); font-weight: 800; cursor: pointer; }
+  .department-panel.loading { opacity: .48; pointer-events: none; }
+  .section-notice { padding: .7rem 1.2rem; font-size: .78rem; color: var(--ink-muted); line-height: 1.5; background: #fafbfc; }
+  @media (max-width: 620px) {
+    .department-picker { gap: .45rem; padding: .7rem .7rem 1rem; }
+    .department-choice { min-height: 86px; }
+    .department-choice span:last-child { font-size: .73rem; }
+  }
 </style>
 </head>
 <body>
@@ -168,7 +189,7 @@
     ⚠️ <strong>Setup non completato.</strong> Inserisci l'URL Google Apps Script in <code>config.js</code>.
   </div>
 
-  <form id="form-passaggi">
+  <form id="form-passaggi" onsubmit="event.preventDefault(); submitForm()">
     <div class="page">
 
       <div class="section">
@@ -180,6 +201,18 @@
       </div>
 
       <div class="section">
+        <div class="section-header"><span class="section-icon">🏢</span><span class="section-title">Reparto che invia il report</span></div>
+        <p class="department-intro">Un referente compila i dati di tutto il reparto. Gli altri reparti inviano il proprio report in autonomia.</p>
+        <div class="department-picker" role="group" aria-label="Seleziona il reparto">
+          <button type="button" class="department-choice" data-reparto="Toyota" aria-pressed="false" onclick="selezionaReparto('Toyota')"><span>🚗</span><span>Toyota</span></button>
+          <button type="button" class="department-choice" data-reparto="Volvo" aria-pressed="false" onclick="selezionaReparto('Volvo')"><span>🔵</span><span>Volvo</span></button>
+          <button type="button" class="department-choice" data-reparto="Carrozzeria" aria-pressed="false" onclick="selezionaReparto('Carrozzeria')"><span>🎨</span><span>Carrozzeria</span></button>
+        </div>
+        <div class="report-state" id="report-state" role="status" aria-live="polite" hidden></div>
+        <button type="button" id="retry-load-btn" class="retry-load-btn" onclick="caricaReportEsistente()" hidden>↻ Riprova verifica report</button>
+      </div>
+
+      <div class="section department-panel" data-reparto="Toyota" hidden>
         <div class="section-header"><span class="section-icon">🚗</span><span class="section-title">Toyota</span></div>
         <div class="operator-list">
           <div class="operator-head toyota">
@@ -207,7 +240,7 @@
         </div>
       </div>
 
-      <div class="section">
+      <div class="section department-panel" data-reparto="Volvo" hidden>
         <div class="section-header"><span class="section-icon">🔵</span><span class="section-title">Volvo</span></div>
         <div class="simple-value-row">
           <span class="field-label">Passaggi totali di oggi</span>
@@ -215,15 +248,16 @@
         </div>
       </div>
 
-      <div class="section">
+      <div class="section department-panel" data-reparto="Toyota" hidden>
         <div class="section-header"><span class="section-icon">🔧</span><span class="section-title">Revisioni</span></div>
+        <div class="section-notice">Le revisioni sono inserite dal referente Toyota e non rientrano nei passaggi officina.</div>
         <div class="simple-value-row">
           <span class="field-label">Revisioni totali effettuate</span>
           <input type="number" id="revisioni" class="num-input" min="0" value="0" inputmode="numeric" oninput="onNumeroInput(this)">
         </div>
       </div>
 
-      <div class="section">
+      <div class="section department-panel" data-reparto="Carrozzeria" hidden>
         <div class="section-header"><span class="section-icon">🎨</span><span class="section-title">Carrozzeria</span></div>
         <div class="operator-list">
           <div class="operator-head carrozzeria">
@@ -257,46 +291,223 @@
 
 <div class="bottom-bar" id="bottom-bar">
   <div class="totale-left">
-    <span class="totale-label">Totale Passaggi</span>
+    <span class="totale-label" id="totale-label">Passaggi del reparto</span>
     <span class="totale-value" id="totale-passaggi">0</span>
   </div>
-  <button class="submit-btn" id="submit-btn" type="button" onclick="submitForm()">✓ Invia Report</button>
+  <button class="submit-btn" id="submit-btn" type="button" onclick="submitForm()" disabled>Seleziona reparto</button>
 </div>
 
 <script src="config.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('header-sede').textContent = CONFIG.sede || 'Via Biagi';
-  document.getElementById('header-date').textContent =
-    new Date().toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric'});
-  document.getElementById('data').valueAsDate = new Date();
+let selectedReparto = '';
+let existingReport = false;
+let reportReady = false;
+let reportLoadToken = 0;
+let submittedShare = null;
+let submittedShareToken = 0;
 
-  if (!CONFIG.googleSheets?.scriptUrl || CONFIG.googleSheets.scriptUrl.includes('INCOLLA_QUI')) {
-    document.getElementById('setup-notice').style.display = 'block';
-    document.getElementById('submit-btn').disabled = true;
-    document.getElementById('submit-btn').textContent = '⚙ Setup richiesto';
+function oggiISO() {
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0')].join('-');
+}
+
+function idValue(id) {
+  return parseInt(document.getElementById(id)?.value || '0', 10) || 0;
+}
+
+function formatDataIT(isoDate) {
+  const [y, m, d] = String(isoDate || '').split('-');
+  return y && m && d ? `${d}/${m}/${y}` : String(isoDate || '');
+}
+
+function setSubmitState() {
+  const btn = document.getElementById('submit-btn');
+  const goodConfig = typeof CONFIG !== 'undefined' &&
+    !!CONFIG.googleSheets?.scriptUrl && !CONFIG.googleSheets.scriptUrl.includes('INCOLLA_QUI');
+  btn.disabled = !goodConfig || !selectedReparto || !reportReady;
+  btn.textContent = !goodConfig ? '⚙ Setup richiesto'
+    : !selectedReparto ? 'Seleziona reparto'
+    : !reportReady ? '⏳ Verifico report...'
+    : existingReport ? `↻ Aggiorna ${selectedReparto}` : `✓ Invia ${selectedReparto}`;
+}
+
+function setReportState(message, kind = '') {
+  const el = document.getElementById('report-state');
+  el.hidden = !message;
+  el.textContent = message || '';
+  el.className = 'report-state' + (kind ? ' ' + kind : '');
+}
+
+function mostraReparto() {
+  document.querySelectorAll('.department-choice').forEach(button => {
+    const active = button.dataset.reparto === selectedReparto;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  document.querySelectorAll('.department-panel').forEach(panel => {
+    const active = panel.dataset.reparto === selectedReparto;
+    panel.hidden = !active;
+    panel.querySelectorAll('input').forEach(input => input.disabled = !active);
+  });
+  ricalcolaTotali();
+  setSubmitState();
+}
+
+function selezionaReparto(reparto) {
+  if (!['Toyota', 'Volvo', 'Carrozzeria'].includes(reparto)) return;
+  selectedReparto = reparto;
+  existingReport = false;
+  reportReady = false;
+  mostraReparto();
+  void caricaReportEsistente();
+}
+
+function azzeraReparto(reparto) {
+  document.querySelectorAll('.department-panel').forEach(panel => {
+    if (panel.dataset.reparto !== reparto) return;
+    panel.querySelectorAll('input[type="number"]').forEach(input => {
+      input.value = '0';
+      input.classList.remove('has-value', 'has-value-green');
+    });
+    panel.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+  });
+  ricalcolaTotali();
+}
+
+function impostaDatiEsistenti(reparto, rows) {
+  azzeraReparto(reparto);
+  const toyotaOperators = Array.isArray(CONFIG.accettatori_toyota) ? CONFIG.accettatori_toyota : [];
+  const carOperators = Array.isArray(CONFIG.accettatori_carrozzeria) ? CONFIG.accettatori_carrozzeria : [];
+  const extras = [];
+  rows.forEach(row => {
+    const sezione = String(row.Sezione || '').toLowerCase();
+    if (sezione === 'revisioni') {
+      document.getElementById('revisioni').value = String(Number(row.Passaggi) || 0);
+    } else if (sezione === 'volvo') {
+      document.getElementById('volvo-passaggi').value = String(Number(row.Passaggi) || 0);
+    } else if (sezione === 'toyota' || (sezione === 'carrozzeria' && String(row.Accettatore).toLowerCase() !== 'odl totali')) {
+      const name = String(row.Accettatore || '').trim();
+      const configured = sezione === 'toyota' ? toyotaOperators : carOperators;
+      if (sezione === 'toyota' && !configured.includes(name)) {
+        extras.push(row);
+        return;
+      }
+      const metrics = sezione === 'toyota' ? ['passaggi', 'gomme', 'tappetini', 'easypay'] : ['passaggi', 'easypay'];
+      metrics.forEach(metric => {
+        const el = document.getElementById(`${name}-${metric}`);
+        if (el) el.value = String(Number(row[metric === 'passaggi' ? 'Passaggi' : metric === 'easypay' ? 'EasyPay' : metric === 'gomme' ? 'Gomme' : 'Tappetini']) || 0);
+      });
+    } else if (sezione === 'carrozzeria' && String(row.Accettatore).toLowerCase() === 'odl totali') {
+      document.getElementById('carrozzeria-odl').value = String(Number(row.ODL) || 0);
+    }
+  });
+  if (reparto === 'Toyota' && extras.length > 1) {
+    throw new Error('Sono presenti più accettatori bonus già salvati. Contatta il responsabile prima di modificare il report.');
   }
+  if (extras.length === 1) {
+    const extra = extras[0];
+    document.getElementById('toyota-extra').value = String(extra.Accettatore);
+    ['passaggi', 'gomme', 'tappetini', 'easypay'].forEach(metric => {
+      const col = {passaggi: 'Passaggi', gomme: 'Gomme', tappetini: 'Tappetini', easypay: 'EasyPay'}[metric];
+      document.getElementById('toyota-extra-' + metric).value = String(Number(extra[col]) || 0);
+    });
+  }
+  document.querySelectorAll('.department-panel:not([hidden]) input[type="number"]').forEach(field => {
+    onNumeroInput(field, field.id.endsWith('-easypay'));
+  });
+  ricalcolaTotali();
+}
 
+async function caricaReportEsistente() {
+  if (!selectedReparto) return;
+  const token = ++reportLoadToken;
+  const reparto = selectedReparto;
+  const date = document.getElementById('data').value;
+  existingReport = false;
+  reportReady = false;
+  document.getElementById('retry-load-btn').hidden = true;
+  document.querySelectorAll('.department-panel:not([hidden])').forEach(el => el.classList.add('loading'));
+  setReportState(`Verifica dei dati ${reparto} per il ${formatDataIT(date)}...`);
+  setSubmitState();
+  try {
+    if (!date) throw new Error('Seleziona una data valida.');
+    if (typeof CONFIG === 'undefined' || !CONFIG.googleSheets?.scriptUrl ||
+        CONFIG.googleSheets.scriptUrl.includes('INCOLLA_QUI')) throw new Error('Configura Google Apps Script in config.js.');
+    const endpoint = CONFIG.googleSheets.scriptUrl;
+    const query = new URLSearchParams({action: 'reparto', reparto, data: date, _: String(Date.now())});
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const response = await fetch(endpoint + separator + query.toString(), {cache: 'no-store'});
+    if (!response.ok) throw new Error(`Errore server HTTP ${response.status}`);
+    const result = await response.json();
+    if (token !== reportLoadToken) return;
+    if (result.error) throw new Error(result.error);
+    if (result.apiVersion !== 2 || !Array.isArray(result.rows)) {
+      throw new Error('Aggiorna prima Google Apps Script alla versione 2.');
+    }
+    impostaDatiEsistenti(reparto, result.rows);
+    existingReport = result.rows.length > 0;
+    reportReady = true;
+    setReportState(existingReport
+      ? `Report ${reparto} del ${formatDataIT(date)} già presente: i dati sono stati caricati. Un nuovo invio sostituirà solo questo reparto.`
+      : `Nessun report ${reparto} per il ${formatDataIT(date)}. Puoi compilare e inviare i dati.`,
+      existingReport ? 'existing' : '');
+  } catch (error) {
+    if (token !== reportLoadToken) return;
+    console.warn('Verifica report esistente non riuscita:', error);
+    reportReady = false;
+    setReportState(`Verifica non riuscita: ${error.message}. Invio bloccato per evitare duplicati.`, 'error');
+    document.getElementById('retry-load-btn').hidden = false;
+  } finally {
+    if (token === reportLoadToken) {
+      document.querySelectorAll('.department-panel').forEach(el => el.classList.remove('loading'));
+      setSubmitState();
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('header-sede').textContent = typeof CONFIG !== 'undefined' ? (CONFIG.sede || 'Via Biagi') : 'Via Biagi';
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('it-IT', {day: '2-digit', month: '2-digit', year: 'numeric'});
+  document.getElementById('data').value = oggiISO();
+  if (typeof CONFIG === 'undefined') {
+    document.getElementById('setup-notice').style.display = 'block';
+    document.getElementById('setup-notice').textContent = '⚠️ Impossibile caricare config.js: verifica che il file sia nella stessa cartella del form.';
+    setSubmitState();
+    return;
+  }
   generaToyota();
   generaCarrozzeria();
-  ricalcolaTotali();
+  mostraReparto();
+  document.getElementById('data').addEventListener('change', () => {
+    reportLoadToken++;
+    reportReady = false;
+    if (selectedReparto) void caricaReportEsistente();
+    else setSubmitState();
+  });
 
-  // Campi numerici: al tocco lo 0 iniziale sparisce, senza modificare altri valori.
-  // Gli eventi sono delegati al form e funzionano anche per gli accettatori generati via JS.
-  const reportForm = document.getElementById('form-passaggi');
-  reportForm.addEventListener('focusin', (event) => {
+  const form = document.getElementById('form-passaggi');
+  form.addEventListener('focusin', event => {
     const field = event.target;
     if (field instanceof HTMLInputElement && field.type === 'number' && field.value === '0') {
       field.value = '';
     }
   });
-  reportForm.addEventListener('focusout', (event) => {
+  form.addEventListener('focusout', event => {
     const field = event.target;
     if (field instanceof HTMLInputElement && field.type === 'number' && field.value === '') {
       field.value = '0';
       field.dispatchEvent(new Event('input', {bubbles: true}));
     }
   });
+
+  if (typeof CONFIG === 'undefined' || !CONFIG.googleSheets?.scriptUrl ||
+      CONFIG.googleSheets.scriptUrl.includes('INCOLLA_QUI')) {
+    document.getElementById('setup-notice').style.display = 'block';
+  }
+  // Collegamenti dedicati possibili: index.html?reparto=Toyota (o Volvo/Carrozzeria).
+  const fromLink = new URLSearchParams(location.search).get('reparto');
+  if (['Toyota', 'Volvo', 'Carrozzeria'].includes(fromLink)) selezionaReparto(fromLink);
 });
 
 function inputOperatore(id, label, green = false) {
@@ -362,7 +573,9 @@ function ricalcolaTotali() {
   });
 
   const volvoPass = parseInt(document.getElementById('volvo-passaggi')?.value || 0);
-  const totalePassaggi = toyotaPass + volvoPass + carrozzeriaPass;
+  const totalePassaggi = selectedReparto === 'Toyota' ? toyotaPass
+    : selectedReparto === 'Volvo' ? volvoPass
+    : selectedReparto === 'Carrozzeria' ? carrozzeriaPass : 0;
 
   document.getElementById('toyota-passaggi-tot').textContent = toyotaPass;
   document.getElementById('toyota-gomme-tot').textContent = toyotaGomme;
@@ -375,279 +588,253 @@ function ricalcolaTotali() {
   return { toyotaPass, toyotaGomme, toyotaTapp, toyotaEasy, volvoPass, carrozzeriaPass, carrozzeriaEasy, totalePassaggi };
 }
 
-function formatDataIT(isoDate) {
-  if (!isoDate) return '';
-  const parts = isoDate.split('-');
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : isoDate;
+
+function payloadDelReparto() {
+  const data = {
+    data: document.getElementById('data').value,
+    reparto: selectedReparto
+  };
+  if (selectedReparto === 'Toyota') {
+    data.toyota = {};
+    CONFIG.accettatori_toyota.forEach(name => {
+      data.toyota[name] = {
+        passaggi: idValue(`${name}-passaggi`), gomme: idValue(`${name}-gomme`),
+        tappetini: idValue(`${name}-tappetini`), easypay: idValue(`${name}-easypay`)
+      };
+    });
+    const bonus = document.getElementById('toyota-extra').value.trim();
+    const bonusFields = ['passaggi', 'gomme', 'tappetini', 'easypay'];
+    if (!bonus && bonusFields.some(field => idValue('toyota-extra-' + field) !== 0)) {
+      throw new Error('Inserisci il nome dell’accettatore bonus o azzera i suoi valori.');
+    }
+    if (bonus && CONFIG.accettatori_toyota.some(name => name.toLocaleLowerCase('it') === bonus.toLocaleLowerCase('it'))) {
+      throw new Error('L’accettatore bonus è già presente nell’elenco Toyota.');
+    }
+    if (bonus) {
+      data.toyota[bonus] = {
+        passaggi: idValue('toyota-extra-passaggi'), gomme: idValue('toyota-extra-gomme'),
+        tappetini: idValue('toyota-extra-tappetini'), easypay: idValue('toyota-extra-easypay')
+      };
+    }
+    data.revisioni = idValue('revisioni');
+  } else if (selectedReparto === 'Volvo') {
+    data.volvo = idValue('volvo-passaggi');
+  } else if (selectedReparto === 'Carrozzeria') {
+    data.carrozzeria = {};
+    CONFIG.accettatori_carrozzeria.forEach(name => {
+      data.carrozzeria[name] = {
+        passaggi: idValue(`${name}-passaggi`),
+        easypay: idValue(`${name}-easypay`)
+      };
+    });
+    data.carrozzeria_odl = idValue('carrozzeria-odl');
+  }
+  return data;
 }
 
 async function submitForm() {
+  if (!selectedReparto || !reportReady) {
+    showToast('Prima seleziona il reparto e attendi la verifica dei dati.');
+    return;
+  }
   const form = document.getElementById('form-passaggi');
   if (!form.reportValidity()) return;
+  let data;
+  try { data = payloadDelReparto(); }
+  catch (error) { showToast(error.message); return; }
+  if (existingReport && !window.confirm(`Il report ${selectedReparto} del ${formatDataIT(data.data)} è già presente. Vuoi sostituirlo con i valori attuali?`)) return;
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Invio...';
-
-  const data = {
-    data: document.getElementById('data').value,
-    toyota: {},
-    volvo: parseInt(document.getElementById('volvo-passaggi').value) || 0,
-    revisioni: parseInt(document.getElementById('revisioni').value) || 0,
-    carrozzeria: {},
-    carrozzeria_odl: parseInt(document.getElementById('carrozzeria-odl').value) || 0
-  };
-
-  CONFIG.accettatori_toyota.forEach(acc => {
-    data.toyota[acc] = {
-      passaggi: parseInt(document.getElementById(`${acc}-passaggi`)?.value || 0),
-      gomme: parseInt(document.getElementById(`${acc}-gomme`)?.value || 0),
-      tappetini: parseInt(document.getElementById(`${acc}-tappetini`)?.value || 0),
-      easypay: parseInt(document.getElementById(`${acc}-easypay`)?.value || 0)
-    };
-  });
-
-  const nomeExtra = document.getElementById('toyota-extra').value.trim();
-  if (nomeExtra) {
-    data.toyota[nomeExtra] = {
-      passaggi: parseInt(document.getElementById('toyota-extra-passaggi')?.value || 0),
-      gomme: parseInt(document.getElementById('toyota-extra-gomme')?.value || 0),
-      tappetini: parseInt(document.getElementById('toyota-extra-tappetini')?.value || 0),
-      easypay: parseInt(document.getElementById('toyota-extra-easypay')?.value || 0)
-    };
-  }
-
-  CONFIG.accettatori_carrozzeria.forEach(acc => {
-    data.carrozzeria[acc] = {
-      passaggi: parseInt(document.getElementById(`${acc}-passaggi`)?.value || 0),
-      easypay: parseInt(document.getElementById(`${acc}-easypay`)?.value || 0)
-    };
-  });
-
+  reportReady = false;
+  const totals = ricalcolaTotali();
   try {
     const response = await fetch(CONFIG.googleSheets.scriptUrl, {
       method: 'POST',
       body: JSON.stringify(data)
     });
+    if (!response.ok) throw new Error(`Errore server HTTP ${response.status}`);
     const result = await response.json();
-
     if (!result.success) throw new Error(result.error || 'Invio non riuscito');
-
-    const totals = ricalcolaTotali();
+    if (result.apiVersion !== 2 || result.reparto !== selectedReparto) {
+      throw new Error('Risposta non compatibile con il nuovo sistema');
+    }
+    const total = totals.totalePassaggi;
     document.getElementById('form-view').style.display = 'none';
     document.getElementById('bottom-bar').style.display = 'none';
-    document.getElementById('success-title').textContent = 'Report inviato correttamente!';
-    document.getElementById('success-sub').textContent = `Report del ${formatDataIT(data.data)} · ${totals.totalePassaggi} passaggi totali`;
-    document.getElementById('success-detail').innerHTML =
-      `Toyota ${totals.toyotaPass} · Volvo ${totals.volvoPass} · Carrozzeria ${totals.carrozzeriaPass}<br>` +
-      `Revisioni ${data.revisioni} · ODL carrozzeria ${data.carrozzeria_odl}`;
+    document.getElementById('success-title').textContent = result.updated
+      ? `Report ${selectedReparto} aggiornato!` : `Report ${selectedReparto} inviato!`;
+    document.getElementById('success-sub').textContent = `Report del ${formatDataIT(data.data)} · ${total} passaggi ${selectedReparto}`;
+    document.getElementById('success-detail').textContent = selectedReparto === 'Toyota'
+      ? `Gomme ${totals.toyotaGomme} · Tappetini ${totals.toyotaTapp} · EasyPay ${totals.toyotaEasy} · Revisioni ${data.revisioni}`
+      : selectedReparto === 'Carrozzeria'
+      ? `EasyPay ${totals.carrozzeriaEasy} · ODL ${data.carrozzeria_odl}`
+      : 'Salvataggio dei passaggi Volvo completato.';
     document.getElementById('success-view').classList.add('show');
-    // La foto viene creata solo dopo che Google Sheets ha confermato il salvataggio.
+    existingReport = true;
     void prepareSubmittedReportImage(data);
+    window.scrollTo({top: 0, behavior: 'smooth'});
   } catch (error) {
-    console.error('Errore invio report passaggi:', error);
-    showToast('Errore di connessione — riprova');
-    btn.disabled = false;
-    btn.textContent = '✓ Invia Report';
+    console.error('Errore invio report:', error);
+    // Può essere fallita solo la risposta dopo il salvataggio: si verifica
+    // nuovamente Google Sheets prima di permettere di riprovare.
+    showToast('Invio non confermato. Verifica il report prima di riprovare.');
+    setReportState(`Invio non confermato (${error.message}). Verifica i dati salvati prima di ritentare.`, 'error');
+    document.getElementById('retry-load-btn').hidden = false;
+    setSubmitState();
   }
 }
 
 function newReport() {
-  submittedShareToken++;
+  ++submittedShareToken;
   submittedShare = null;
-  document.getElementById('share-report-btn').disabled = true;
-  document.getElementById('share-hint').textContent = '';
+  ++reportLoadToken;
+  existingReport = false;
+  reportReady = false;
+  selectedReparto = '';
   document.getElementById('success-view').classList.remove('show');
   document.getElementById('form-view').style.display = 'block';
   document.getElementById('bottom-bar').style.display = 'flex';
-
-  const form = document.getElementById('form-passaggi');
-  form.reset();
-  document.getElementById('data').valueAsDate = new Date();
-
-  document.querySelectorAll('.num-input').forEach(el => el.classList.remove('has-value', 'has-value-green'));
-  ricalcolaTotali();
-
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = !CONFIG.googleSheets?.scriptUrl || CONFIG.googleSheets.scriptUrl.includes('INCOLLA_QUI');
-  btn.textContent = btn.disabled ? '⚙ Setup richiesto' : '✓ Invia Report';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('share-report-btn').disabled = true;
+  document.getElementById('share-hint').textContent = '';
+  document.getElementById('form-passaggi').reset();
+  document.getElementById('data').value = oggiISO();
+  setReportState('');
+  document.getElementById('retry-load-btn').hidden = true;
+  document.querySelectorAll('input[type="number"]').forEach(el =>
+    el.classList.remove('has-value', 'has-value-green'));
+  mostraReparto();
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
 }
 
-function formatDateIT(d){
-  if(!d) return '';
-  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-}
-
-function wrapCanvasText(ctx,text,maxWidth){
-  const words=String(text||'').split(/\s+/).filter(Boolean);
-  const lines=[]; let line='';
-  words.forEach(word=>{
-    const test=line?`${line} ${word}`:word;
-    if(line && ctx.measureText(test).width>maxWidth){ lines.push(line); line=word; }
-    else line=test;
-  });
-  if(line) lines.push(line);
-  return lines.length?lines:['—'];
-}
-
-function drawRoundedRect(ctx,x,y,w,h,r,fill,stroke){
-  const radius=Math.min(r,w/2,h/2);
+function drawRoundedRect(ctx, x, y, w, h, r, fill, stroke) {
+  const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.moveTo(x+radius,y);
-  ctx.arcTo(x+w,y,x+w,y+h,radius);
-  ctx.arcTo(x+w,y+h,x,y+h,radius);
-  ctx.arcTo(x,y+h,x,y,radius);
-  ctx.arcTo(x,y,x+w,y,radius);
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
   ctx.closePath();
-  if(fill){ctx.fillStyle=fill;ctx.fill();}
-  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
 }
 
-function createDailyReportCanvas(data){
-  const W=1080, H=1350;
-  const canvas=document.createElement('canvas');
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  const ink='#111827', muted='#6b7280', border='#d8dee8', surface='#ffffff', bg='#f3f5f8';
-  const toyota='#c93636', volvo='#2563eb', car='#d49a00', rev='#6b7280', accent='#1e3a5f';
-  const margin=56, contentW=W-margin*2;
+// Foto del SOLO reparto inviato, senza chiamare di nuovo Google Sheets.
+function createDepartmentReportCanvas(data) {
+  const W = 1080, M = 56, contentW = W - M * 2;
+  const dept = data.reparto;
+  const red = '#c93636', blue = '#2563eb', gold = '#b08000';
+  const accent = dept === 'Toyota' ? red : dept === 'Volvo' ? blue : gold;
+  const rawOps = dept === 'Toyota' ? data.toyota : dept === 'Carrozzeria' ? data.carrozzeria : null;
+  const operators = rawOps ? Object.entries(rawOps).map(([name, values]) => ({name, ...values})) : [];
+  const metrics = dept === 'Toyota' ? ['passaggi', 'gomme', 'tappetini', 'easypay']
+    : dept === 'Carrozzeria' ? ['passaggi', 'easypay'] : [];
+  const sum = metric => operators.reduce((total, op) => total + (Number(op[metric]) || 0), 0);
+  const total = dept === 'Volvo' ? Number(data.volvo) || 0 : sum('passaggi');
+  const tiles = dept === 'Toyota'
+    ? [['GOMME', sum('gomme')], ['TAPPETINI', sum('tappetini')],
+       ['EASYPAY', sum('easypay')], ['REVISIONI', Number(data.revisioni) || 0]]
+    : dept === 'Carrozzeria'
+    ? [['EASYPAY', sum('easypay')], ['ODL', Number(data.carrozzeria_odl) || 0]] : [];
+  const tableHeight = operators.length ? 115 + operators.length * 64 + 72 : 0;
+  const tileHeight = tiles.length ? (tiles.length > 2 ? 290 : 165) : 0;
+  const H = Math.max(650, 205 + 190 + (tableHeight ? tableHeight + 20 : 0)
+    + (tileHeight ? tileHeight + 20 : 0) + 100);
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f3f5f8'; ctx.fillRect(0, 0, W, H);
+  drawRoundedRect(ctx, 26, 26, W - 52, H - 52, 22, '#fff', '#d8dee8');
 
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-  drawRoundedRect(ctx,28,28,W-56,H-56,22,surface,border);
+  ctx.fillStyle = '#111827'; ctx.font = '900 46px Nunito, Arial, sans-serif';
+  ctx.fillText(`REPORT ${dept.toUpperCase()}`, M, 98, contentW);
+  ctx.fillStyle = '#6b7280'; ctx.font = '700 24px Nunito, Arial, sans-serif';
+  ctx.fillText(`Riolo · ${CONFIG.sede || 'Via Biagi'}  |  ${formatDataIT(data.data)}`, M, 140, contentW);
+  ctx.fillStyle = accent; ctx.fillRect(M, 160, contentW, 6);
 
-  ctx.textBaseline='alphabetic';
-  ctx.fillStyle=ink; ctx.font='800 42px Nunito, Arial, sans-serif';
-  ctx.fillText(`PASSAGGI DEL ${formatDateIT(data.date)}`,margin,98);
-  ctx.fillStyle=accent; ctx.fillRect(margin,122,contentW,5);
+  let y = 192;
+  drawRoundedRect(ctx, M, y, contentW, 170, 17, '#f8fafc', '#d8dee8');
+  ctx.fillStyle = '#6b7280'; ctx.font = '800 21px Nunito, Arial, sans-serif';
+  ctx.fillText('PASSAGGI TOTALI DEL REPARTO', M + 26, y + 49);
+  ctx.fillStyle = accent; ctx.font = '900 79px JetBrains Mono, monospace';
+  ctx.fillText(String(total), M + 26, y + 132);
+  y += 192;
 
-  const drawSection=(y,title,total,color,operators=[],rightNote='')=>{
-    const h=operators.length?205:142;
-    drawRoundedRect(ctx,margin,y,contentW,h,16,'#ffffff',border);
-    ctx.fillStyle=color; ctx.fillRect(margin,y,7,h);
-    ctx.fillStyle=muted; ctx.font='800 18px Nunito, Arial, sans-serif';
-    ctx.fillText(title.toUpperCase(),margin+28,y+40);
-    ctx.fillStyle=color; ctx.font='900 45px JetBrains Mono, monospace';
-    ctx.fillText(String(Math.round(total)),margin+28,y+94);
-    if(rightNote){
-      ctx.textAlign='right'; ctx.fillStyle=muted; ctx.font='700 20px Nunito, Arial, sans-serif';
-      ctx.fillText(rightNote,margin+contentW-28,y+76); ctx.textAlign='left';
-    }
-    if(operators.length){
-      ctx.font='700 20px Nunito, Arial, sans-serif'; ctx.fillStyle=ink;
-      const text=operators.map(o=>`${o.nome} ${Math.round(o.valore)}`).join('   ·   ');
-      const lines=wrapCanvasText(ctx,text,contentW-56);
-      lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,margin+28,y+137+i*30));
-    }
-    return y+h;
-  };
+  if (operators.length) {
+    drawRoundedRect(ctx, M, y, contentW, tableHeight, 17, '#fff', '#d8dee8');
+    ctx.fillStyle = '#1e3a5f'; ctx.font = '800 22px Nunito, Arial, sans-serif';
+    ctx.fillText('DETTAGLIO ACCETTATORI', M + 24, y + 40);
+    ctx.fillStyle = '#f3f6fa'; ctx.fillRect(M + 18, y + 59, contentW - 36, 49);
+    ctx.fillStyle = '#6b7280'; ctx.font = '800 16px Nunito, Arial, sans-serif';
+    ctx.fillText('ACCETTATORE', M + 30, y + 89);
+    const headers = dept === 'Toyota' ? ['PASS.', 'GOMME', 'TAPP.', 'EASYPAY'] : ['PASSAGGI', 'EASYPAY'];
+    const centers = dept === 'Toyota' ? [M + 555, M + 685, M + 810, M + 925]
+      : [M + 695, M + 900];
+    headers.forEach((header, i) => {
+      ctx.textAlign = 'center'; ctx.fillText(header, centers[i], y + 89);
+    });
+    ctx.textAlign = 'left';
+    operators.forEach((op, i) => {
+      const rowY = y + 110 + i * 64;
+      if (i % 2 === 1) { ctx.fillStyle = '#f8fafc'; ctx.fillRect(M + 20, rowY, contentW - 40, 64); }
+      ctx.fillStyle = '#111827'; ctx.font = '800 23px Nunito, Arial, sans-serif';
+      ctx.fillText(op.name, M + 30, rowY + 41, dept === 'Toyota' ? 445 : 575);
+      ctx.font = '600 24px JetBrains Mono, monospace';
+      metrics.forEach((metric, index) => {
+        ctx.textAlign = 'center';
+        ctx.fillText(String(Number(op[metric]) || 0), centers[index], rowY + 41);
+      });
+      ctx.textAlign = 'left';
+    });
+    const totalsY = y + 113 + operators.length * 64;
+    ctx.fillStyle = '#eaf1fb'; ctx.fillRect(M + 20, totalsY, contentW - 40, 54);
+    ctx.fillStyle = '#1e3a5f'; ctx.font = '800 22px Nunito, Arial, sans-serif';
+    ctx.fillText('TOTALE', M + 30, totalsY + 35);
+    ctx.font = '800 25px JetBrains Mono, monospace';
+    metrics.forEach((metric, index) => {
+      ctx.textAlign = 'center'; ctx.fillText(String(sum(metric)), centers[index], totalsY + 35);
+    });
+    ctx.textAlign = 'left';
+    y += tableHeight + 20;
+  }
 
-  let y=158;
-  y=drawSection(y,'Toyota',data.toyota.total,toyota,data.toyota.operators)+18;
-
-  // Volvo + Revisioni, affiancati.
-  const gap=18, half=(contentW-gap)/2, hSmall=135;
-  drawRoundedRect(ctx,margin,y,half,hSmall,16,'#ffffff',border);
-  ctx.fillStyle=volvo;ctx.fillRect(margin,y,7,hSmall);
-  ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText('VOLVO',margin+28,y+40);
-  ctx.fillStyle=volvo;ctx.font='900 45px JetBrains Mono, monospace';ctx.fillText(String(Math.round(data.volvo)),margin+28,y+94);
-
-  const x2=margin+half+gap;
-  drawRoundedRect(ctx,x2,y,half,hSmall,16,'#ffffff',border);
-  ctx.fillStyle=rev;ctx.fillRect(x2,y,7,hSmall);
-  ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText('REVISIONI',x2+28,y+40);
-  ctx.fillStyle=rev;ctx.font='900 45px JetBrains Mono, monospace';ctx.fillText(String(Math.round(data.revisioni)),x2+28,y+94);
-  y+=hSmall+18;
-
-  y=drawSection(y,'Carrozzeria',data.carrozzeria.total,car,data.carrozzeria.operators,`di cui ${Math.round(data.carrozzeria.odl)} ODL`)+18;
-
-  const compactSection=(y,title,obj,color)=>{
-    const h=150;
-    drawRoundedRect(ctx,margin,y,contentW,h,16,'#ffffff',border);
-    ctx.fillStyle=color;ctx.fillRect(margin,y,7,h);
-    ctx.fillStyle=muted;ctx.font='800 18px Nunito, Arial, sans-serif';ctx.fillText(title.toUpperCase(),margin+28,y+38);
-    ctx.fillStyle=ink;ctx.font='900 37px JetBrains Mono, monospace';ctx.fillText(String(Math.round(obj.total)),margin+28,y+88);
-    ctx.font='700 19px Nunito, Arial, sans-serif';ctx.fillStyle=ink;
-    const detail=obj.operators.length?obj.operators.map(o=>`${o.nome} ${Math.round(o.valore)}`).join('   ·   '):'—';
-    const lines=wrapCanvasText(ctx,detail,contentW-180);
-    lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,margin+150,y+72+i*27));
-    return y+h;
-  };
-
-  y=compactSection(y,'EasyPay',data.easypay,toyota)+14;
-  y=compactSection(y,'Pneumatici',data.pneumatici,toyota)+14;
-  y=compactSection(y,'Tappetini',data.tappetini,toyota)+14;
-
+  if (tiles.length) {
+    const columns = 2;
+    const gap = 18;
+    const tileWidth = (contentW - gap) / columns;
+    const rowHeight = 125;
+    tiles.forEach(([label, value], i) => {
+      const tileX = M + (i % 2) * (tileWidth + gap);
+      const tileY = y + Math.floor(i / 2) * (rowHeight + 18);
+      drawRoundedRect(ctx, tileX, tileY, tileWidth, rowHeight, 14, '#f8fafc', '#d8dee8');
+      ctx.fillStyle = '#6b7280'; ctx.font = '800 19px Nunito, Arial, sans-serif';
+      ctx.fillText(label, tileX + 24, tileY + 40);
+      ctx.fillStyle = accent; ctx.font = '900 47px JetBrains Mono, monospace';
+      ctx.fillText(String(value), tileX + 24, tileY + 96);
+    });
+  }
+  ctx.textAlign = 'center'; ctx.fillStyle = '#6b7280';
+  ctx.font = '700 19px Nunito, Arial, sans-serif';
+  ctx.fillText('RIEPILOGO DEL SOLO REPARTO ' + dept.toUpperCase(), W / 2, H - 54);
+  ctx.textAlign = 'left';
   return canvas;
-}
-
-
-// Riepilogo WhatsApp: stessi dati e stesso disegno della dashboard, senza rileggere il foglio.
-let submittedShare = null;
-let submittedShareToken = 0;
-
-function submissionDailyReportData(submission) {
-  const toyota = submission.toyota || {};
-  const carrozzeria = submission.carrozzeria || {};
-  const total = (operators, metric) => Object.values(operators)
-    .reduce((sum, values) => sum + (Number(values?.[metric]) || 0), 0);
-  const byOperator = (operators, metric) => Object.entries(operators)
-    .map(([nome, values]) => ({nome, valore: Number(values?.[metric]) || 0}))
-    .filter(item => item.nome.trim() && item.valore > 0);
-
-  // Nella sezione EasyPay sono sommati Toyota e Carrozzeria, come nella dashboard.
-  const orderedCombined = (items) => {
-    const byName = new Map();
-    items.forEach(({nome, valore}) => byName.set(nome, (byName.get(nome) || 0) + valore));
-    const configured = [...(CONFIG.accettatori_toyota || []), 'Francesco Pio Rasa'];
-    const order = new Map(configured.map((name, index) => [name, index]));
-    return [...byName.entries()]
-      .map(([nome, valore]) => ({nome, valore}))
-      .sort((a, b) => (order.get(a.nome) ?? 9999) - (order.get(b.nome) ?? 9999)
-        || a.nome.localeCompare(b.nome, 'it'));
-  };
-
-  // new Date('YYYY-MM-DD') userebbe UTC e potrebbe cambiare giorno: data locale.
-  const [year, month, day] = submission.data.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  const tyreOps = byOperator(toyota, 'gomme');
-  const matsOps = byOperator(toyota, 'tappetini');
-  const easyOps = orderedCombined([
-    ...byOperator(toyota, 'easypay'),
-    ...byOperator(carrozzeria, 'easypay')
-  ]);
-
-  return {
-    date,
-    toyota: {total: total(toyota, 'passaggi'), operators: byOperator(toyota, 'passaggi')},
-    volvo: Number(submission.volvo) || 0,
-    revisioni: Number(submission.revisioni) || 0,
-    carrozzeria: {
-      total: total(carrozzeria, 'passaggi'),
-      odl: Number(submission.carrozzeria_odl) || 0,
-      operators: byOperator(carrozzeria, 'passaggi')
-    },
-    easypay: {total: total(toyota, 'easypay') + total(carrozzeria, 'easypay'), operators: easyOps},
-    pneumatici: {total: total(toyota, 'gomme'), operators: orderedCombined(tyreOps)},
-    tappetini: {total: total(toyota, 'tappetini'), operators: orderedCombined(matsOps)}
-  };
 }
 
 function canShareReportPng(blob, filename) {
   if (!blob || typeof File === 'undefined' || typeof navigator.share !== 'function') return false;
   if (typeof navigator.canShare !== 'function') return true;
-  try {
-    return navigator.canShare({files: [new File([blob], filename, {type: 'image/png'})]});
-  } catch (_) {
-    return false;
-  }
+  try { return navigator.canShare({files: [new File([blob], filename, {type: 'image/png'})]}); }
+  catch (_) { return false; }
 }
 
 async function prepareSubmittedReportImage(submission) {
@@ -658,56 +845,55 @@ async function prepareSubmittedReportImage(submission) {
   button.disabled = true;
   button.textContent = '⏳ Preparo la foto...';
   hint.textContent = 'Preparazione del riepilogo fotografico...';
-
   try {
-    // Assicura la stessa tipografia della dashboard, quando i font sono disponibili.
     if (document.fonts?.ready) await document.fonts.ready;
     if (token !== submittedShareToken) return;
-    const report = submissionDailyReportData(submission);
-    const canvas = createDailyReportCanvas(report);
+    const canvas = createDepartmentReportCanvas(submission);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
     if (token !== submittedShareToken) return;
     if (!blob) throw new Error('Impossibile creare il PNG');
-    const filename = `passaggi-${submission.data}.png`;
-    submittedShare = {blob, filename, date: report.date};
+    const filename = `passaggi-${submission.reparto.toLowerCase()}-${submission.data}.png`;
+    submittedShare = {blob, filename, data: submission.data, reparto: submission.reparto};
     const direct = canShareReportPng(blob, filename);
     button.textContent = direct ? '📲 Condividi su WhatsApp' : '⬇ Scarica foto riepilogo';
     hint.textContent = direct
       ? 'Seleziona WhatsApp e la chat di lavoro nel menu di condivisione.'
-      : 'La condivisione diretta non è disponibile qui. Scarica la foto e allegala su WhatsApp.';
+      : 'Condivisione diretta non disponibile qui: scarica la foto e allegala su WhatsApp.';
     button.disabled = false;
   } catch (error) {
-    console.error('Errore creazione foto report:', error);
+    console.error('Errore creazione foto:', error);
     button.textContent = 'Foto non disponibile';
-    hint.textContent = 'Non è stato possibile generare la foto. Il report è comunque stato salvato.';
+    hint.textContent = 'Il report è salvato, ma non è stato possibile generare la foto.';
   }
 }
 
 function downloadSubmittedPng({blob, filename}) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function shareSubmittedReport() {
   if (!submittedShare) return;
   const button = document.getElementById('share-report-btn');
-  const share = submittedShare;
   button.disabled = true;
+  const share = submittedShare;
   try {
     if (canShareReportPng(share.blob, share.filename)) {
       const file = new File([share.blob], share.filename, {type: 'image/png'});
-      await navigator.share({files: [file], title: `Passaggi del ${formatDateIT(share.date)}`});
+      await navigator.share({
+        files: [file], title: `Passaggi ${share.reparto} del ${formatDataIT(share.data)}`
+      });
     } else {
       downloadSubmittedPng(share);
     }
   } catch (error) {
-    if (error?.name === 'AbortError') return; // Condivisione annullata dall'utente.
+    if (error?.name === 'AbortError') return;
     console.warn('Condivisione diretta non disponibile:', error);
     downloadSubmittedPng(share);
     showToast('Foto scaricata: puoi allegarla su WhatsApp');
@@ -715,8 +901,7 @@ async function shareSubmittedReport() {
     button.disabled = false;
   }
 }
-
-
 </script>
+
 </body>
 </html>
