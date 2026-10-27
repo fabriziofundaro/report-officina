@@ -201,19 +201,19 @@
       </div>
 
       <div class="section">
-        <div class="section-header"><span class="section-icon">🏢</span><span class="section-title">Reparto che invia il report</span></div>
+        <div class="section-header"><span class="section-icon"></span><span class="section-title">Reparto che invia il report</span></div>
         <p class="department-intro">Un referente compila i dati di tutto il reparto. Gli altri reparti inviano il proprio report in autonomia.</p>
         <div class="department-picker" role="group" aria-label="Seleziona il reparto">
-          <button type="button" class="department-choice" data-reparto="Toyota" aria-pressed="false" onclick="selezionaReparto('Toyota')"><span>🚗</span><span>Toyota</span></button>
-          <button type="button" class="department-choice" data-reparto="Volvo" aria-pressed="false" onclick="selezionaReparto('Volvo')"><span>🔵</span><span>Volvo</span></button>
-          <button type="button" class="department-choice" data-reparto="Carrozzeria" aria-pressed="false" onclick="selezionaReparto('Carrozzeria')"><span>🎨</span><span>Carrozzeria</span></button>
+          <button type="button" class="department-choice" data-reparto="Toyota" aria-pressed="false" onclick="selezionaReparto('Toyota')"><span></span><span>Toyota</span></button>
+          <button type="button" class="department-choice" data-reparto="Volvo" aria-pressed="false" onclick="selezionaReparto('Volvo')"><span></span><span>Volvo</span></button>
+          <button type="button" class="department-choice" data-reparto="Carrozzeria" aria-pressed="false" onclick="selezionaReparto('Carrozzeria')"><span></span><span>Carrozzeria</span></button>
         </div>
         <div class="report-state" id="report-state" role="status" aria-live="polite" hidden></div>
         <button type="button" id="retry-load-btn" class="retry-load-btn" onclick="caricaReportEsistente()" hidden>↻ Riprova verifica report</button>
       </div>
 
       <div class="section department-panel" data-reparto="Toyota" hidden>
-        <div class="section-header"><span class="section-icon">🚗</span><span class="section-title">Toyota</span></div>
+        <div class="section-header"><span class="section-icon"></span><span class="section-title">Toyota</span></div>
         <div class="operator-list">
           <div class="operator-head toyota">
             <div>Accettatore</div><div>Passaggi</div><div>Gomme</div><div>Tappetini</div><div>EasyPay</div>
@@ -222,7 +222,7 @@
         </div>
 
         <div class="extra-wrap">
-          <div class="extra-title">👤 Accettatore bonus</div>
+          <div class="extra-title">Accettatore bonus</div>
           <input type="text" id="toyota-extra" class="text-input extra-name" placeholder="Inserisci nome..." oninput="ricalcolaTotali()">
           <div class="extra-grid">
             <div class="metric-field"><label>Passaggi</label><input type="number" id="toyota-extra-passaggi" class="num-input" min="0" value="0" inputmode="numeric" oninput="onNumeroInput(this); ricalcolaTotali()"></div>
@@ -241,7 +241,7 @@
       </div>
 
       <div class="section department-panel" data-reparto="Volvo" hidden>
-        <div class="section-header"><span class="section-icon">🔵</span><span class="section-title">Volvo</span></div>
+        <div class="section-header"><span class="section-icon"></span><span class="section-title">Volvo</span></div>
         <div class="simple-value-row">
           <span class="field-label">Passaggi totali di oggi</span>
           <input type="number" id="volvo-passaggi" class="num-input" min="0" value="0" inputmode="numeric" oninput="onNumeroInput(this); ricalcolaTotali()">
@@ -258,7 +258,7 @@
       </div>
 
       <div class="section department-panel" data-reparto="Carrozzeria" hidden>
-        <div class="section-header"><span class="section-icon">🎨</span><span class="section-title">Carrozzeria</span></div>
+        <div class="section-header"><span class="section-icon"></span><span class="section-title">Carrozzeria</span></div>
         <div class="operator-list">
           <div class="operator-head carrozzeria">
             <div>Accettatore</div><div>Passaggi</div><div>EasyPay</div>
@@ -855,7 +855,7 @@ async function prepareSubmittedReportImage(submission) {
     const filename = `passaggi-${submission.reparto.toLowerCase()}-${submission.data}.png`;
     submittedShare = {blob, filename, data: submission.data, reparto: submission.reparto};
     const direct = canShareReportPng(blob, filename);
-    button.textContent = direct ? '📲 Condividi su WhatsApp' : '⬇ Scarica foto riepilogo';
+    button.textContent = direct ? 'Condividi su WhatsApp' : '⬇ Scarica foto riepilogo';
     hint.textContent = direct
       ? 'Seleziona WhatsApp e la chat di lavoro nel menu di condivisione.'
       : 'Condivisione diretta non disponibile qui: scarica la foto e allegala su WhatsApp.';
