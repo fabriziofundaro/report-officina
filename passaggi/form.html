@@ -280,6 +280,23 @@ document.addEventListener('DOMContentLoaded', () => {
   generaToyota();
   generaCarrozzeria();
   ricalcolaTotali();
+
+  // Campi numerici: al tocco lo 0 iniziale sparisce, senza modificare altri valori.
+  // Gli eventi sono delegati al form e funzionano anche per gli accettatori generati via JS.
+  const reportForm = document.getElementById('form-passaggi');
+  reportForm.addEventListener('focusin', (event) => {
+    const field = event.target;
+    if (field instanceof HTMLInputElement && field.type === 'number' && field.value === '0') {
+      field.value = '';
+    }
+  });
+  reportForm.addEventListener('focusout', (event) => {
+    const field = event.target;
+    if (field instanceof HTMLInputElement && field.type === 'number' && field.value === '') {
+      field.value = '0';
+      field.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+  });
 });
 
 function inputOperatore(id, label, green = false) {
